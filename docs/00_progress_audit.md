@@ -24,7 +24,8 @@ ideas.
 | Phase 5A Behavior Simulator | Complete | deterministic personas, Markov sessions, time/burst distributions, streaming sinks, strict report |
 | Phase 5B quality corpus | Complete | hidden scenarios, substantive note/OCR/comment text, ground truth, strict quality report |
 | Phase 5C lifecycle/fact materialization | Not started | behavior sessions are not yet materialized into community fact tables |
-| Phase 6 capacity testing | Partial | k6 exists; no long-duration capacity envelope or Locust session model |
+| Phase 6A capacity testing | Complete | baseline, step, hotspot, cold/warm, spike, dependency snapshots, and result index |
+| Phase 6B scale/soak testing | Not started | larger database rerun, stampede fix, soak, and Locust session model remain |
 | Platform/RAG/evaluation/cloud | Not started | deliberately deferred until the data and event substrate is stable |
 
 ## What Is Strong Today
@@ -41,6 +42,10 @@ ideas.
   million-row workloads without requiring an LLM API.
 - Both pressure-test and Agent-quality datasets now contain substantive Chinese text;
   hidden scenarios and gold source selectors make later retrieval measurable.
+- Capacity runs now preserve per-endpoint tail latency, cache behavior, dropped work,
+  dependency state, and Docker resource evidence instead of reporting only aggregate QPS.
+- Seed generation now has bounded write buffers, O(1)-memory unique interactions, and
+  4.21-million-row and 10.72-million-row profiles for controlled scale expansion.
 - GitHub Actions now covers formatting, race-enabled tests, vet, all command builds,
   simulator checks, Compose validation, idempotent migrations, and full API acceptance.
 
@@ -55,6 +60,9 @@ ideas.
    materialization, and scenario calibration while preserving run reproducibility.
 3. **Version control remote:** reviewed baseline commit `c0428c4` exists locally, but a
    remote repository and branch protection still need to be configured.
+4. **Cold-cache stampede:** the 100 RPS cold-hotspot run dropped 100 arrivals and reached
+   a 1.79 second P99, while the prewarmed equivalent passed at 80.8ms P95. Add
+   request coalescing and test cache recovery rather than relying on prewarming.
 
 ### Priority 2
 
@@ -67,8 +75,8 @@ ideas.
    checklist, but repository and service integration coverage should move into Go tests
    that run in CI. Current statement coverage is concentrated in middleware and pure
    helpers: approximately `note=4.1%`, `auth=11.8%`, and `worker=26.7%`.
-4. **Capacity evidence:** run longer steady, spike, soak, and dependency-outage tests;
-   preserve machine specifications and database/Redis/NATS metrics with each report.
+4. **Capacity evidence:** rerun the exact matrix at 4.21 million rows, then add a
+   30-minute soak and stateful Locust journeys. Current evidence is single-host only.
 
 ### Later, By Design
 
@@ -82,7 +90,7 @@ These should not jump ahead of Phase 5 behavior data and Phase 6 capacity eviden
 
 ## Recommended Sequence
 
-1. Phase 6: capacity, spike, soak, and failure testing using the new corpus and sessions.
+1. Phase 6B: cold-cache coalescing, 4.21-million-row rerun, soak, and stateful journeys.
 2. Observability track: Prometheus/Grafana/alerts and DLQ replay/retention tooling.
 3. Event governance: schema versions, compatibility tests, and retention policies.
 4. Build note-domain Evidence Store and deterministic ingestion with index versioning.

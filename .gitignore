@@ -7,3 +7,4 @@
 backend-go/bin/
 backend-go/tmp/
 backend-go/coverage*
+load-tests/results/

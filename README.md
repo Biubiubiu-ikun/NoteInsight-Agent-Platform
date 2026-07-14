@@ -122,6 +122,24 @@ docker pull grafana/k6:latest
 
 The helper script runs the Docker image against `http://host.docker.internal:18080`.
 
+Run the Phase 6 capacity matrix and build its local result index:
+
+```powershell
+.\scripts\run_k6_phase6.ps1 -Profile baseline -Workload mixed -Rate 30 -Duration 45s
+.\scripts\run_k6_phase6.ps1 -Profile step -Workload mixed
+.\scripts\run_k6_phase6.ps1 -Profile spike -Workload comments_read `
+  -AccessPattern hotspot -HotNoteCount 100 -SpikeRps 120
+.\scripts\analyze_phase6_results.ps1
+```
+
+Prepare future larger data sets without an LLM API:
+
+```powershell
+.\scripts\generate_capacity_data.ps1 -Profile capacity -DryRun
+# Use -Truncate only with a dedicated or backed-up PostgreSQL volume.
+.\scripts\generate_capacity_data.ps1 -Profile capacity -Truncate -WithTokens
+```
+
 Run the event-pipeline outage scenario:
 
 ```powershell
@@ -172,4 +190,5 @@ go run ./cmd/reconcile
 - [Phase 4D async counters and fault verification](docs/07_phase4d_async_counters.md)
 - [Phase 5A behavior simulator](docs/08_phase5a_behavior_simulator.md)
 - [Phase 5B quality text corpus](docs/09_phase5b_quality_corpus.md)
+- [Phase 6A capacity testing](docs/10_phase6_capacity_testing.md)
 - [Project progress and quality audit](docs/00_progress_audit.md)

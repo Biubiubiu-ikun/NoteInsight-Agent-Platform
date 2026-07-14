@@ -8,7 +8,7 @@ Files whose names start with `旧版项目规划` remain historical reference ma
 
 ## Current Progress
 
-Phase 5A behavior simulation and the first CI quality baseline have been completed on top of the Phase 4D asynchronous event pipeline.
+Phase 6A capacity testing and scalable data-generation preparation have been completed on top of the Phase 5B quality corpus.
 
 Completed:
 
@@ -220,12 +220,34 @@ Final Phase 5A runtime snapshot on 2026-07-14:
 - every quality note has a hidden scenario and five ground-truth tasks whose source
   selectors can later be resolved to Evidence Store IDs.
 - Phase 5B report: `docs/09_phase5b_quality_corpus.md`.
+- Phase 6 capacity script: `load-tests/k6/phase6_capacity.js`.
+- repeatable runner with API, worker, PostgreSQL, Redis, NATS, Docker, and data snapshots:
+  `scripts/run_k6_phase6.ps1`.
+- cross-run result index: `scripts/analyze_phase6_results.ps1`.
+- 30 RPS uniform mixed workload passed with P95 `41.7ms`, zero errors, and zero drops.
+- 50 RPS uniform mixed workload sustained target throughput but failed strict endpoint
+  latency thresholds; 75 RPS reached P95 `779.9ms` and dropped 11 arrivals.
+- PostgreSQL was the measured saturation point at 75 RPS, peaking around `510%` CPU.
+- cold 100 RPS hotspot comments failed with P99 `1.79s` and 100 dropped arrivals;
+  the prewarmed equivalent passed at P95 `80.8ms`, P99 `148.7ms`, and zero drops.
+- 20/120/20 RPS hotspot spike had zero errors and zero drops; spike P95 was `153.0ms`
+  and recovery P95 returned to `96.5ms`.
+- final asynchronous integrity after the tests: Outbox active/failed `0`, JetStream
+  pending/ack-pending `0`, `note_drift=0`, and `comment_drift=0`.
+- `seedgen` now bounds batch memory, streams note-linked comments, generates unique
+  interaction pairs in O(1) memory, and batches Redis ranking rebuilds.
+- new `capacity` profile estimates 4.21 million rows; `million-comments` estimates
+  10.72 million rows. Both retain meaningful deterministic text without an LLM API.
+- Phase 6A report: `docs/10_phase6_capacity_testing.md`.
 
 ## Next Development Step
 
-Recommended Phase 6 and RAG preparation track:
+Recommended Phase 6B and RAG preparation track:
 
-- run steady, spike, soak, and outage capacity tests against the meaningful corpus;
+- add cache-miss request coalescing and repeat the cold-hotspot test;
+- generate the 4.21-million-row `capacity` profile in a dedicated volume and rerun the
+  exact matrix;
+- run a 30-minute soak at the verified SLO-safe rate;
 - add Prometheus, Grafana, and alert-rule assets for the existing API/worker metrics;
 - add controlled DLQ inspection/replay and event-retention commands;
 - then create note-domain Evidence Store and deterministic ingestion for note bodies,

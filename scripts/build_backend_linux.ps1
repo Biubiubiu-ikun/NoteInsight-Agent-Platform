@@ -23,6 +23,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Simulator Linux build failed." }
     go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-corpusgen" ./cmd/corpusgen
     if ($LASTEXITCODE -ne 0) { throw "Corpus generator Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-seedgen" ./cmd/seedgen
+    if ($LASTEXITCODE -ne 0) { throw "Seed generator Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled

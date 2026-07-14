@@ -47,6 +47,9 @@ jobs:
       - name: Simulator quality smoke
         run: go run ./cmd/simulator --profile=smoke --sessions=100 --no-event-files --strict=true
 
+      - name: Capacity seed profile smoke
+        run: go run ./cmd/seedgen --profile=capacity --dry-run
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:

@@ -44,14 +44,41 @@ var devProfile = profileConfig{
 	commentLikes: 50000,
 }
 
+var capacityProfile = profileConfig{
+	users:        10000,
+	creators:     1000,
+	notes:        50000,
+	comments:     500000,
+	likes:        2000000,
+	collects:     600000,
+	commentLikes: 1000000,
+}
+
+var millionCommentsProfile = profileConfig{
+	users:        20000,
+	creators:     2000,
+	notes:        100000,
+	comments:     1000000,
+	likes:        5000000,
+	collects:     1500000,
+	commentLikes: 3000000,
+}
+
 func main() {
 	var (
-		profile    = flag.String("profile", "dev", "seed profile: dev")
-		seed       = flag.Int64("seed", 20260706, "random seed")
-		truncate   = flag.Bool("truncate", false, "truncate generated data before seeding")
-		withTokens = flag.Bool("with-tokens", false, "generate user_auth_tokens and token csv")
-		dryRun     = flag.Bool("dry-run", false, "print planned data volume without writing")
-		tokenOut   = flag.String("token-out", "tmp/dev_tokens.csv", "token csv output path")
+		profile      = flag.String("profile", "dev", "seed profile: dev, capacity, or million-comments")
+		seed         = flag.Int64("seed", 20260706, "random seed")
+		truncate     = flag.Bool("truncate", false, "truncate generated data before seeding")
+		withTokens   = flag.Bool("with-tokens", false, "generate user_auth_tokens and token csv")
+		dryRun       = flag.Bool("dry-run", false, "print planned data volume without writing")
+		tokenOut     = flag.String("token-out", "tmp/dev_tokens.csv", "token csv output path")
+		users        = flag.Int("users", 0, "override profile user count")
+		creators     = flag.Int("creators", 0, "override profile creator count")
+		notes        = flag.Int("notes", 0, "override profile note count")
+		comments     = flag.Int("comments", 0, "override profile comment count")
+		likes        = flag.Int("likes", 0, "override profile note like count")
+		collects     = flag.Int("collects", 0, "override profile note collect count")
+		commentLikes = flag.Int("comment-likes", 0, "override profile comment like count")
 	)
 	flag.Parse()
 
@@ -72,8 +99,21 @@ func main() {
 		logger.Error("select profile failed", "error", err)
 		os.Exit(1)
 	}
+	selected = selected.withOverrides(profileConfig{
+		users:        *users,
+		creators:     *creators,
+		notes:        *notes,
+		comments:     *comments,
+		likes:        *likes,
+		collects:     *collects,
+		commentLikes: *commentLikes,
+	})
+	if err := selected.validate(); err != nil {
+		logger.Error("invalid seed profile", "error", err)
+		os.Exit(1)
+	}
 	if *dryRun {
-		logger.Info("seedgen dry run", "profile", *profile, "users", selected.users, "creators", selected.creators, "notes", selected.notes, "comments", selected.comments, "likes", selected.likes, "collects", selected.collects, "comment_likes", selected.commentLikes)
+		logger.Info("seedgen dry run", "profile", *profile, "users", selected.users, "creators", selected.creators, "notes", selected.notes, "comments", selected.comments, "likes", selected.likes, "collects", selected.collects, "comment_likes", selected.commentLikes, "estimated_rows", selected.estimatedRows())
 		return
 	}
 
@@ -124,12 +164,11 @@ func main() {
 		}
 	}
 
-	documents, err := seedNotes(ctx, db, rng, selected, ids, *seed)
-	if err != nil {
+	if err := seedNotes(ctx, db, rng, selected, ids, *seed); err != nil {
 		logger.Error("seed notes failed", "error", err)
 		os.Exit(1)
 	}
-	if err := seedComments(ctx, db, rng, selected, ids, *seed, documents); err != nil {
+	if err := seedComments(ctx, db, rng, selected, ids, *seed); err != nil {
 		logger.Error("seed comments failed", "error", err)
 		os.Exit(1)
 	}
@@ -166,9 +205,67 @@ func selectProfile(profile string) (profileConfig, error) {
 	switch profile {
 	case "dev":
 		return devProfile, nil
+	case "capacity":
+		return capacityProfile, nil
+	case "million-comments":
+		return millionCommentsProfile, nil
 	default:
 		return profileConfig{}, fmt.Errorf("unsupported profile %q", profile)
 	}
+}
+
+func (p profileConfig) withOverrides(overrides profileConfig) profileConfig {
+	if overrides.users > 0 {
+		p.users = overrides.users
+	}
+	if overrides.creators > 0 {
+		p.creators = overrides.creators
+	}
+	if overrides.notes > 0 {
+		p.notes = overrides.notes
+	}
+	if overrides.comments > 0 {
+		p.comments = overrides.comments
+	}
+	if overrides.likes > 0 {
+		p.likes = overrides.likes
+	}
+	if overrides.collects > 0 {
+		p.collects = overrides.collects
+	}
+	if overrides.commentLikes > 0 {
+		p.commentLikes = overrides.commentLikes
+	}
+	return p
+}
+
+func (p profileConfig) validate() error {
+	if p.users <= 0 || p.creators <= 0 || p.notes <= 0 || p.comments <= 0 {
+		return fmt.Errorf("users, creators, notes, and comments must be positive")
+	}
+	if p.creators > p.users {
+		return fmt.Errorf("creators %d exceed users %d", p.creators, p.users)
+	}
+	for name, value := range map[string]int{"likes": p.likes, "collects": p.collects, "comment_likes": p.commentLikes} {
+		if value < 0 {
+			return fmt.Errorf("%s must not be negative", name)
+		}
+	}
+	if int64(p.likes) > int64(p.notes)*int64(p.users) {
+		return fmt.Errorf("likes exceed unique note/user pairs")
+	}
+	if int64(p.collects) > int64(p.notes)*int64(p.users) {
+		return fmt.Errorf("collects exceed unique note/user pairs")
+	}
+	if int64(p.commentLikes) > int64(p.comments)*int64(p.users) {
+		return fmt.Errorf("comment likes exceed unique comment/user pairs")
+	}
+	return nil
+}
+
+func (p profileConfig) estimatedRows() int64 {
+	// GenerateDocument currently emits one media row per note.
+	return int64(p.users) + int64(p.notes)*2 + int64(p.comments) + int64(p.likes) + int64(p.collects) + int64(p.commentLikes)
 }
 
 func nextIDs(ctx context.Context, db *sqlx.DB, profile profileConfig) (idOffsets, error) {
@@ -190,6 +287,9 @@ func truncateGeneratedData(ctx context.Context, db *sqlx.DB) error {
 TRUNCATE TABLE
 	 content_corpus_runs,
 	 simulation_runs,
+	 processed_events,
+	 behavior_events,
+	 outbox_events,
   note_comment_likes,
   note_collects,
   note_likes,
@@ -225,11 +325,15 @@ func seedUsers(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profile
 		}
 		createdAt := now.Add(time.Duration(rng.Intn(90*24)) * time.Hour)
 		username := fmt.Sprintf("seed_user_%d", userID)
-		users.add(userID, username, fmt.Sprintf("Seed User %d", userID), "", role, persona, "active", createdAt, createdAt)
+		if err := users.add(ctx, userID, username, fmt.Sprintf("Seed User %d", userID), "", role, persona, "active", createdAt, createdAt); err != nil {
+			return nil, err
+		}
 
 		if withTokens {
 			token := fmt.Sprintf("dev_%d_%s", userID, randomString(rng, 24))
-			tokens.add(userID, hashToken(token), "active", createdAt)
+			if err := tokens.add(ctx, userID, hashToken(token), "active", createdAt); err != nil {
+				return nil, err
+			}
 			generated = append(generated, generatedToken{UserID: userID, Token: token})
 		}
 	}
@@ -244,72 +348,149 @@ func seedUsers(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profile
 	return generated, nil
 }
 
-func seedNotes(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets, seed int64) (map[int64]contentgen.Document, error) {
+func seedNotes(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets, seed int64) error {
 	notes := newBatchInserter(db, `INSERT INTO notes (id, project_id, author_id, title, body, category, topics, tags, location, product_entities, note_type, quality_score, status, created_at, updated_at) VALUES `, ` ON CONFLICT (id) DO NOTHING`, 15, 500)
 	media := newBatchInserter(db, `INSERT INTO note_media (note_id, media_type, url, caption, ocr_text, position, metadata, created_at) VALUES `, ``, 8, 1000)
 	categories := contentgen.Categories()
 	startAt := time.Date(2026, 1, 1, 8, 0, 0, 0, time.UTC)
-	documents := make(map[int64]contentgen.Document, profile.notes)
 
 	for i := 0; i < profile.notes; i++ {
 		noteID := ids.noteStart + int64(i)
 		authorID := ids.userStart + int64(rng.Intn(profile.creators))
-		category := randomChoice(rng, categories)
+		category := categoryForNote(seed, noteID, categories)
 		document, err := contentgen.GenerateDocument(seed, noteID, category, 1, startAt)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		document.AuthorID = authorID
-		documents[noteID] = document
 		topics, err := contentgen.JSON(document.Topics)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		tags, err := contentgen.JSON(document.Tags)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		location, err := contentgen.JSON(document.Location)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		products, err := contentgen.JSON(document.ProductEntities)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		notes.add(noteID, 0, authorID, document.Title, document.Body, category, topics, tags, location, products, "image_text", document.QualityScore, "published", document.CreatedAt, document.CreatedAt)
+		if err := notes.add(ctx, noteID, 0, authorID, document.Title, document.Body, category, topics, tags, location, products, "image_text", document.QualityScore, "published", document.CreatedAt, document.CreatedAt); err != nil {
+			return err
+		}
 		for _, asset := range document.Media {
 			metadata, err := contentgen.JSON(asset.Metadata)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			media.add(noteID, "image", nil, asset.Caption, asset.OCRText, asset.Position, metadata, document.CreatedAt)
+			if err := media.add(ctx, noteID, "image", nil, asset.Caption, asset.OCRText, asset.Position, metadata, document.CreatedAt); err != nil {
+				return err
+			}
 		}
 	}
 	if err := notes.flush(ctx); err != nil {
-		return nil, err
+		return err
 	}
 	if err := media.flush(ctx); err != nil {
-		return nil, err
+		return err
 	}
-	return documents, nil
+	return nil
 }
 
-func seedComments(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets, seed int64, documents map[int64]contentgen.Document) error {
+func seedComments(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets, seed int64) error {
 	comments := newBatchInserter(db, `INSERT INTO note_comments (id, note_id, user_id, parent_id, root_id, content, sentiment, intent, topic_id, status, created_at, updated_at) VALUES `, ` ON CONFLICT (id) DO NOTHING`, 12, 1000)
+	categories := contentgen.Categories()
+	startAt := time.Date(2026, 1, 1, 8, 0, 0, 0, time.UTC)
+	commentIndex := 0
 
-	for i := 0; i < profile.comments; i++ {
-		commentID := ids.commentStart + int64(i)
-		noteID := ids.noteStart + int64(rng.Intn(profile.notes))
-		userID := ids.userStart + int64(rng.Intn(profile.users))
-		document, ok := documents[noteID]
-		if !ok {
-			return fmt.Errorf("missing generated document for note %d", noteID)
+	for _, tier := range buildCommentTiers(profile.notes, profile.comments) {
+		for noteOffset := 0; noteOffset < tier.noteCount; noteOffset++ {
+			absoluteOffset := tier.noteStart + noteOffset
+			noteID := ids.noteStart + int64(absoluteOffset)
+			category := categoryForNote(seed, noteID, categories)
+			document, err := contentgen.GenerateDocument(seed, noteID, category, 1, startAt)
+			if err != nil {
+				return err
+			}
+			commentCount := tier.commentCount / tier.noteCount
+			if noteOffset < tier.commentCount%tier.noteCount {
+				commentCount++
+			}
+			for localIndex := 0; localIndex < commentCount; localIndex++ {
+				commentID := ids.commentStart + int64(commentIndex)
+				userID := ids.userStart + int64(rng.Intn(profile.users))
+				comment := contentgen.GenerateComment(seed, document, commentID, commentIndex)
+				if err := comments.add(ctx, commentID, noteID, userID, 0, 0, comment.Content, comment.Sentiment, comment.Intent, comment.TopicID, 1, comment.CreatedAt, comment.CreatedAt); err != nil {
+					return err
+				}
+				commentIndex++
+			}
 		}
-		comment := contentgen.GenerateComment(seed, document, commentID, i)
-		comments.add(commentID, noteID, userID, 0, 0, comment.Content, comment.Sentiment, comment.Intent, comment.TopicID, 1, comment.CreatedAt, comment.CreatedAt)
+	}
+	if commentIndex != profile.comments {
+		return fmt.Errorf("generated %d comments, want %d", commentIndex, profile.comments)
 	}
 	return comments.flush(ctx)
+}
+
+type commentTier struct {
+	noteStart    int
+	noteCount    int
+	commentCount int
+}
+
+func buildCommentTiers(noteCount int, commentCount int) []commentTier {
+	hotNotes := noteCount / 20
+	if hotNotes < 1 {
+		hotNotes = 1
+	}
+	warmNotes := noteCount / 5
+	if warmNotes < 1 && noteCount > hotNotes {
+		warmNotes = 1
+	}
+	if hotNotes+warmNotes > noteCount {
+		warmNotes = noteCount - hotNotes
+	}
+	tailNotes := noteCount - hotNotes - warmNotes
+
+	hotComments := commentCount * 40 / 100
+	warmComments := commentCount * 40 / 100
+	tailComments := commentCount - hotComments - warmComments
+	if warmNotes == 0 {
+		hotComments += warmComments
+		warmComments = 0
+	}
+	if tailNotes == 0 {
+		if warmNotes > 0 {
+			warmComments += tailComments
+		} else {
+			hotComments += tailComments
+		}
+		tailComments = 0
+	}
+
+	tiers := []commentTier{{noteStart: 0, noteCount: hotNotes, commentCount: hotComments}}
+	if warmNotes > 0 {
+		tiers = append(tiers, commentTier{noteStart: hotNotes, noteCount: warmNotes, commentCount: warmComments})
+	}
+	if tailNotes > 0 {
+		tiers = append(tiers, commentTier{noteStart: hotNotes + warmNotes, noteCount: tailNotes, commentCount: tailComments})
+	}
+	return tiers
+}
+
+func categoryForNote(seed int64, noteID int64, categories []string) string {
+	value := uint64(noteID) ^ uint64(seed)
+	value ^= value >> 33
+	value *= 0xff51afd7ed558ccd
+	value ^= value >> 33
+	value *= 0xc4ceb9fe1a85ec53
+	value ^= value >> 33
+	return categories[value%uint64(len(categories))]
 }
 
 func seedInteractions(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets) error {
@@ -342,6 +523,13 @@ func refreshCounters(ctx context.Context, db *sqlx.DB) error {
 }
 
 func populateRankings(ctx context.Context, db *sqlx.DB, redisClient *redis.Client) error {
+	if err := deleteRedisPattern(ctx, redisClient, "ranking:notes:*"); err != nil {
+		return err
+	}
+	if err := deleteRedisPattern(ctx, redisClient, "note:*:hot_comments"); err != nil {
+		return err
+	}
+
 	rows, err := db.QueryxContext(ctx, `SELECT id, category, hot_score FROM notes WHERE status = 'published'`)
 	if err != nil {
 		return err
@@ -349,8 +537,18 @@ func populateRankings(ctx context.Context, db *sqlx.DB, redisClient *redis.Clien
 	defer rows.Close()
 
 	pipe := redisClient.Pipeline()
-	pipe.Del(ctx, "ranking:notes:daily")
-	categoryKeys := map[string]struct{}{}
+	queued := 0
+	flush := func() error {
+		if queued == 0 {
+			return nil
+		}
+		if _, err := pipe.Exec(ctx); err != nil {
+			return err
+		}
+		pipe = redisClient.Pipeline()
+		queued = 0
+		return nil
+	}
 	for rows.Next() {
 		var id int64
 		var category string
@@ -361,13 +559,18 @@ func populateRankings(ctx context.Context, db *sqlx.DB, redisClient *redis.Clien
 		member := fmt.Sprint(id)
 		pipe.ZAdd(ctx, "ranking:notes:daily", redis.Z{Score: score, Member: member})
 		key := fmt.Sprintf("ranking:notes:%s:daily", category)
-		if _, ok := categoryKeys[key]; !ok {
-			pipe.Del(ctx, key)
-			categoryKeys[key] = struct{}{}
-		}
 		pipe.ZAdd(ctx, key, redis.Z{Score: score, Member: member})
+		queued += 2
+		if queued >= 5000 {
+			if err := flush(); err != nil {
+				return err
+			}
+		}
 	}
 	if err := rows.Err(); err != nil {
+		return err
+	}
+	if err := flush(); err != nil {
 		return err
 	}
 
@@ -376,24 +579,43 @@ func populateRankings(ctx context.Context, db *sqlx.DB, redisClient *redis.Clien
 		return err
 	}
 	defer commentRows.Close()
-	commentKeys := map[string]struct{}{}
 	for commentRows.Next() {
 		var id, noteID, likeCount int64
 		if err := commentRows.Scan(&id, &noteID, &likeCount); err != nil {
 			return err
 		}
 		key := fmt.Sprintf("note:%d:hot_comments", noteID)
-		if _, ok := commentKeys[key]; !ok {
-			pipe.Del(ctx, key)
-			commentKeys[key] = struct{}{}
-		}
 		pipe.ZAdd(ctx, key, redis.Z{Score: float64(likeCount * 5), Member: fmt.Sprint(id)})
+		queued++
+		if queued >= 5000 {
+			if err := flush(); err != nil {
+				return err
+			}
+		}
 	}
 	if err := commentRows.Err(); err != nil {
 		return err
 	}
-	_, err = pipe.Exec(ctx)
-	return err
+	return flush()
+}
+
+func deleteRedisPattern(ctx context.Context, redisClient *redis.Client, pattern string) error {
+	var cursor uint64
+	for {
+		keys, nextCursor, err := redisClient.Scan(ctx, cursor, pattern, 1000).Result()
+		if err != nil {
+			return err
+		}
+		if len(keys) > 0 {
+			if err := redisClient.Del(ctx, keys...).Err(); err != nil {
+				return err
+			}
+		}
+		cursor = nextCursor
+		if cursor == 0 {
+			return nil
+		}
+	}
 }
 
 type batchInserter struct {
@@ -409,11 +631,14 @@ func newBatchInserter(db *sqlx.DB, prefix string, suffix string, cols int, batch
 	return &batchInserter{db: db, prefix: prefix, suffix: suffix, cols: cols, batchSize: batchSize}
 }
 
-func (b *batchInserter) add(values ...any) error {
+func (b *batchInserter) add(ctx context.Context, values ...any) error {
 	if len(values) != b.cols {
 		return fmt.Errorf("batch row has %d values, want %d", len(values), b.cols)
 	}
 	b.rows = append(b.rows, values)
+	if len(b.rows) >= b.batchSize {
+		return b.flush(ctx)
+	}
 	return nil
 }
 
@@ -461,19 +686,72 @@ func (b *batchInserter) exec(ctx context.Context, rows [][]any) error {
 
 func seedUniquePairsDB(ctx context.Context, db *sqlx.DB, rng *rand.Rand, target int, leftCount int, rightCount int, leftStart int64, rightStart int64, prefix string, suffix string) error {
 	inserter := newBatchInserter(db, prefix, suffix, 3, 2000)
-	seen := make(map[[2]int64]struct{}, target)
+	sequence, err := newUniquePairSequence(rng, target, leftCount, rightCount)
+	if err != nil {
+		return err
+	}
 	now := time.Now()
-	for len(seen) < target {
-		leftID := leftStart + int64(rng.Intn(leftCount))
-		rightID := rightStart + int64(rng.Intn(rightCount))
-		key := [2]int64{leftID, rightID}
-		if _, ok := seen[key]; ok {
-			continue
+	for {
+		leftOffset, rightOffset, ok := sequence.next()
+		if !ok {
+			break
 		}
-		seen[key] = struct{}{}
-		inserter.add(leftID, rightID, now.Add(-time.Duration(rng.Intn(30*24))*time.Hour))
+		if err := inserter.add(ctx, leftStart+int64(leftOffset), rightStart+int64(rightOffset), now.Add(-time.Duration(rng.Intn(30*24))*time.Hour)); err != nil {
+			return err
+		}
 	}
 	return inserter.flush(ctx)
+}
+
+type uniquePairSequence struct {
+	remaining int
+	right     uint64
+	total     uint64
+	current   uint64
+	stride    uint64
+}
+
+func newUniquePairSequence(rng *rand.Rand, target int, leftCount int, rightCount int) (*uniquePairSequence, error) {
+	if target < 0 || leftCount <= 0 || rightCount <= 0 {
+		return nil, fmt.Errorf("invalid pair dimensions target=%d left=%d right=%d", target, leftCount, rightCount)
+	}
+	total := uint64(leftCount) * uint64(rightCount)
+	if uint64(target) > total {
+		return nil, fmt.Errorf("target %d exceeds %d unique pairs", target, total)
+	}
+	if total > uint64(^uint64(0)>>1) {
+		return nil, fmt.Errorf("pair space %d exceeds supported deterministic sequence size", total)
+	}
+	current := uint64(0)
+	stride := uint64(1)
+	if total > 1 {
+		current = uint64(rng.Int63n(int64(total)))
+		stride = uint64(rng.Int63n(int64(total-1))) + 1
+		for greatestCommonDivisor(stride, total) != 1 {
+			stride++
+			if stride >= total {
+				stride = 1
+			}
+		}
+	}
+	return &uniquePairSequence{remaining: target, right: uint64(rightCount), total: total, current: current, stride: stride}, nil
+}
+
+func (s *uniquePairSequence) next() (int, int, bool) {
+	if s.remaining == 0 {
+		return 0, 0, false
+	}
+	flat := s.current
+	s.current = (s.current + s.stride) % s.total
+	s.remaining--
+	return int(flat / s.right), int(flat % s.right), true
+}
+
+func greatestCommonDivisor(left uint64, right uint64) uint64 {
+	for right != 0 {
+		left, right = right, left%right
+	}
+	return left
 }
 
 func randomChoice(rng *rand.Rand, values []string) string {
