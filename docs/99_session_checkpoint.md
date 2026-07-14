@@ -193,6 +193,21 @@ Final Phase 4D runtime snapshot on 2026-07-14:
 - full fact-table comparison reports `note_drift=0` and `comment_drift=0`;
 - the latest deployed worker exposes Phase 4D lag and derived-refresh metrics.
 
+Final Phase 5A runtime snapshot on 2026-07-14:
+
+- baseline Git commit: `c0428c4`;
+- all five Compose services are running and dependency readiness is healthy;
+- all six migrations are applied and a second migration pass skips all six;
+- Outbox has `sent=154` with no pending, processing, retry, or failed rows;
+- optimized fact-table verification reports `note_drift=0` and `comment_drift=0`;
+- database simulator run `phase5a_smoke_mixed_20260714` is completed with 2,645
+  declared and stored events and zero invalid session sequences;
+- rebuilt container simulator strict smoke passed with 100 sessions, 501 events, all
+  eight personas, all ten event types, and every distribution check passing;
+- the rebuilt API/worker acceptance suite passed after two idempotent migration runs;
+- `go test -p 1 -timeout 60s -count=1 ./...`, `go vet -p 1 ./...`, Windows command
+  builds, and Linux static binary builds passed.
+
 ## Next Development Step
 
 Recommended Phase 5B and quality track:

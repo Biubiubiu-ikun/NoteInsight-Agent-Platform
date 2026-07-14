@@ -50,8 +50,8 @@ ideas.
    dependency readiness are absent.
 2. **Phase 5B data lifecycle:** add user/note evolution, optional fact-table
    materialization, and scenario calibration while preserving run reproducibility.
-3. **Version control remote:** the local repository is initialized, but it still needs a
-   reviewed baseline commit and a configured remote.
+3. **Version control remote:** reviewed baseline commit `c0428c4` exists locally, but a
+   remote repository and branch protection still need to be configured.
 
 ### Priority 2
 
