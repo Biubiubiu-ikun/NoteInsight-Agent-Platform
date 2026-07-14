@@ -40,6 +40,22 @@ var (
 		[]string{"cache"},
 	)
 
+	CacheBackendLoadsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "cache_backend_load_total",
+			Help: "Total cache-miss backend loads by cache and result.",
+		},
+		[]string{"cache", "result"},
+	)
+
+	CacheCoalescedRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "cache_coalesced_requests_total",
+			Help: "Total requests served by a shared in-process cache-miss load.",
+		},
+		[]string{"cache"},
+	)
+
 	DBQueryDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "db_query_duration_seconds",
@@ -231,6 +247,8 @@ func init() {
 		HTTPRequestDuration,
 		CacheHitsTotal,
 		CacheMissesTotal,
+		CacheBackendLoadsTotal,
+		CacheCoalescedRequestsTotal,
 		DBQueryDuration,
 		HotRankingUpdatesTotal,
 		OutboxEventsLockedTotal,
@@ -268,6 +286,14 @@ func IncCacheHit(cache string) {
 
 func IncCacheMiss(cache string) {
 	CacheMissesTotal.WithLabelValues(cache).Inc()
+}
+
+func IncCacheBackendLoad(cache string, result string) {
+	CacheBackendLoadsTotal.WithLabelValues(cache, result).Inc()
+}
+
+func IncCacheCoalescedRequest(cache string) {
+	CacheCoalescedRequestsTotal.WithLabelValues(cache).Inc()
 }
 
 func IncHotRankingUpdate(ranking string) {

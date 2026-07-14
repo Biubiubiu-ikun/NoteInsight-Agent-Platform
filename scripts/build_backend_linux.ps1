@@ -25,6 +25,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Corpus generator Linux build failed." }
     go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-seedgen" ./cmd/seedgen
     if ($LASTEXITCODE -ne 0) { throw "Seed generator Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/creatorinsight-migrate" ./cmd/migrate
+    if ($LASTEXITCODE -ne 0) { throw "Migration Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-reconcile" ./cmd/reconcile
+    if ($LASTEXITCODE -ne 0) { throw "Reconcile Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled

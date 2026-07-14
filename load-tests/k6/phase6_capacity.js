@@ -13,6 +13,7 @@ const NOTE_COUNT = positiveInt(__ENV.NOTE_COUNT, 5000);
 const COMMENT_START = positiveInt(__ENV.COMMENT_START, 1);
 const COMMENT_COUNT = positiveInt(__ENV.COMMENT_COUNT, 20000);
 const HOT_NOTE_COUNT = Math.min(positiveInt(__ENV.HOT_NOTE_COUNT, 100), NOTE_COUNT);
+const HOTSET_PERCENT = percentInt(__ENV.HOTSET_PERCENT, 80);
 
 const endpointDurations = {
   notes_list: new Trend('notes_list_duration_ms', true),
@@ -277,12 +278,20 @@ function request(endpoint, method, url, body, params, expectedStatuses) {
 }
 
 function publicParams(endpoint) {
-  return { tags: { phase: 'phase6', profile: PROFILE, workload: WORKLOAD, kind: 'read', endpoint } };
+  return {
+    headers: { Accept: 'application/json', 'Accept-Encoding': 'gzip' },
+    tags: { phase: 'phase6', profile: PROFILE, workload: WORKLOAD, kind: 'read', endpoint },
+  };
 }
 
 function authParams(token, endpoint) {
   return {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'Accept-Encoding': 'gzip',
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
     tags: { phase: 'phase6', profile: PROFILE, workload: WORKLOAD, kind: 'write', endpoint },
   };
 }
@@ -308,6 +317,14 @@ function positiveInt(value, fallback) {
   const parsed = Number(value || fallback);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`expected a positive integer, got ${value}`);
+  }
+  return parsed;
+}
+
+function percentInt(value, fallback) {
+  const parsed = Number(value === undefined || value === '' ? fallback : value);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
+    throw new Error(`expected an integer percentage, got ${value}`);
   }
   return parsed;
 }
@@ -373,7 +390,7 @@ function renderMarkdownSummary(data) {
 
 function pickNoteID() {
   const selector = (__VU * 997 + __ITER * 17) >>> 0;
-  if (ACCESS_PATTERN === 'hotspot' && selector % 100 < 80) {
+  if (ACCESS_PATTERN === 'hotspot' && selector % 100 < HOTSET_PERCENT) {
     const hotSelector = (__VU * 577 + __ITER * 7919) >>> 0;
     return NOTE_START + (hotSelector % HOT_NOTE_COUNT);
   }

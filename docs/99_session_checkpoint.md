@@ -257,3 +257,58 @@ High-volume behavior generation remains local and does not use an LLM API. A fut
 LLM-backed content corpus should be smaller, versioned, reviewed, and generated offline.
 
 The host still does not have a system-level `k6` command in PATH; use the Docker runner script above.
+
+## Phase 6B Checkpoint (2026-07-15)
+
+Planning precedence is unchanged: `最新项目规划.md` is authoritative and files beginning
+with `旧版项目规划` are historical references only.
+
+Completed in Phase 6B:
+
+- note-detail and first-comment-page cache misses use cancellation-safe `singleflight`;
+- concurrent tests prove one backend load, preserved comment limits/cursors, and caller
+  cancellation without canceling a shared load;
+- new cache backend-load/coalesced-request Prometheus counters;
+- negotiated `/api/` gzip with pooled BestSpeed writers and payload-integrity tests;
+- migration/reconcile binaries and migration SQL included in the scratch image;
+- Compose names and ports are parameterized without changing main-environment defaults;
+- isolated `noteinsight-capacity` stack at ports 28080/28081/25432/16379/24222/28222;
+- exact 4.21M core rows generated in 31m06s with 10,000 load-test tokens;
+- all 50,000 notes/media and 500,000 comments have non-empty meaningful text;
+- capacity database is approximately 1.21 GB and has been analyzed;
+- same-key cold test produced one backend load and four shared results for 3,001 requests;
+- 30 RPS notes-list P95 improved from 2,850.3ms/129 drops to 112.2ms/zero drops;
+- 10-minute mixed soak completed 6,002 requests and 899 writes with zero HTTP errors,
+  zero drops, and a drained event pipeline.
+
+Open gate:
+
+- the 10-minute 10 RPS mixed soak failed strict latency thresholds at 431.1ms P95 and
+  1,239.5ms P99; early cold I/O and Docker network queuing improved materially after
+  warm-up, but a 30-minute warm SLO pass has not been demonstrated;
+- full source-of-truth reconciliation scans million-row tables and should be converted
+  to incremental/partitioned repair before production-scale claims;
+- stateful Locust, multi-instance/external load tests, dashboards/alerts/tracing,
+  backup restore, event governance, and integration-test depth remain.
+
+Capacity stack commands:
+
+```powershell
+.\scripts\start_capacity_stack.ps1
+
+docker compose --env-file deploy/compose/capacity.env -f docker-compose.yml `
+  -p noteinsight-capacity down
+```
+
+The second command stops capacity containers but preserves the generated PostgreSQL and
+NATS volumes. Main environment data remains independent.
+
+Recommended next work is documented in `docs/12_project_excellence_review.md`: Phase 6C
+tracing/DB diagnostics/incremental reconciliation first, then operational hardening and
+Phase 5C, followed by the Evidence Store and retrieval evaluation.
+
+End-of-session runtime state: the main five-service stack is running and both API/worker
+readiness checks are healthy. The capacity stack is stopped; its
+`noteinsight-capacity_postgres_data` and `noteinsight-capacity_nats_data` volumes are
+preserved, and its final Outbox active/failed plus JetStream pending/ack-pending values
+were all zero before shutdown.

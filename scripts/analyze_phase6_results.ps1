@@ -115,6 +115,7 @@ foreach ($directory in Get-ChildItem -LiteralPath $resultRootPath -Directory | S
     $summary = Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json
     $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
     $peaks = Get-ResourcePeaks $directory.FullName
+    $containerPrefix = if ($null -ne $config.container_prefix -and $config.container_prefix) { $config.container_prefix } else { "creatorinsight" }
     $target = if ($config.profile -eq "step") { ($config.step_rps -join "->") } elseif ($config.profile -eq "spike") { "spike:$($config.spike_rps)" } else { [string]$config.rate }
     $runs += [pscustomobject]@{
         Run = $directory.Name
@@ -129,9 +130,9 @@ foreach ($directory in Get-ChildItem -LiteralPath $resultRootPath -Directory | S
         ErrorRate = Get-MetricValue $summary "http_req_failed" "rate"
         Dropped = Get-MetricValue $summary "dropped_iterations" "count"
         CacheHit = Get-CacheHitRate $directory.FullName
-        BackendCPU = $peaks["creatorinsight-backend"]
-        PostgresCPU = $peaks["creatorinsight-postgres"]
-        WorkerCPU = $peaks["creatorinsight-worker"]
+        BackendCPU = $peaks["$containerPrefix-backend"]
+        PostgresCPU = $peaks["$containerPrefix-postgres"]
+        WorkerCPU = $peaks["$containerPrefix-worker"]
         Result = Get-ThresholdResult $summary
         Summary = $summary
     }

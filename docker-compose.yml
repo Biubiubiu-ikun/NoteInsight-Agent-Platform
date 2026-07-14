@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend-go
       dockerfile: Dockerfile
-    container_name: creatorinsight-backend
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-backend"
     environment:
       APP_ENV: local
       LOG_LEVEL: info
@@ -17,7 +17,7 @@ services:
       RATE_LIMIT_INTERACTION_WRITE_LIMIT: "${RATE_LIMIT_INTERACTION_WRITE_LIMIT:-120}"
       RECONCILE_ENABLED: "${RECONCILE_ENABLED:-true}"
     ports:
-      - "18080:8080"
+      - "${BACKEND_PORT:-18080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,7 +29,7 @@ services:
     build:
       context: ./backend-go
       dockerfile: Dockerfile
-    container_name: creatorinsight-worker
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-worker"
     entrypoint: ["/app/creatorinsight-worker"]
     environment:
       APP_NAME: noteinsight-worker
@@ -47,7 +47,7 @@ services:
       WORKER_HTTP_PORT: 8081
       RECONCILE_ENABLED: "${RECONCILE_ENABLED:-true}"
     ports:
-      - "18081:8081"
+      - "${WORKER_PORT:-18081}:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,13 +59,23 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: creatorinsight-postgres
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-postgres"
+    command:
+      - postgres
+      - -c
+      - "shared_buffers=${POSTGRES_SHARED_BUFFERS:-128MB}"
+      - -c
+      - "max_wal_size=${POSTGRES_MAX_WAL_SIZE:-1GB}"
+      - -c
+      - "checkpoint_timeout=${POSTGRES_CHECKPOINT_TIMEOUT:-5min}"
+      - -c
+      - "wal_compression=${POSTGRES_WAL_COMPRESSION:-off}"
     environment:
       POSTGRES_USER: creatorinsight
       POSTGRES_PASSWORD: creatorinsight
       POSTGRES_DB: creatorinsight
     ports:
-      - "15432:5432"
+      - "${POSTGRES_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -77,9 +87,9 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: creatorinsight-redis
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-redis"
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -89,11 +99,11 @@ services:
 
   nats:
     image: nats:2.12-alpine
-    container_name: creatorinsight-nats
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-nats"
     command: ["-js", "-sd", "/data", "-m", "8222"]
     ports:
-      - "14222:4222"
-      - "18222:8222"
+      - "${NATS_CLIENT_PORT:-14222}:4222"
+      - "${NATS_MONITOR_PORT:-18222}:8222"
     volumes:
       - nats_data:/data
     healthcheck:

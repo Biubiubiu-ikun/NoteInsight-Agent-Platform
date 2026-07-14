@@ -31,6 +31,7 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	}
 
 	router := gin.New()
+	router.Use(ResponseCompression())
 	router.Use(gin.Recovery())
 	router.Use(RequestLogger(deps.Logger))
 

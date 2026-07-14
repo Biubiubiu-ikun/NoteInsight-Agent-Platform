@@ -2,6 +2,10 @@ param(
     [ValidateSet("dev", "capacity", "million-comments")]
     [string]$Profile = "capacity",
     [long]$Seed = 20260714,
+    [string]$ComposeProject = "",
+    [string]$ComposeEnvFile = "",
+    [string]$TokenDirectory = "backend-go\tmp",
+    [string]$TokenFileName = "dev_tokens.csv",
     [switch]$Truncate,
     [switch]$WithTokens,
     [switch]$DryRun
@@ -10,11 +14,21 @@ param(
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $composeFile = Join-Path $projectRoot "docker-compose.yml"
-$tokenDir = Join-Path $projectRoot "backend-go\tmp"
+$tokenDir = Join-Path $projectRoot $TokenDirectory
 New-Item -ItemType Directory -Force -Path $tokenDir | Out-Null
+$composeArgs = @("compose")
+if ($ComposeEnvFile) {
+    $composeEnvPath = if ([IO.Path]::IsPathRooted($ComposeEnvFile)) { $ComposeEnvFile } else { Join-Path $projectRoot $ComposeEnvFile }
+    $composeArgs += @("--env-file", $composeEnvPath)
+}
+$composeArgs += @("-f", $composeFile)
+if ($ComposeProject) {
+    $composeArgs += @("-p", $ComposeProject)
+}
 
 if (-not $DryRun) {
-    $services = docker compose -f $composeFile ps --status running --services
+    $psArgs = $composeArgs + @("ps", "--status", "running", "--services")
+    $services = & docker @psArgs
     foreach ($required in @("postgres", "redis")) {
         if ($services -notcontains $required) {
             throw "Required service '$required' is not running."
@@ -22,7 +36,7 @@ if (-not $DryRun) {
     }
 }
 
-$seedArgs = @("--profile=$Profile", "--seed=$Seed", "--token-out=/output/dev_tokens.csv")
+$seedArgs = @("--profile=$Profile", "--seed=$Seed", "--token-out=/output/$TokenFileName")
 if ($Truncate) {
     $seedArgs += "--truncate"
 }
@@ -34,8 +48,8 @@ if ($DryRun) {
 }
 
 $tokenMount = "${tokenDir}:/output"
-$dockerArgs = @(
-    "compose", "-f", $composeFile, "run", "--rm", "--no-deps",
+$dockerArgs = $composeArgs + @(
+    "run", "--rm", "--no-deps",
     "-v", $tokenMount,
     "--entrypoint", "/app/noteinsight-seedgen",
     "backend"

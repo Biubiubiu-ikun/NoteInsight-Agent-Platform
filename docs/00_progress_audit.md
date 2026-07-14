@@ -25,7 +25,7 @@ ideas.
 | Phase 5B quality corpus | Complete | hidden scenarios, substantive note/OCR/comment text, ground truth, strict quality report |
 | Phase 5C lifecycle/fact materialization | Not started | behavior sessions are not yet materialized into community fact tables |
 | Phase 6A capacity testing | Complete | baseline, step, hotspot, cold/warm, spike, dependency snapshots, and result index |
-| Phase 6B scale/soak testing | Not started | larger database rerun, stampede fix, soak, and Locust session model remain |
+| Phase 6B scale/soak testing | Implemented; SLO gate open | request coalescing, isolated 4.21M-row database, response compression, large-data baselines, and a 10-minute soak are complete; mixed-workload tail latency still fails strict thresholds |
 | Platform/RAG/evaluation/cloud | Not started | deliberately deferred until the data and event substrate is stable |
 
 ## What Is Strong Today
@@ -46,6 +46,13 @@ ideas.
   dependency state, and Docker resource evidence instead of reporting only aggregate QPS.
 - Seed generation now has bounded write buffers, O(1)-memory unique interactions, and
   4.21-million-row and 10.72-million-row profiles for controlled scale expansion.
+- Cache misses for note details and comment first pages are coalesced with caller-safe
+  cancellation and independent backend-load timeouts. Concurrent behavior is covered by tests.
+- API gzip uses pooled BestSpeed writers. On the 4.21M-row database this reduced a
+  representative notes-list response from 53,233 to 4,546 wire bytes and improved the
+  30 RPS P95 from 2.85 seconds to 112.2 ms.
+- A separate `noteinsight-capacity` Compose project preserves the reviewed corpus while
+  retaining a reusable 1.21 GB PostgreSQL volume and 10,000-token load-test pool.
 - GitHub Actions now covers formatting, race-enabled tests, vet, all command builds,
   simulator checks, Compose validation, idempotent migrations, and full API acceptance.
 
@@ -60,9 +67,12 @@ ideas.
    materialization, and scenario calibration while preserving run reproducibility.
 3. **Version control remote:** reviewed baseline commit `c0428c4` exists locally, but a
    remote repository and branch protection still need to be configured.
-4. **Cold-cache stampede:** the 100 RPS cold-hotspot run dropped 100 arrivals and reached
-   a 1.79 second P99, while the prewarmed equivalent passed at 80.8ms P95. Add
-   request coalescing and test cache recovery rather than relying on prewarming.
+4. **Large-data mixed tail latency:** request coalescing fixed duplicate same-key backend
+   loads, and read-only notes-list 30 RPS now passes at 112.2 ms P95. However, the
+   10-minute 10 RPS mixed run completed 6,002 requests with no errors or drops but reached
+   431.1 ms P95 and failed strict endpoint thresholds. Separate cold-start and warm SLOs,
+   profile PostgreSQL/I/O with tracing, and replace full reconciliation with incremental
+   or partitioned repair before treating the capacity gate as closed.
 
 ### Priority 2
 
@@ -75,8 +85,9 @@ ideas.
    checklist, but repository and service integration coverage should move into Go tests
    that run in CI. Current statement coverage is concentrated in middleware and pure
    helpers: approximately `note=4.1%`, `auth=11.8%`, and `worker=26.7%`.
-4. **Capacity evidence:** rerun the exact matrix at 4.21 million rows, then add a
-   30-minute soak and stateful Locust journeys. Current evidence is single-host only.
+4. **Capacity evidence:** the 4.21-million-row rerun and 10-minute soak are complete.
+   A 30-minute warm soak, stateful Locust journeys, multi-instance tests, and an external
+   load generator remain. Current evidence is single-host Docker Desktop only.
 
 ### Later, By Design
 
@@ -90,8 +101,10 @@ These should not jump ahead of Phase 5 behavior data and Phase 6 capacity eviden
 
 ## Recommended Sequence
 
-1. Phase 6B: cold-cache coalescing, 4.21-million-row rerun, soak, and stateful journeys.
+1. Close the Phase 6B mixed-tail gate: isolate warm-up, add tracing/pg_stat_statements,
+   and redesign full reconciliation as bounded incremental repair.
 2. Observability track: Prometheus/Grafana/alerts and DLQ replay/retention tooling.
-3. Event governance: schema versions, compatibility tests, and retention policies.
-4. Build note-domain Evidence Store and deterministic ingestion with index versioning.
+3. Move repository/auth/worker integration coverage into container-backed Go tests.
+4. Complete Phase 5C fact materialization, then build the note-domain Evidence Store
+   and deterministic ingestion with index versioning.
 5. Add lexical/vector retrieval and evaluation before beginning the Agent runtime.

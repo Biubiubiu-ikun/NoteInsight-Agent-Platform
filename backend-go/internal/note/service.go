@@ -13,6 +13,7 @@ import (
 	"creatorinsight/backend-go/internal/platform/observability"
 
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -22,14 +23,37 @@ const (
 	maxCommentLimit     = 100
 	noteDetailCacheTTL  = 10 * time.Minute
 	commentFirstPageTTL = 60 * time.Second
+	cacheLoadTimeout    = 5 * time.Second
 )
 
-type Service struct {
-	repo  *Repository
-	redis *redis.Client
+type noteRepository interface {
+	CreateNote(ctx context.Context, input CreateNoteInput) (Note, error)
+	GetNote(ctx context.Context, id int64) (Note, error)
+	ListNotes(ctx context.Context, input ListNotesInput, cursor keysetCursor) ([]Note, bool, error)
+	CreateComment(ctx context.Context, noteID int64, input CreateCommentInput) (NoteComment, error)
+	ListComments(ctx context.Context, noteID int64, input ListCommentsInput, cursor keysetCursor) ([]NoteComment, bool, error)
+	LikeNote(ctx context.Context, noteID int64, userID int64) (IdempotentActionResult, error)
+	CollectNote(ctx context.Context, noteID int64, userID int64, collectionName string) (IdempotentActionResult, error)
+	ShareNote(ctx context.Context, noteID int64, userID int64, channel string) (ShareNoteResult, error)
+	LikeComment(ctx context.Context, commentID int64, userID int64) (IdempotentActionResult, error)
+	UpdateNote(ctx context.Context, noteID int64, input UpdateNoteInput) (Note, error)
+	SoftDeleteNote(ctx context.Context, noteID int64) error
+	SoftDeleteComment(ctx context.Context, commentID int64, actorUserID int64) (int64, error)
+	GetNoteOwner(ctx context.Context, noteID int64) (int64, error)
+	GetCommentOwner(ctx context.Context, commentID int64) (int64, error)
+	GetNoteRankingStats(ctx context.Context, noteID int64) (NoteRankingStats, error)
+	UpdateNoteHotScore(ctx context.Context, noteID int64, hotScore float64) (float64, error)
+	GetCommentRankingInfo(ctx context.Context, commentID int64) (CommentRankingInfo, error)
 }
 
-func NewService(repo *Repository, redisClient ...*redis.Client) *Service {
+type Service struct {
+	repo             noteRepository
+	redis            *redis.Client
+	noteLoads        singleflight.Group
+	commentPageLoads singleflight.Group
+}
+
+func NewService(repo noteRepository, redisClient ...*redis.Client) *Service {
 	service := &Service{repo: repo}
 	if len(redisClient) > 0 {
 		service.redis = redisClient[0]
@@ -188,12 +212,39 @@ func (s *Service) GetNote(ctx context.Context, rawID string) (Note, error) {
 	if note, ok := s.getNoteCache(ctx, id); ok {
 		return note, nil
 	}
-	note, err := s.repo.GetNote(ctx, id)
-	if err != nil {
-		return Note{}, err
+
+	resultChannel := s.noteLoads.DoChan(strconv.FormatInt(id, 10), func() (any, error) {
+		loadCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cacheLoadTimeout)
+		defer cancel()
+		if note, ok := s.getNoteCache(loadCtx, id); ok {
+			return note, nil
+		}
+		note, loadErr := s.repo.GetNote(loadCtx, id)
+		if loadErr != nil {
+			observability.IncCacheBackendLoad("note_detail", "error")
+			return Note{}, loadErr
+		}
+		observability.IncCacheBackendLoad("note_detail", "success")
+		s.setNoteCache(loadCtx, note)
+		return note, nil
+	})
+
+	select {
+	case <-ctx.Done():
+		return Note{}, ctx.Err()
+	case result := <-resultChannel:
+		if result.Shared {
+			observability.IncCacheCoalescedRequest("note_detail")
+		}
+		if result.Err != nil {
+			return Note{}, result.Err
+		}
+		note, ok := result.Val.(Note)
+		if !ok {
+			return Note{}, fmt.Errorf("unexpected shared note result %T", result.Val)
+		}
+		return note, nil
 	}
-	s.setNoteCache(ctx, note)
-	return note, nil
 }
 
 func (s *Service) ListNotes(ctx context.Context, input ListNotesInput) (NotePage, error) {
@@ -310,30 +361,66 @@ func (s *Service) ListComments(ctx context.Context, input ListCommentsInput) (Co
 		if page, ok := s.getCommentFirstPageCache(ctx, noteID, input.Limit); ok {
 			return limitCommentPage(page, input.Limit)
 		}
-	}
 
-	requestedLimit := input.Limit
-	if input.Cursor == "" {
-		input.Limit = maxCommentLimit
+		requestedLimit := input.Limit
+		resultChannel := s.commentPageLoads.DoChan(strconv.FormatInt(noteID, 10), func() (any, error) {
+			loadCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cacheLoadTimeout)
+			defer cancel()
+			if page, ok := s.getCommentFirstPageCache(loadCtx, noteID, maxCommentLimit); ok {
+				return page, nil
+			}
+
+			loadInput := input
+			loadInput.Limit = maxCommentLimit
+			items, hasMore, loadErr := s.repo.ListComments(loadCtx, noteID, loadInput, keysetCursor{})
+			if loadErr != nil {
+				observability.IncCacheBackendLoad("comments_first_page", "error")
+				return CommentPage{}, loadErr
+			}
+			observability.IncCacheBackendLoad("comments_first_page", "success")
+			page, loadErr := buildCommentPage(items, hasMore)
+			if loadErr != nil {
+				return CommentPage{}, loadErr
+			}
+			s.setCommentFirstPageCache(loadCtx, noteID, page)
+			return page, nil
+		})
+
+		select {
+		case <-ctx.Done():
+			return CommentPage{}, ctx.Err()
+		case result := <-resultChannel:
+			if result.Shared {
+				observability.IncCacheCoalescedRequest("comments_first_page")
+			}
+			if result.Err != nil {
+				return CommentPage{}, result.Err
+			}
+			page, ok := result.Val.(CommentPage)
+			if !ok {
+				return CommentPage{}, fmt.Errorf("unexpected shared comment page result %T", result.Val)
+			}
+			return limitCommentPage(page, requestedLimit)
+		}
 	}
 
 	items, hasMore, err := s.repo.ListComments(ctx, noteID, input, cursor)
 	if err != nil {
 		return CommentPage{}, err
 	}
+	return buildCommentPage(items, hasMore)
+}
 
+func buildCommentPage(items []NoteComment, hasMore bool) (CommentPage, error) {
 	page := CommentPage{Items: items}
-	if hasMore && len(items) > 0 {
-		nextCursor, err := encodeCommentCursor(items[len(items)-1])
-		if err != nil {
-			return CommentPage{}, err
-		}
-		page.NextCursor = nextCursor
+	if !hasMore || len(items) == 0 {
+		return page, nil
 	}
-	if input.Cursor == "" {
-		s.setCommentFirstPageCache(ctx, noteID, page)
-		return limitCommentPage(page, requestedLimit)
+	nextCursor, err := encodeCommentCursor(items[len(items)-1])
+	if err != nil {
+		return CommentPage{}, err
 	}
+	page.NextCursor = nextCursor
 	return page, nil
 }
 

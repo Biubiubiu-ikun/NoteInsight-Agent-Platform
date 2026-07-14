@@ -6,7 +6,9 @@ NoteInsight Agent Platform is an AI search and insight platform for a Xiaohongsh
 
 ## Current Status
 
-Phase 5B completes deterministic behavior simulation and a RAG-ready Chinese text corpus on top of the Phase 4D asynchronous interaction pipeline:
+Phase 6B now adds cache-stampede protection, an isolated 4.21-million-row capacity
+environment, large-data baselines, and soak evidence on top of the Phase 5B RAG-ready
+Chinese corpus. The mixed-workload tail-latency gate remains open:
 
 - Go + Gin API service
 - `/health` and `/ready`
@@ -52,6 +54,10 @@ Phase 5B completes deterministic behavior simulation and a RAG-ready Chinese tex
 - strict text uniqueness, length, semantic-alignment, and task-coverage checks
 - GitHub Actions quality and container-backed integration workflows
 - production startup rejection for the default development JWT secret
+- same-key cache-miss request coalescing with cancellation-safe shared loads
+- pooled BestSpeed gzip for negotiated `/api/` responses
+- isolated `noteinsight-capacity` Compose project and reusable 4.21-million-row dataset
+- parameterized large-data k6 runner with cold/hot, baseline, spike, and soak evidence
 
 ## Project Layout
 
@@ -132,12 +138,15 @@ Run the Phase 6 capacity matrix and build its local result index:
 .\scripts\analyze_phase6_results.ps1
 ```
 
-Prepare future larger data sets without an LLM API:
+Start the isolated capacity stack and generate larger data sets without an LLM API:
 
 ```powershell
-.\scripts\generate_capacity_data.ps1 -Profile capacity -DryRun
-# Use -Truncate only with a dedicated or backed-up PostgreSQL volume.
-.\scripts\generate_capacity_data.ps1 -Profile capacity -Truncate -WithTokens
+.\scripts\start_capacity_stack.ps1 -Rebuild
+.\scripts\generate_capacity_data.ps1 -Profile capacity -DryRun `
+  -ComposeProject noteinsight-capacity -ComposeEnvFile deploy/compose/capacity.env
+.\scripts\generate_capacity_data.ps1 -Profile capacity -Truncate -WithTokens `
+  -ComposeProject noteinsight-capacity -ComposeEnvFile deploy/compose/capacity.env `
+  -TokenDirectory backend-go\tmp\capacity
 ```
 
 Run the event-pipeline outage scenario:
@@ -191,4 +200,6 @@ go run ./cmd/reconcile
 - [Phase 5A behavior simulator](docs/08_phase5a_behavior_simulator.md)
 - [Phase 5B quality text corpus](docs/09_phase5b_quality_corpus.md)
 - [Phase 6A capacity testing](docs/10_phase6_capacity_testing.md)
+- [Phase 6B scale and soak testing](docs/11_phase6b_scale_soak.md)
 - [Project progress and quality audit](docs/00_progress_audit.md)
+- [Project excellence review](docs/12_project_excellence_review.md)

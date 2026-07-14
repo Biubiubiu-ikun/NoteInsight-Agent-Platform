@@ -19,29 +19,52 @@ param(
     [int]$CommentStart = 1,
     [int]$CommentCount = 20000,
     [int]$HotNoteCount = 100,
+    [ValidateRange(0, 100)]
+    [int]$HotsetPercent = 80,
     [string]$ResultRoot = "load-tests/results/phase6",
+    [string]$ComposeProject = "",
+    [string]$ComposeEnvFile = "",
+    [string]$ContainerPrefix = "creatorinsight",
+    [string]$TokenFile = "backend-go/tmp/dev_tokens.csv",
+    [int]$ApiHostPort = 18080,
+    [int]$WorkerHostPort = 18081,
+    [int]$NatsMonitorHostPort = 18222,
+    [switch]$SkipHotsetPrewarm,
     [string]$Image = "grafana/k6:latest"
 )
 
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$tokenFile = Join-Path $projectRoot "backend-go\tmp\dev_tokens.csv"
+$tokenFilePath = Join-Path $projectRoot $TokenFile
+$tokenContainerPath = "/work/" + $TokenFile.Replace("\", "/")
 $composeFile = Join-Path $projectRoot "docker-compose.yml"
 $runID = "{0}-{1}-{2}" -f (Get-Date -Format "yyyyMMdd-HHmmss"), $Profile, $Workload
 $resultRootPath = Join-Path $projectRoot $ResultRoot
 $resultDir = Join-Path $resultRootPath $runID
 $requiredServices = @("backend", "worker", "postgres", "redis", "nats")
-$containers = @("creatorinsight-backend", "creatorinsight-worker", "creatorinsight-postgres", "creatorinsight-redis", "creatorinsight-nats")
+$containers = @("$ContainerPrefix-backend", "$ContainerPrefix-worker", "$ContainerPrefix-postgres", "$ContainerPrefix-redis", "$ContainerPrefix-nats")
+$postgresContainer = "$ContainerPrefix-postgres"
+$redisContainer = "$ContainerPrefix-redis"
+$composeArgs = @("compose")
+if ($ComposeEnvFile) {
+    $composeEnvPath = if ([IO.Path]::IsPathRooted($ComposeEnvFile)) { $ComposeEnvFile } else { Join-Path $projectRoot $ComposeEnvFile }
+    $composeArgs += @("--env-file", $composeEnvPath)
+}
+$composeArgs += @("-f", $composeFile)
+if ($ComposeProject) {
+    $composeArgs += @("-p", $ComposeProject)
+}
 
-if (($Workload -eq "mixed" -or $Workload -eq "writes") -and -not (Test-Path -LiteralPath $tokenFile)) {
-    throw "Missing $tokenFile. Run seedgen with --with-tokens first."
+if (($Workload -eq "mixed" -or $Workload -eq "writes") -and -not (Test-Path -LiteralPath $tokenFilePath)) {
+    throw "Missing $tokenFilePath. Run seedgen with --with-tokens first."
 }
 if ($NoteCount -le 0 -or $CommentCount -le 0) {
     throw "NoteCount and CommentCount must be positive."
 }
 
-$services = docker compose -f $composeFile ps --status running --services
+$psArgs = $composeArgs + @("ps", "--status", "running", "--services")
+$services = & docker @psArgs
 foreach ($required in $requiredServices) {
     if ($services -notcontains $required) {
         throw "Required service '$required' is not running."
@@ -74,6 +97,12 @@ $runConfig = [ordered]@{
     note_range = @{ start = $NoteStart; count = $NoteCount }
     comment_range = @{ start = $CommentStart; count = $CommentCount }
     hot_note_count = $HotNoteCount
+    hotset_percent = $HotsetPercent
+    hotset_prewarmed = -not $SkipHotsetPrewarm.IsPresent
+    compose_project = $ComposeProject
+    compose_env_file = $ComposeEnvFile
+    container_prefix = $ContainerPrefix
+    token_file = $TokenFile
     k6_image = $Image
 }
 $runConfig | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $resultDir "run-config.json") -Encoding UTF8
@@ -97,7 +126,8 @@ function Save-Snapshot {
     docker version --format "{{json .Server}}" 2>&1 | Set-Content -LiteralPath (Join-Path $snapshotDir "docker-version.json") -Encoding UTF8
     docker info --format "{{json .}}" 2>&1 | Set-Content -LiteralPath (Join-Path $snapshotDir "docker-info.json") -Encoding UTF8
     docker stats --no-stream --format "{{json .}}" @containers 2>&1 | Set-Content -LiteralPath (Join-Path $snapshotDir "docker-stats.jsonl") -Encoding UTF8
-    docker compose -f $composeFile ps 2>&1 | Set-Content -LiteralPath (Join-Path $snapshotDir "compose-ps.txt") -Encoding UTF8
+    $snapshotComposeArgs = $composeArgs + @("ps")
+    & docker @snapshotComposeArgs 2>&1 | Set-Content -LiteralPath (Join-Path $snapshotDir "compose-ps.txt") -Encoding UTF8
 
     $dataQuery = @"
 SELECT 'users', COUNT(*) FROM users
@@ -113,22 +143,22 @@ UNION ALL SELECT 'behavior_events', COUNT(*) FROM behavior_events
 UNION ALL SELECT 'outbox_active', COUNT(*) FROM outbox_events WHERE status IN ('pending','processing','retry')
 UNION ALL SELECT 'outbox_failed', COUNT(*) FROM outbox_events WHERE status = 'failed';
 "@
-    docker exec creatorinsight-postgres psql -U creatorinsight -d creatorinsight -At -F "," -c $dataQuery 2>&1 |
+    docker exec $postgresContainer psql -U creatorinsight -d creatorinsight -At -F "," -c $dataQuery 2>&1 |
         Set-Content -LiteralPath (Join-Path $snapshotDir "postgres-counts.csv") -Encoding UTF8
 
     $activityQuery = @"
 SELECT datname, numbackends, xact_commit, xact_rollback, blks_read, blks_hit, tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted, temp_files, temp_bytes, deadlocks
 FROM pg_stat_database WHERE datname = 'creatorinsight';
 "@
-    docker exec creatorinsight-postgres psql -U creatorinsight -d creatorinsight -P footer=off -A -F "," -c $activityQuery 2>&1 |
+    docker exec $postgresContainer psql -U creatorinsight -d creatorinsight -P footer=off -A -F "," -c $activityQuery 2>&1 |
         Set-Content -LiteralPath (Join-Path $snapshotDir "postgres-activity.csv") -Encoding UTF8
 
-    docker exec creatorinsight-redis redis-cli INFO stats memory keyspace 2>&1 |
+    docker exec $redisContainer redis-cli INFO stats memory keyspace 2>&1 |
         Set-Content -LiteralPath (Join-Path $snapshotDir "redis-info.txt") -Encoding UTF8
-    Save-WebContent -Url "http://127.0.0.1:18080/metrics" -Path (Join-Path $snapshotDir "api-metrics.prom")
-    Save-WebContent -Url "http://127.0.0.1:18081/metrics" -Path (Join-Path $snapshotDir "worker-metrics.prom")
-    Save-WebContent -Url "http://127.0.0.1:18222/varz" -Path (Join-Path $snapshotDir "nats-varz.json")
-    Save-WebContent -Url "http://127.0.0.1:18222/jsz?consumers=true" -Path (Join-Path $snapshotDir "nats-jsz.json")
+    Save-WebContent -Url "http://127.0.0.1:$ApiHostPort/metrics" -Path (Join-Path $snapshotDir "api-metrics.prom")
+    Save-WebContent -Url "http://127.0.0.1:$WorkerHostPort/metrics" -Path (Join-Path $snapshotDir "worker-metrics.prom")
+    Save-WebContent -Url "http://127.0.0.1:$NatsMonitorHostPort/varz" -Path (Join-Path $snapshotDir "nats-varz.json")
+    Save-WebContent -Url "http://127.0.0.1:$NatsMonitorHostPort/jsz?consumers=true" -Path (Join-Path $snapshotDir "nats-jsz.json")
 }
 
 function Wait-EventPipelineDrain {
@@ -136,8 +166,8 @@ function Wait-EventPipelineDrain {
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     do {
-        $active = [int](docker exec creatorinsight-postgres psql -U creatorinsight -d creatorinsight -Atc "SELECT COUNT(*) FROM outbox_events WHERE status IN ('pending','processing','retry');")
-        $metrics = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "http://127.0.0.1:18081/metrics").Content
+        $active = [int](docker exec $postgresContainer psql -U creatorinsight -d creatorinsight -Atc "SELECT COUNT(*) FROM outbox_events WHERE status IN ('pending','processing','retry');")
+        $metrics = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "http://127.0.0.1:$WorkerHostPort/metrics").Content
         $pendingMatch = [regex]::Match($metrics, '(?m)^jetstream_consumer_pending_messages\s+([0-9.eE+-]+)$')
         $ackMatch = [regex]::Match($metrics, '(?m)^jetstream_consumer_ack_pending_messages\s+([0-9.eE+-]+)$')
         $pending = if ($pendingMatch.Success) { [double]$pendingMatch.Groups[1].Value } else { -1 }
@@ -178,7 +208,7 @@ function Stop-ResourceMonitor {
 }
 
 function Warm-Hotset {
-    if ($AccessPattern -ne "hotspot") {
+    if ($AccessPattern -ne "hotspot" -or $SkipHotsetPrewarm) {
         return
     }
     $hostBaseUrl = $BaseUrl.Replace("host.docker.internal", "127.0.0.1").TrimEnd("/")
@@ -207,7 +237,7 @@ $dockerArgs = @(
     "-w", "/work",
     "-e", "K6_NO_USAGE_REPORT=true",
     "-e", "BASE_URL=$BaseUrl",
-    "-e", "TOKEN_FILE=/work/backend-go/tmp/dev_tokens.csv",
+    "-e", "TOKEN_FILE=$tokenContainerPath",
     "-e", "PROFILE=$Profile",
     "-e", "WORKLOAD=$Workload",
     "-e", "ACCESS_PATTERN=$AccessPattern",
@@ -224,6 +254,7 @@ $dockerArgs = @(
     "-e", "COMMENT_START=$CommentStart",
     "-e", "COMMENT_COUNT=$CommentCount",
     "-e", "HOT_NOTE_COUNT=$HotNoteCount",
+    "-e", "HOTSET_PERCENT=$HotsetPercent",
     $Image, "run", "--summary-export", "/results/summary-export.json", "load-tests/k6/phase6_capacity.js"
 )
 
