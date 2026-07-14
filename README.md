@@ -6,7 +6,7 @@ NoteInsight Agent Platform is an AI search and insight platform for a Xiaohongsh
 
 ## Current Status
 
-Phase 5A completes a deterministic behavior simulator on top of the Phase 4D asynchronous interaction pipeline:
+Phase 5B completes deterministic behavior simulation and a RAG-ready Chinese text corpus on top of the Phase 4D asynchronous interaction pipeline:
 
 - Go + Gin API service
 - `/health` and `/ready`
@@ -46,6 +46,10 @@ Phase 5A completes a deterministic behavior simulator on top of the Phase 4D asy
 - Zipf/Pareto/Poisson distributions plus viral and controversy burst scenarios
 - streaming NDJSON and transactional PostgreSQL simulator sinks
 - strict distribution reports and `smoke`, `dev`, and `scale` profiles
+- meaningful Chinese note bodies, captions, OCR text, and note-linked comments in `seedgen`
+- hidden note scenarios and a 200-note/40,000-comment Agent-quality corpus
+- 1,000 ground-truth cases covering summary, procedure, controversy, audience, and OCR
+- strict text uniqueness, length, semantic-alignment, and task-coverage checks
 - GitHub Actions quality and container-backed integration workflows
 - production startup rejection for the default development JWT secret
 
@@ -94,6 +98,20 @@ go run ./cmd/simulator --profile=scale --no-event-files --strict=true
 To generate against the current database, set `POSTGRES_DSN` and add
 `--dataset=database --write-db`. Bulk behavior generation is local and deterministic;
 it does not require an LLM API.
+
+## Quality Text Corpus
+
+```powershell
+.\scripts\generate_quality_corpus.ps1 `
+  -Profile quality `
+  -RunId phase5b_quality_20260714 `
+  -Replace
+```
+
+Generated image rows may have no real URL, but every row carries a meaningful caption,
+OCR text, and semantic role. Hidden scenarios and ground-truth cases are stored for the
+future Evidence Store and RAG evaluation pipeline. Bulk corpus generation does not call
+an LLM API.
 
 ## k6 Load Test
 
@@ -153,4 +171,5 @@ go run ./cmd/reconcile
 - [Phase 4C standalone JetStream worker](docs/06_phase4c_jetstream_worker.md)
 - [Phase 4D async counters and fault verification](docs/07_phase4d_async_counters.md)
 - [Phase 5A behavior simulator](docs/08_phase5a_behavior_simulator.md)
+- [Phase 5B quality text corpus](docs/09_phase5b_quality_corpus.md)
 - [Project progress and quality audit](docs/00_progress_audit.md)

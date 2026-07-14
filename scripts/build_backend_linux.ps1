@@ -21,6 +21,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Worker Linux build failed." }
     go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-simulator" ./cmd/simulator
     if ($LASTEXITCODE -ne 0) { throw "Simulator Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-corpusgen" ./cmd/corpusgen
+    if ($LASTEXITCODE -ne 0) { throw "Corpus generator Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled

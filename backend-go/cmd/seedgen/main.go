@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"creatorinsight/backend-go/internal/config"
+	"creatorinsight/backend-go/internal/contentgen"
 	"creatorinsight/backend-go/internal/platform/cache"
 	"creatorinsight/backend-go/internal/platform/database"
 	"creatorinsight/backend-go/internal/platform/logging"
@@ -123,11 +124,12 @@ func main() {
 		}
 	}
 
-	if err := seedNotes(ctx, db, rng, selected, ids); err != nil {
+	documents, err := seedNotes(ctx, db, rng, selected, ids, *seed)
+	if err != nil {
 		logger.Error("seed notes failed", "error", err)
 		os.Exit(1)
 	}
-	if err := seedComments(ctx, db, rng, selected, ids); err != nil {
+	if err := seedComments(ctx, db, rng, selected, ids, *seed, documents); err != nil {
 		logger.Error("seed comments failed", "error", err)
 		os.Exit(1)
 	}
@@ -186,6 +188,7 @@ func nextIDs(ctx context.Context, db *sqlx.DB, profile profileConfig) (idOffsets
 func truncateGeneratedData(ctx context.Context, db *sqlx.DB) error {
 	if _, err := db.ExecContext(ctx, `
 TRUNCATE TABLE
+	 content_corpus_runs,
 	 simulation_runs,
   note_comment_likes,
   note_collects,
@@ -241,41 +244,70 @@ func seedUsers(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profile
 	return generated, nil
 }
 
-func seedNotes(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets) error {
-	notes := newBatchInserter(db, `INSERT INTO notes (id, project_id, author_id, title, body, category, topics, tags, location, product_entities, note_type, status, created_at, updated_at) VALUES `, ` ON CONFLICT (id) DO NOTHING`, 14, 500)
+func seedNotes(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets, seed int64) (map[int64]contentgen.Document, error) {
+	notes := newBatchInserter(db, `INSERT INTO notes (id, project_id, author_id, title, body, category, topics, tags, location, product_entities, note_type, quality_score, status, created_at, updated_at) VALUES `, ` ON CONFLICT (id) DO NOTHING`, 15, 500)
 	media := newBatchInserter(db, `INSERT INTO note_media (note_id, media_type, url, caption, ocr_text, position, metadata, created_at) VALUES `, ``, 8, 1000)
-	categories := []string{"beauty", "fashion", "food", "travel", "home", "fitness", "career", "digital", "study", "local_life"}
-	now := time.Now().Add(-120 * 24 * time.Hour)
+	categories := contentgen.Categories()
+	startAt := time.Date(2026, 1, 1, 8, 0, 0, 0, time.UTC)
+	documents := make(map[int64]contentgen.Document, profile.notes)
 
 	for i := 0; i < profile.notes; i++ {
 		noteID := ids.noteStart + int64(i)
 		authorID := ids.userStart + int64(rng.Intn(profile.creators))
 		category := randomChoice(rng, categories)
-		createdAt := now.Add(time.Duration(rng.Intn(120*24)) * time.Hour)
-		title := fmt.Sprintf("%s note %d", strings.ReplaceAll(category, "_", " "), noteID)
-		body := fmt.Sprintf("Seed note about %s with practical checklist, experience, and searchable OCR text.", category)
-		tags := fmt.Sprintf(`["%s","seed","guide"]`, category)
-		notes.add(noteID, 0, authorID, title, body, category, `["seed_topic"]`, tags, `{}`, `[]`, "image_text", "published", createdAt, createdAt)
-		media.add(noteID, "image", fmt.Sprintf("https://example.com/seed/%d.jpg", noteID), "seed image caption", fmt.Sprintf("%s OCR checklist tips", category), 1, `{}`, createdAt)
+		document, err := contentgen.GenerateDocument(seed, noteID, category, 1, startAt)
+		if err != nil {
+			return nil, err
+		}
+		document.AuthorID = authorID
+		documents[noteID] = document
+		topics, err := contentgen.JSON(document.Topics)
+		if err != nil {
+			return nil, err
+		}
+		tags, err := contentgen.JSON(document.Tags)
+		if err != nil {
+			return nil, err
+		}
+		location, err := contentgen.JSON(document.Location)
+		if err != nil {
+			return nil, err
+		}
+		products, err := contentgen.JSON(document.ProductEntities)
+		if err != nil {
+			return nil, err
+		}
+		notes.add(noteID, 0, authorID, document.Title, document.Body, category, topics, tags, location, products, "image_text", document.QualityScore, "published", document.CreatedAt, document.CreatedAt)
+		for _, asset := range document.Media {
+			metadata, err := contentgen.JSON(asset.Metadata)
+			if err != nil {
+				return nil, err
+			}
+			media.add(noteID, "image", nil, asset.Caption, asset.OCRText, asset.Position, metadata, document.CreatedAt)
+		}
 	}
 	if err := notes.flush(ctx); err != nil {
-		return err
+		return nil, err
 	}
-	return media.flush(ctx)
+	if err := media.flush(ctx); err != nil {
+		return nil, err
+	}
+	return documents, nil
 }
 
-func seedComments(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets) error {
-	comments := newBatchInserter(db, `INSERT INTO note_comments (id, note_id, user_id, parent_id, root_id, content, intent, status, created_at, updated_at) VALUES `, ` ON CONFLICT (id) DO NOTHING`, 10, 1000)
-	now := time.Now().Add(-90 * 24 * time.Hour)
-	intents := []string{"ask_link", "ask_price", "ask_usage", "ask_suitable", "positive_feedback", "experience_share"}
+func seedComments(ctx context.Context, db *sqlx.DB, rng *rand.Rand, profile profileConfig, ids idOffsets, seed int64, documents map[int64]contentgen.Document) error {
+	comments := newBatchInserter(db, `INSERT INTO note_comments (id, note_id, user_id, parent_id, root_id, content, sentiment, intent, topic_id, status, created_at, updated_at) VALUES `, ` ON CONFLICT (id) DO NOTHING`, 12, 1000)
 
 	for i := 0; i < profile.comments; i++ {
 		commentID := ids.commentStart + int64(i)
 		noteID := ids.noteStart + int64(rng.Intn(profile.notes))
 		userID := ids.userStart + int64(rng.Intn(profile.users))
-		createdAt := now.Add(time.Duration(rng.Intn(90*24)) * time.Hour)
-		content := fmt.Sprintf("Seed comment %d: useful detail, asking for more info.", commentID)
-		comments.add(commentID, noteID, userID, 0, 0, content, randomChoice(rng, intents), 1, createdAt, createdAt)
+		document, ok := documents[noteID]
+		if !ok {
+			return fmt.Errorf("missing generated document for note %d", noteID)
+		}
+		comment := contentgen.GenerateComment(seed, document, commentID, i)
+		comments.add(commentID, noteID, userID, 0, 0, comment.Content, comment.Sentiment, comment.Intent, comment.TopicID, 1, comment.CreatedAt, comment.CreatedAt)
 	}
 	return comments.flush(ctx)
 }

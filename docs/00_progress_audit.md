@@ -22,7 +22,8 @@ ideas.
 | Phase 4C JetStream worker | Complete | standalone worker, durable consumer, retry, DLQ, broker recovery |
 | Phase 4D async counters | Complete | transactional exact counter rebuild, event lag metrics, outage k6 |
 | Phase 5A Behavior Simulator | Complete | deterministic personas, Markov sessions, time/burst distributions, streaming sinks, strict report |
-| Phase 5B lifecycle/fact materialization | Not started | Phase 5A emits behavior events but does not mutate community fact tables |
+| Phase 5B quality corpus | Complete | hidden scenarios, substantive note/OCR/comment text, ground truth, strict quality report |
+| Phase 5C lifecycle/fact materialization | Not started | behavior sessions are not yet materialized into community fact tables |
 | Phase 6 capacity testing | Partial | k6 exists; no long-duration capacity envelope or Locust session model |
 | Platform/RAG/evaluation/cloud | Not started | deliberately deferred until the data and event substrate is stable |
 
@@ -38,6 +39,8 @@ ideas.
   repeatable NATS outage scenario.
 - The simulator reproduces complete session datasets from a fixed seed and streams
   million-row workloads without requiring an LLM API.
+- Both pressure-test and Agent-quality datasets now contain substantive Chinese text;
+  hidden scenarios and gold source selectors make later retrieval measurable.
 - GitHub Actions now covers formatting, race-enabled tests, vet, all command builds,
   simulator checks, Compose validation, idempotent migrations, and full API acceptance.
 
@@ -48,7 +51,7 @@ ideas.
 1. **Operational dashboards:** metrics are exposed, but Prometheus scrape config,
    Grafana dashboards, and alert rules for event lag, Outbox age, DLQ, error rates, and
    dependency readiness are absent.
-2. **Phase 5B data lifecycle:** add user/note evolution, optional fact-table
+2. **Phase 5C data lifecycle:** add user/note evolution, optional fact-table
    materialization, and scenario calibration while preserving run reproducibility.
 3. **Version control remote:** reviewed baseline commit `c0428c4` exists locally, but a
    remote repository and branch protection still need to be configured.
@@ -79,8 +82,8 @@ These should not jump ahead of Phase 5 behavior data and Phase 6 capacity eviden
 
 ## Recommended Sequence
 
-1. Phase 5B: lifecycle evolution, optional fact materialization, and scenario calibration.
+1. Phase 6: capacity, spike, soak, and failure testing using the new corpus and sessions.
 2. Observability track: Prometheus/Grafana/alerts and DLQ replay/retention tooling.
 3. Event governance: schema versions, compatibility tests, and retention policies.
-4. Phase 6: capacity, spike, soak, and failure testing with a reproducible report.
-5. Only then begin the note-domain Evidence Store and RAG/Agent phases.
+4. Build note-domain Evidence Store and deterministic ingestion with index versioning.
+5. Add lexical/vector retrieval and evaluation before beginning the Agent runtime.

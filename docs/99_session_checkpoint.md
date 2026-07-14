@@ -207,17 +207,29 @@ Final Phase 5A runtime snapshot on 2026-07-14:
 - the rebuilt API/worker acceptance suite passed after two idempotent migration runs;
 - `go test -p 1 -timeout 60s -count=1 ./...`, `go vet -p 1 ./...`, Windows command
   builds, and Linux static binary builds passed.
+- Phase 5B migration: `backend-go/migrations/000007_phase5b_quality_corpus.sql`.
+- shared semantic generator: `backend-go/internal/contentgen`.
+- Agent-quality corpus command: `backend-go/cmd/corpusgen` and
+  `scripts/generate_quality_corpus.ps1`.
+- `seedgen` now generates substantive Chinese note bodies, OCR, and semantically linked
+  comments instead of English placeholders.
+- final development data: 5,220 notes, 5,860 media/OCR rows, and 60,600 comments;
+  placeholder note bodies and comments are both zero.
+- quality corpus: 200 notes, 800 OCR rows, 40,000 comments, and 1,000 eval cases;
+  title uniqueness and semantic alignment are 1.0, comment duplication is 0.0.
+- every quality note has a hidden scenario and five ground-truth tasks whose source
+  selectors can later be resolved to Evidence Store IDs.
+- Phase 5B report: `docs/09_phase5b_quality_corpus.md`.
 
 ## Next Development Step
 
-Recommended Phase 5B and quality track:
+Recommended Phase 6 and RAG preparation track:
 
-- add deterministic user and note lifecycle evolution across multi-week simulations;
-- optionally materialize selected simulated actions into fact tables without bypassing
-  database uniqueness constraints;
+- run steady, spike, soak, and outage capacity tests against the meaningful corpus;
 - add Prometheus, Grafana, and alert-rule assets for the existing API/worker metrics;
 - add controlled DLQ inspection/replay and event-retention commands;
-- reuse simulator sessions in reproducible steady, spike, soak, and outage tests.
+- then create note-domain Evidence Store and deterministic ingestion for note bodies,
+  media OCR, representative comments, comment clusters, and behavior summaries.
 
 High-volume behavior generation remains local and does not use an LLM API. A future
 LLM-backed content corpus should be smaller, versioned, reviewed, and generated offline.
