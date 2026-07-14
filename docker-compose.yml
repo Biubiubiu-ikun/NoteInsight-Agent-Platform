@@ -1,0 +1,108 @@
+services:
+  backend:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+    container_name: creatorinsight-backend
+    environment:
+      APP_ENV: local
+      LOG_LEVEL: info
+      HTTP_HOST: 0.0.0.0
+      HTTP_PORT: 8080
+      POSTGRES_DSN: postgres://creatorinsight:creatorinsight@postgres:5432/creatorinsight?sslmode=disable
+      REDIS_ADDR: redis:6379
+      RATE_LIMIT_ENABLED: "${RATE_LIMIT_ENABLED:-true}"
+      RATE_LIMIT_CONTENT_WRITE_LIMIT: "${RATE_LIMIT_CONTENT_WRITE_LIMIT:-30}"
+      RATE_LIMIT_COMMENT_WRITE_LIMIT: "${RATE_LIMIT_COMMENT_WRITE_LIMIT:-60}"
+      RATE_LIMIT_INTERACTION_WRITE_LIMIT: "${RATE_LIMIT_INTERACTION_WRITE_LIMIT:-120}"
+      RECONCILE_ENABLED: "${RECONCILE_ENABLED:-true}"
+    ports:
+      - "18080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend-go
+      dockerfile: Dockerfile
+    container_name: creatorinsight-worker
+    entrypoint: ["/app/creatorinsight-worker"]
+    environment:
+      APP_NAME: noteinsight-worker
+      APP_ENV: local
+      LOG_LEVEL: info
+      POSTGRES_DSN: postgres://creatorinsight:creatorinsight@postgres:5432/creatorinsight?sslmode=disable
+      REDIS_ADDR: redis:6379
+      NATS_URL: nats://nats:4222
+      NATS_STREAM: NOTEINSIGHT_EVENTS
+      NATS_SUBJECT_PREFIX: noteinsight.events
+      NATS_DLQ_STREAM: NOTEINSIGHT_DLQ
+      NATS_DLQ_SUBJECT_PREFIX: noteinsight.dlq
+      NATS_CONSUMER: noteinsight-worker-v1
+      WORKER_HTTP_HOST: 0.0.0.0
+      WORKER_HTTP_PORT: 8081
+      RECONCILE_ENABLED: "${RECONCILE_ENABLED:-true}"
+    ports:
+      - "18081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: creatorinsight-postgres
+    environment:
+      POSTGRES_USER: creatorinsight
+      POSTGRES_PASSWORD: creatorinsight
+      POSTGRES_DB: creatorinsight
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U creatorinsight -d creatorinsight"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: creatorinsight-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.12-alpine
+    container_name: creatorinsight-nats
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "14222:4222"
+      - "18222:8222"
+    volumes:
+      - nats_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8222/healthz | grep -q ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  nats_data:

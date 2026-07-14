@@ -1,0 +1,5 @@
+.git
+tmp
+coverage.out
+*.test
+go.work

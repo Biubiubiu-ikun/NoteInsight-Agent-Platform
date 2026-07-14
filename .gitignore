@@ -1,0 +1,9 @@
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+
+backend-go/bin/
+backend-go/tmp/
+backend-go/coverage*

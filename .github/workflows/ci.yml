@@ -1,0 +1,124 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend-go
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache-dependency-path: backend-go/go.sum
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Unit tests with race detector
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build all commands
+        run: go build ./cmd/...
+
+      - name: Simulator quality smoke
+        run: go run ./cmd/simulator --profile=smoke --sessions=100 --no-event-files --strict=true
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: backend-go/coverage.out
+
+  compose-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Compose
+        run: docker compose config --quiet
+
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | Format-List
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+
+  integration:
+    needs: [go-quality, compose-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RATE_LIMIT_ENABLED: "false"
+      RECONCILE_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-go/go.mod
+          cache-dependency-path: backend-go/go.sum
+
+      - name: Build Linux service binaries
+        shell: pwsh
+        run: ./scripts/build_backend_linux.ps1
+
+      - name: Start application stack
+        run: docker compose up -d --build --wait
+
+      - name: Apply migrations twice
+        shell: pwsh
+        run: |
+          ./scripts/migrate.ps1
+          ./scripts/migrate.ps1
+
+      - name: Run authenticated API and async pipeline acceptance
+        shell: pwsh
+        run: ./scripts/smoke_phase2c_auth.ps1 -ConvergenceTimeoutSeconds 60
+
+      - name: Show diagnostics on failure
+        if: failure()
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --tail=300
+
+      - name: Stop application stack
+        if: always()
+        run: docker compose down -v --remove-orphans
