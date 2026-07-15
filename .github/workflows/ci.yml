@@ -86,7 +86,7 @@ jobs:
         run: go build ./cmd/...
 
       - name: Verify frozen retrieval benchmark checksums
-        run: go run ./cmd/evalfreeze -verify-only -output-dir ../evaluation/benchmarks/retrieval_v3
+        run: go run ./cmd/evalfreeze -verify-only -output-dir ../evaluation/benchmarks/retrieval_v4
 
       - name: Simulator quality smoke
         run: go run ./cmd/simulator --profile=smoke --sessions=100 --no-event-files --strict=true

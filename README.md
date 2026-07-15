@@ -12,15 +12,15 @@ Public repository: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.co
 - JWT access tokens, rotating hashed refresh sessions, ownership/admin/banned rules.
 - Redis detail/comment caches and note/comment rankings.
 - Transactional Outbox, NATS JetStream, idempotent worker, retry, DLQ and replay tooling.
-- Project/dataset/visibility boundaries and versioned Evidence Source registry.
+- Project/dataset/visibility boundaries, versioned Evidence Source registry and immutable source payloads.
 - Soft-delete propagation from notes/comments to active evidence.
 - Deterministic behavior simulator, daily fact materialization and run lineage.
-- Meaningful Chinese note/OCR/comment corpus plus a separate frozen six-task adversarial retrieval benchmark.
+- Meaningful Chinese note/OCR/comment corpus plus a dataset-bound frozen eight-task adversarial retrieval benchmark.
 - React console for feed, search, ranking, auth, publishing, detail, comments and interactions.
 - Prometheus metrics/alerts, provisioned Grafana dashboard, maintenance and recovery tools.
 - OpenAPI/Gin drift checks, domain-event JSON Schema, Go/React/integration/E2E tests, Compose acceptance, CodeQL SARIF, SBOM and vulnerability gates.
 
-Phase 6C is complete. Phase 7A canonical Evidence Store ingestion is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
+Phase 7A-0 retrieval preflight is complete: source versions/payloads, immutable dataset snapshots and a sealed v4 benchmark are in place. Phase 7A canonical Evidence Store ingestion is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
 
 ## Layout
 
@@ -82,12 +82,12 @@ Bulk text generation is deterministic and does not call an LLM API. Image URLs m
 
 The latest run produced 200 notes, 800 media rows, 40,000 comments and 1,619 evaluation cases across summary, procedure, controversy, audience, OCR, conflict, temporal, no-answer and cross-note tasks.
 
-The independent retrieval baseline is `retrieval_v3_20260715`: 240 unique cases, 80 public development cases, 160 sealed holdout cases, six adversarial task families and manifest checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`. The repository publishes full development cases and ordered SHA-256 commitments for every case, but never publishes holdout questions or answers.
+The approved retrieval baseline is `retrieval_v4_20260716`: 240 unique cases, 80 public development cases, 160 sealed holdout cases, eight balanced task families and manifest checksum `851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74`. It is bound to immutable dataset version `2` (`113,921` sources) and uses random nonce commitments, so public deterministic inputs cannot reveal holdout case checksums. `retrieval_v3` is retained only as a retired audit artifact.
 
 ```powershell
 cd backend-go
 go run ./cmd/evalfreeze -verify-only `
-  -output-dir ../evaluation/benchmarks/retrieval_v3
+  -output-dir ../evaluation/benchmarks/retrieval_v4
 ```
 
 ## Fact Materialization
@@ -172,3 +172,5 @@ The isolated capacity environment and 4.21-million-row evidence are documented i
 - `docs/13_recovery_runbook.md`: backup/recovery procedure.
 - `docs/14_data_governance.md`: scope, deletion, retention and retrieval rules.
 - `docs/15_quality_security_gates.md`: benchmark, test, contract and supply-chain gates.
+- `docs/16_phase7a0_retrieval_preflight.md`: frozen source/dataset/evaluation baseline for Phase 7.
+- `docs/adr/`: accepted evidence, citation and evaluation design decisions.

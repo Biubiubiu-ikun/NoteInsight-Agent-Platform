@@ -2,6 +2,7 @@ package evalbench
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -62,10 +63,33 @@ func (r *Repository) SaveFrozen(ctx context.Context, benchmark Benchmark) error 
 	}
 	defer func() { _ = tx.Rollback() }()
 
+	if benchmark.Config.CommitmentScheme == NonceCommitmentScheme {
+		var status string
+		var sourceCount int64
+		err := tx.QueryRowContext(ctx, `
+SELECT status, source_count
+FROM dataset_versions
+WHERE id=$1
+FOR SHARE`, benchmark.Config.DatasetVersionID).Scan(&status, &sourceCount)
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("dataset version %d does not exist", benchmark.Config.DatasetVersionID)
+		}
+		if err != nil {
+			return fmt.Errorf("verify dataset version: %w", err)
+		}
+		if status != "frozen" || sourceCount <= 0 {
+			return fmt.Errorf("dataset version %d must be frozen and non-empty", benchmark.Config.DatasetVersionID)
+		}
+	}
+
+	assignment := "authored_explicit"
+	if benchmark.Config.CommitmentScheme == LegacyCommitmentScheme {
+		assignment = "seeded_exact_permutation"
+	}
 	splitPolicy, err := json.Marshal(map[string]any{
 		"development_cases": benchmark.Config.DevelopmentCases,
 		"holdout_cases":     benchmark.Config.CaseCount - benchmark.Config.DevelopmentCases,
-		"assignment":        "seeded_exact_permutation",
+		"assignment":        assignment,
 	})
 	if err != nil {
 		return fmt.Errorf("encode benchmark split policy: %w", err)
@@ -73,15 +97,17 @@ func (r *Repository) SaveFrozen(ctx context.Context, benchmark Benchmark) error 
 	_, err = tx.ExecContext(ctx, `
 INSERT INTO retrieval_benchmarks (
     benchmark_id, benchmark_version, source_run_id, generator_version,
-    seed, split_policy, status, created_at
+    seed, split_policy, status, dataset_version_id, commitment_scheme, created_at
 )
-VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'building', now())`,
+VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'building', NULLIF($7, 0), $8, now())`,
 		benchmark.Config.BenchmarkID,
 		benchmark.Config.BenchmarkVersion,
 		benchmark.Config.SourceRunID,
 		benchmark.Config.GeneratorVersion,
 		benchmark.Config.Seed,
 		string(splitPolicy),
+		benchmark.Config.DatasetVersionID,
+		benchmark.Config.CommitmentScheme,
 	)
 	if err != nil {
 		if isUniqueViolation(err) {
@@ -93,9 +119,9 @@ VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'building', now())`,
 	statement, err := tx.PreparexContext(ctx, `
 INSERT INTO retrieval_benchmark_cases (
     benchmark_id, split, task_type, query, expected_answer, gold_sources,
-    adversarial_tags, provenance, review_status, case_checksum, metadata, created_at
+    adversarial_tags, provenance, review_status, case_checksum, commitment_hash, metadata, created_at
 )
-VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11::jsonb, now())`)
+VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, NULLIF($11, ''), $12::jsonb, now())`)
 	if err != nil {
 		return fmt.Errorf("prepare benchmark case insert: %w", err)
 	}
@@ -125,6 +151,7 @@ VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10, $11::jsonb, now()
 			evalCase.Provenance,
 			evalCase.ReviewStatus,
 			evalCase.CaseChecksum,
+			evalCase.CommitmentHash,
 			string(metadata),
 		); err != nil {
 			return fmt.Errorf("insert retrieval benchmark case: %w", err)

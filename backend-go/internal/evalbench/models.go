@@ -6,8 +6,12 @@ import (
 )
 
 const (
-	DefaultGeneratorVersion = "independent_eval_v3"
-	DefaultProvenance       = "codex_assisted_independent_v3"
+	DefaultGeneratorVersion  = "independent_eval_v3"
+	DefaultProvenance        = "codex_assisted_independent_v3"
+	AuthoredGeneratorVersion = "private_authored_eval_v4"
+	AuthoredProvenance       = "private_model_assisted_v4"
+	LegacyCommitmentScheme   = "legacy_case_checksum_v1"
+	NonceCommitmentScheme    = "sha256_nonce_case_checksum_v1"
 )
 
 type Config struct {
@@ -18,6 +22,8 @@ type Config struct {
 	Seed             int64  `json:"seed"`
 	CaseCount        int    `json:"case_count"`
 	DevelopmentCases int    `json:"development_cases"`
+	DatasetVersionID int64  `json:"dataset_version_id,omitempty"`
+	CommitmentScheme string `json:"commitment_scheme,omitempty"`
 }
 
 func (c *Config) Normalize() {
@@ -27,6 +33,9 @@ func (c *Config) Normalize() {
 	c.GeneratorVersion = strings.TrimSpace(c.GeneratorVersion)
 	if c.GeneratorVersion == "" {
 		c.GeneratorVersion = DefaultGeneratorVersion
+	}
+	if c.CommitmentScheme == "" {
+		c.CommitmentScheme = LegacyCommitmentScheme
 	}
 }
 
@@ -48,6 +57,12 @@ func (c Config) Validate() error {
 	}
 	if c.DevelopmentCases < 1 || c.DevelopmentCases >= c.CaseCount {
 		return fmt.Errorf("development_cases must be between 1 and case_count-1")
+	}
+	if c.CommitmentScheme != LegacyCommitmentScheme && c.CommitmentScheme != NonceCommitmentScheme {
+		return fmt.Errorf("unsupported commitment scheme %q", c.CommitmentScheme)
+	}
+	if c.CommitmentScheme == NonceCommitmentScheme && c.DatasetVersionID <= 0 {
+		return fmt.Errorf("dataset_version_id is required for nonce-committed benchmarks")
 	}
 	return nil
 }
@@ -76,6 +91,7 @@ type GoldSource struct {
 	SourceType string `json:"source_type"`
 	NoteID     int64  `json:"note_id"`
 	Topic      string `json:"topic,omitempty"`
+	Position   int    `json:"position,omitempty"`
 }
 
 type Case struct {
@@ -88,6 +104,8 @@ type Case struct {
 	Provenance      string         `json:"provenance"`
 	ReviewStatus    string         `json:"review_status"`
 	CaseChecksum    string         `json:"case_checksum"`
+	CommitmentNonce string         `json:"commitment_nonce,omitempty"`
+	CommitmentHash  string         `json:"commitment_hash,omitempty"`
 	Metadata        map[string]any `json:"metadata"`
 }
 
@@ -103,6 +121,10 @@ type Manifest struct {
 	TaskCounts       map[string]int `json:"task_counts"`
 	ReviewCounts     map[string]int `json:"review_counts"`
 	ManifestChecksum string         `json:"manifest_checksum"`
+	DatasetVersionID int64          `json:"dataset_version_id,omitempty"`
+	CommitmentScheme string         `json:"commitment_scheme,omitempty"`
+	ApprovalStatus   string         `json:"approval_status,omitempty"`
+	RetiredReason    string         `json:"retired_reason,omitempty"`
 	ArtifactScope    string         `json:"artifact_scope,omitempty"`
 	CasesFile        string         `json:"cases_file,omitempty"`
 	DevelopmentFile  string         `json:"development_file,omitempty"`
@@ -110,11 +132,12 @@ type Manifest struct {
 }
 
 type CaseCommitment struct {
-	Ordinal      int    `json:"ordinal"`
-	Split        string `json:"split"`
-	TaskType     string `json:"task_type"`
-	ReviewStatus string `json:"review_status"`
-	CaseChecksum string `json:"case_checksum"`
+	Ordinal        int    `json:"ordinal"`
+	Split          string `json:"split"`
+	TaskType       string `json:"task_type"`
+	ReviewStatus   string `json:"review_status"`
+	CaseChecksum   string `json:"case_checksum,omitempty"`
+	CommitmentHash string `json:"commitment_hash,omitempty"`
 }
 
 type Benchmark struct {

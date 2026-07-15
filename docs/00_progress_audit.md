@@ -1,6 +1,6 @@
 # Project Progress And Quality Audit
 
-Audit date: 2026-07-15
+Audit date: 2026-07-16
 
 ## Planning Rule
 
@@ -19,15 +19,19 @@ Audit date: 2026-07-15
 | Phase 6C | Complete | project/dataset boundaries, Evidence Source registry, auth/event/ops/test hardening |
 | Release hardening | Complete; remote CI enabled | frozen independent benchmark, integration/E2E depth, contracts, SBOM and vulnerability gates |
 | Frontend console | MVP complete | feed, search, ranking, auth, publish, detail, comments, interactions and status |
+| Phase 7A-0 | Complete | immutable source history, dataset snapshots, v3 retirement, sealed v4 benchmark and retrieval ADRs |
 | Phase 7A | Next | canonical evidence documents/chunks and deterministic ingestion |
 
 ## Verified Snapshot
 
-- Eleven checksum-protected migrations apply idempotently.
-- Main data after acceptance: more than 5.4K notes, 101K comments and 113K Evidence Sources.
+- Fifteen checksum-protected migrations apply idempotently.
+- Main data after final Phase 7A-0 acceptance: 5,511 active notes, 6,813 media, 101,635 active comments and 113,927 active Evidence Sources.
 - Every current note/media/comment has a 64-character source hash and dataset boundary.
+- All 113,927 active sources and every frozen source reference resolve to immutable canonical text/payload; 114,005 current or historical payload rows have valid SHA-256 values.
 - Quality corpus run `phase6c_quality_v2_20260715` produced 1,619 cases across nine task types; all strict checks passed.
-- Independent benchmark `retrieval_v3_20260715` contains 240 unique cases with an 80/160 development/holdout split; the public repository contains development content plus ordered commitments, while sealed holdout content remains private. Manifest checksum is `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
+- Dataset version `2` freezes 113,921 logical source references at checksum `b91df11ca9136e000c759fd2c6de5b448816bb57d903849c478f99db8533eab5`.
+- Independent benchmark `retrieval_v4_20260716` contains 240 unique cases with an 80/160 development/holdout split and eight balanced task families. Random nonce commitments seal private holdout identities; manifest checksum is `851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74`.
+- `retrieval_v3` is retired after proving that deterministic public inputs reconstruct all 240 commitments.
 - Fact run `phase6c_final_20260715` materialized 812 note facts and 481 user facts.
 - Auth/API/async/Evidence Source acceptance passes end to end, including private-project isolation and deletion propagation.
 - A 12.8 MB PostgreSQL custom dump was parsed and restored into an isolated database; restored counts matched before teardown.
@@ -41,7 +45,7 @@ Audit date: 2026-07-15
 - Migration lock/checksum, event schema/correlation, retention command, DLQ inspect/replay, backup/restore and governance runbook are present.
 - Prometheus rules and a provisioned Grafana dashboard cover the critical data path.
 - OpenAPI schema/reference plus Gin route drift, Promtool, Actionlint, Gitleaks, CodeQL, pinned govulncheck, npm audit, SBOM, Trivy and Dependabot are in CI.
-- Disposable-database integration tests cover refresh replay/concurrency, unique interactions, transaction rollback, Outbox lease recovery and benchmark immutability; live NATS covers DLQ and replay.
+- Disposable-database integration tests cover refresh replay/concurrency, unique interactions, transaction rollback, Outbox lease recovery, immutable evidence/dataset versions and frozen/retired benchmark rows; live NATS covers DLQ and replay.
 - Frontend coverage floors and committed Playwright desktop/mobile E2E now protect the real product workflow.
 - Phase 6C is preserved by commit `f0dee23` and annotated tag `v0.6.4`; subsequent hardening is a separate change.
 - A private archive preserves the pre-public history and complete benchmark. The sanitized public GitHub remote preserves `main`, `v0.6.4` and `v0.6.5`; Actions exercises the Linux release chain.

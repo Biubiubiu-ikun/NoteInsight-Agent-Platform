@@ -184,6 +184,116 @@ func TestVerifyArtifactsRejectsTamperedCase(t *testing.T) {
 	}
 }
 
+func TestStageArtifactsVerifiesBeforeAtomicPublish(t *testing.T) {
+	benchmark, err := FreezeAuthored(Config{
+		BenchmarkID:      "retrieval_staged_v4",
+		BenchmarkVersion: "retrieval_staged_v4",
+		SourceRunID:      "quality_test_run",
+		GeneratorVersion: AuthoredGeneratorVersion,
+		CaseCount:        6,
+		DevelopmentCases: 2,
+		DatasetVersionID: 9,
+		CommitmentScheme: NonceCommitmentScheme,
+	}, authoredTestCases())
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	publicTarget := filepath.Join(root, "public", "retrieval_v4")
+	privateTarget := filepath.Join(root, "private", "retrieval_v4")
+	stage, err := StageArtifacts(publicTarget, privateTarget, benchmark)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(publicTarget); !os.IsNotExist(err) {
+		t.Fatalf("public target exists before publish: %v", err)
+	}
+	if _, err := VerifyArtifacts(stage.PublicDirectory); err != nil {
+		t.Fatalf("staged public artifacts are invalid: %v", err)
+	}
+	if err := stage.Publish(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := VerifyArtifacts(publicTarget); err != nil {
+		t.Fatalf("published public artifacts are invalid: %v", err)
+	}
+	if _, err := VerifyArtifacts(privateTarget); err != nil {
+		t.Fatalf("published private artifacts are invalid: %v", err)
+	}
+	if _, err := StageArtifacts(publicTarget, filepath.Join(root, "another-private"), benchmark); err == nil {
+		t.Fatal("staging unexpectedly accepted an existing target")
+	}
+}
+
+func TestFreezeAuthoredUsesNonceCommitmentsAndSeparatesNoAnswerSemantics(t *testing.T) {
+	config := Config{
+		BenchmarkID:      "retrieval_authored_v4",
+		BenchmarkVersion: "retrieval_authored_v4",
+		SourceRunID:      "quality_test_run",
+		GeneratorVersion: AuthoredGeneratorVersion,
+		CaseCount:        6,
+		DevelopmentCases: 2,
+		DatasetVersionID: 9,
+		CommitmentScheme: NonceCommitmentScheme,
+	}
+	benchmark, err := FreezeAuthored(config, authoredTestCases())
+	if err != nil {
+		t.Fatalf("FreezeAuthored() error = %v", err)
+	}
+	if benchmark.Manifest.CommitmentScheme != NonceCommitmentScheme || benchmark.Manifest.DatasetVersionID != 9 {
+		t.Fatalf("manifest = %+v", benchmark.Manifest)
+	}
+	for _, evalCase := range benchmark.Cases {
+		if evalCase.CommitmentNonce == "" || len(evalCase.CommitmentHash) != 64 {
+			t.Fatalf("case has incomplete commitment: %+v", evalCase)
+		}
+		if evalCase.CommitmentHash != commitmentHash(evalCase.CommitmentNonce, evalCase.CaseChecksum) {
+			t.Fatalf("case commitment mismatch: %+v", evalCase)
+		}
+	}
+
+	privateDirectory := t.TempDir()
+	if err := WriteArtifacts(privateDirectory, benchmark); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := VerifyArtifacts(privateDirectory); err != nil {
+		t.Fatalf("private VerifyArtifacts() error = %v", err)
+	}
+
+	publicDirectory := t.TempDir()
+	if err := WritePublicArtifacts(publicDirectory, benchmark); err != nil {
+		t.Fatal(err)
+	}
+	commitments, err := os.ReadFile(filepath.Join(publicDirectory, "case_commitments.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(commitments, []byte(`"case_checksum"`)) || bytes.Contains(commitments, []byte(`"commitment_nonce"`)) {
+		t.Fatal("public v4 commitments exposed a case checksum or nonce")
+	}
+	if _, err := VerifyArtifacts(publicDirectory); err != nil {
+		t.Fatalf("public VerifyArtifacts() error = %v", err)
+	}
+}
+
+func TestFreezeAuthoredRejectsConflatedNoRelevantDocumentCase(t *testing.T) {
+	cases := authoredTestCases()
+	cases[4].GoldSources = []GoldSource{{SourceType: "note_body", NoteID: 1}}
+	_, err := FreezeAuthored(Config{
+		BenchmarkID:      "retrieval_authored_invalid",
+		BenchmarkVersion: "retrieval_authored_invalid",
+		SourceRunID:      "quality_test_run",
+		GeneratorVersion: AuthoredGeneratorVersion,
+		CaseCount:        6,
+		DevelopmentCases: 2,
+		DatasetVersionID: 9,
+		CommitmentScheme: NonceCommitmentScheme,
+	}, cases)
+	if err == nil || !strings.Contains(err.Error(), "no_relevant_document") {
+		t.Fatalf("FreezeAuthored() error = %v, want no_relevant_document validation", err)
+	}
+}
+
 func testConfig() Config {
 	return Config{
 		BenchmarkID:      "retrieval_test_v1",
@@ -214,4 +324,15 @@ func testDocuments(count int) []SourceDocument {
 		})
 	}
 	return documents
+}
+
+func authoredTestCases() []Case {
+	return []Case{
+		{Split: "development", TaskType: "semantic_paraphrase", Query: "改写问题一", ExpectedAnswer: "答案一", GoldSources: []GoldSource{{SourceType: "note_body", NoteID: 1}}},
+		{Split: "development", TaskType: "typo_robustness", Query: "错别字问题二", ExpectedAnswer: "答案二", GoldSources: []GoldSource{{SourceType: "note_body", NoteID: 2}}},
+		{Split: "holdout", TaskType: "temporal_conflict", Query: "时间问题三", ExpectedAnswer: "答案三", GoldSources: []GoldSource{{SourceType: "note_body", NoteID: 3}}},
+		{Split: "holdout", TaskType: "cross_note_compare", Query: "比较问题四", ExpectedAnswer: "答案四", GoldSources: []GoldSource{{SourceType: "note_body", NoteID: 4}, {SourceType: "note_body", NoteID: 5}}},
+		{Split: "holdout", TaskType: "no_relevant_document", Query: "无相关文档问题五", ExpectedAnswer: "当前数据集没有相关材料。", Metadata: map[string]any{"answerable": false}},
+		{Split: "holdout", TaskType: "insufficient_evidence", Query: "证据不足问题六", ExpectedAnswer: "现有材料不足以支持该结论。", GoldSources: []GoldSource{{SourceType: "note_body", NoteID: 6}}, Metadata: map[string]any{"answerable": false}},
+	}
 }

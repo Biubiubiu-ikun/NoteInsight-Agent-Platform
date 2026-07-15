@@ -34,13 +34,18 @@ func WritePublicArtifacts(root string, benchmark Benchmark) error {
 		if evalCase.Split == "development" {
 			development = append(development, evalCase)
 		}
-		commitments = append(commitments, CaseCommitment{
+		commitment := CaseCommitment{
 			Ordinal:      index + 1,
 			Split:        evalCase.Split,
 			TaskType:     evalCase.TaskType,
 			ReviewStatus: evalCase.ReviewStatus,
-			CaseChecksum: evalCase.CaseChecksum,
-		})
+		}
+		if normalizedCommitmentScheme(benchmark.Manifest.CommitmentScheme) == NonceCommitmentScheme {
+			commitment.CommitmentHash = evalCase.CommitmentHash
+		} else {
+			commitment.CaseChecksum = evalCase.CaseChecksum
+		}
+		commitments = append(commitments, commitment)
 	}
 
 	publicManifest := benchmark.Manifest
@@ -69,6 +74,13 @@ func VerifyArtifacts(root string) (Manifest, error) {
 	if manifest.Status != "frozen" {
 		return Manifest{}, fmt.Errorf("benchmark status must be frozen, got %q", manifest.Status)
 	}
+	scheme := normalizedCommitmentScheme(manifest.CommitmentScheme)
+	if scheme != LegacyCommitmentScheme && scheme != NonceCommitmentScheme {
+		return Manifest{}, fmt.Errorf("unsupported commitment scheme %q", manifest.CommitmentScheme)
+	}
+	if scheme == NonceCommitmentScheme && (manifest.DatasetVersionID <= 0 || manifest.ApprovalStatus != "approved") {
+		return Manifest{}, fmt.Errorf("nonce-committed benchmark requires a dataset version and approved status")
+	}
 	if manifest.CasesFile != "" {
 		return verifyFullArtifacts(root, manifest)
 	}
@@ -90,6 +102,8 @@ func verifyFullArtifacts(root string, manifest Manifest) (Manifest, error) {
 		SourceRunID:      manifest.SourceRunID,
 		GeneratorVersion: manifest.GeneratorVersion,
 		Seed:             manifest.Seed,
+		DatasetVersionID: manifest.DatasetVersionID,
+		CommitmentScheme: normalizedCommitmentScheme(manifest.CommitmentScheme),
 	}, cases)
 	if err := compareManifest(rebuilt, manifest); err != nil {
 		return Manifest{}, err
@@ -109,9 +123,17 @@ func verifyPublicArtifacts(root string, manifest Manifest) (Manifest, error) {
 	if err != nil {
 		return Manifest{}, err
 	}
-	developmentByChecksum := make(map[string]struct{}, len(development))
+	scheme := normalizedCommitmentScheme(manifest.CommitmentScheme)
+	developmentByCommitment := make(map[string]struct{}, len(development))
 	for _, evalCase := range development {
-		developmentByChecksum[evalCase.CaseChecksum] = struct{}{}
+		value := evalCase.CaseChecksum
+		if scheme == NonceCommitmentScheme {
+			if evalCase.CommitmentNonce == "" || evalCase.CommitmentHash == "" || evalCase.CommitmentHash != commitmentHash(evalCase.CommitmentNonce, evalCase.CaseChecksum) {
+				return Manifest{}, fmt.Errorf("public development case has invalid nonce commitment")
+			}
+			value = evalCase.CommitmentHash
+		}
+		developmentByCommitment[value] = struct{}{}
 	}
 
 	file, err := os.Open(filepath.Join(root, manifest.CommitmentsFile))
@@ -121,7 +143,7 @@ func verifyPublicArtifacts(root string, manifest Manifest) (Manifest, error) {
 	defer file.Close()
 
 	commitments := make([]CaseCommitment, 0, manifest.CaseCount)
-	seenChecksums := make(map[string]struct{}, manifest.CaseCount)
+	seenCommitments := make(map[string]struct{}, manifest.CaseCount)
 	matchedDevelopment := 0
 	scanner := bufio.NewScanner(file)
 	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
@@ -136,13 +158,22 @@ func verifyPublicArtifacts(root string, manifest Manifest) (Manifest, error) {
 		if commitment.Split != "development" && commitment.Split != "holdout" {
 			return Manifest{}, fmt.Errorf("invalid commitment split at line %d", line)
 		}
-		if commitment.TaskType == "" || commitment.ReviewStatus == "" || !validSHA256(commitment.CaseChecksum) {
+		value := commitment.CaseChecksum
+		if scheme == NonceCommitmentScheme {
+			value = commitment.CommitmentHash
+			if commitment.CaseChecksum != "" {
+				return Manifest{}, fmt.Errorf("nonce commitment line %d must not expose a case checksum", line)
+			}
+		} else if commitment.CommitmentHash != "" {
+			return Manifest{}, fmt.Errorf("legacy commitment line %d must not contain commitment_hash", line)
+		}
+		if commitment.TaskType == "" || commitment.ReviewStatus == "" || !validSHA256(value) {
 			return Manifest{}, fmt.Errorf("incomplete commitment at line %d", line)
 		}
-		if _, duplicate := seenChecksums[commitment.CaseChecksum]; duplicate {
+		if _, duplicate := seenCommitments[value]; duplicate {
 			return Manifest{}, fmt.Errorf("duplicate commitment checksum at line %d", line)
 		}
-		_, isPublic := developmentByChecksum[commitment.CaseChecksum]
+		_, isPublic := developmentByCommitment[value]
 		if commitment.Split == "development" && !isPublic {
 			return Manifest{}, fmt.Errorf("development commitment at line %d has no public case", line)
 		}
@@ -152,7 +183,7 @@ func verifyPublicArtifacts(root string, manifest Manifest) (Manifest, error) {
 		if isPublic {
 			matchedDevelopment++
 		}
-		seenChecksums[commitment.CaseChecksum] = struct{}{}
+		seenCommitments[value] = struct{}{}
 		commitments = append(commitments, commitment)
 	}
 	if err := scanner.Err(); err != nil {
@@ -195,6 +226,11 @@ func readVerifiedCases(path string, requiredSplit string) ([]Case, error) {
 		if actual := checksumCase(evalCase); actual != evalCase.CaseChecksum {
 			return nil, fmt.Errorf("case checksum mismatch at line %d", line)
 		}
+		if evalCase.CommitmentNonce != "" || evalCase.CommitmentHash != "" {
+			if evalCase.CommitmentNonce == "" || !validSHA256(evalCase.CommitmentHash) || evalCase.CommitmentHash != commitmentHash(evalCase.CommitmentNonce, evalCase.CaseChecksum) {
+				return nil, fmt.Errorf("case commitment mismatch at line %d", line)
+			}
+		}
 		if _, exists := checksums[evalCase.CaseChecksum]; exists {
 			return nil, fmt.Errorf("duplicate case checksum at line %d", line)
 		}
@@ -216,12 +252,25 @@ func buildManifestFromCommitments(source Manifest, commitments []CaseCommitment)
 	tasks := map[string]int{}
 	reviews := map[string]int{}
 	hasher := sha256.New()
-	_, _ = fmt.Fprintf(hasher, "%s\n%s\n%s\n%d\n", source.BenchmarkID, source.BenchmarkVersion, source.GeneratorVersion, source.Seed)
+	scheme := normalizedCommitmentScheme(source.CommitmentScheme)
+	writeManifestIdentity(hasher, Config{
+		BenchmarkID:      source.BenchmarkID,
+		BenchmarkVersion: source.BenchmarkVersion,
+		SourceRunID:      source.SourceRunID,
+		GeneratorVersion: source.GeneratorVersion,
+		Seed:             source.Seed,
+		DatasetVersionID: source.DatasetVersionID,
+		CommitmentScheme: scheme,
+	})
 	for _, commitment := range commitments {
 		splits[commitment.Split]++
 		tasks[commitment.TaskType]++
 		reviews[commitment.ReviewStatus]++
-		_, _ = fmt.Fprintln(hasher, commitment.CaseChecksum)
+		value := commitment.CaseChecksum
+		if scheme == NonceCommitmentScheme {
+			value = commitment.CommitmentHash
+		}
+		_, _ = fmt.Fprintln(hasher, value)
 	}
 	return Manifest{
 		BenchmarkID:      source.BenchmarkID,
@@ -235,6 +284,9 @@ func buildManifestFromCommitments(source Manifest, commitments []CaseCommitment)
 		TaskCounts:       tasks,
 		ReviewCounts:     reviews,
 		ManifestChecksum: hex.EncodeToString(hasher.Sum(nil)),
+		DatasetVersionID: source.DatasetVersionID,
+		CommitmentScheme: scheme,
+		ApprovalStatus:   source.ApprovalStatus,
 	}
 }
 
@@ -302,6 +354,13 @@ func validLocalFilename(value string) bool {
 func validSHA256(value string) bool {
 	decoded, err := hex.DecodeString(value)
 	return err == nil && len(decoded) == sha256.Size
+}
+
+func normalizedCommitmentScheme(value string) string {
+	if value == "" {
+		return LegacyCommitmentScheme
+	}
+	return value
 }
 
 func writeAtomic(path string, contents []byte) error {

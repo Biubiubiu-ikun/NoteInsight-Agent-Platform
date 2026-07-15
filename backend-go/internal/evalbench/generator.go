@@ -176,22 +176,29 @@ func fallback(value string, fallbackValue string) string {
 
 func checksumCase(evalCase Case) string {
 	evalCase.CaseChecksum = ""
+	evalCase.CommitmentNonce = ""
+	evalCase.CommitmentHash = ""
 	raw, _ := json.Marshal(evalCase)
 	digest := sha256.Sum256(raw)
 	return hex.EncodeToString(digest[:])
 }
 
 func buildManifest(config Config, cases []Case) Manifest {
+	config.Normalize()
 	splits := map[string]int{}
 	tasks := map[string]int{}
 	reviews := map[string]int{}
 	hasher := sha256.New()
-	_, _ = fmt.Fprintf(hasher, "%s\n%s\n%s\n%d\n", config.BenchmarkID, config.BenchmarkVersion, config.GeneratorVersion, config.Seed)
+	writeManifestIdentity(hasher, config)
 	for _, evalCase := range cases {
 		splits[evalCase.Split]++
 		tasks[evalCase.TaskType]++
 		reviews[evalCase.ReviewStatus]++
-		_, _ = fmt.Fprintln(hasher, evalCase.CaseChecksum)
+		commitment := evalCase.CaseChecksum
+		if config.CommitmentScheme == NonceCommitmentScheme {
+			commitment = evalCase.CommitmentHash
+		}
+		_, _ = fmt.Fprintln(hasher, commitment)
 	}
 	return Manifest{
 		BenchmarkID:      config.BenchmarkID,
@@ -205,6 +212,26 @@ func buildManifest(config Config, cases []Case) Manifest {
 		TaskCounts:       tasks,
 		ReviewCounts:     reviews,
 		ManifestChecksum: hex.EncodeToString(hasher.Sum(nil)),
+		DatasetVersionID: config.DatasetVersionID,
+		CommitmentScheme: config.CommitmentScheme,
+		ApprovalStatus:   "approved",
 		CasesFile:        "cases.jsonl",
 	}
+}
+
+func writeManifestIdentity(hasher interface{ Write([]byte) (int, error) }, config Config) {
+	if config.CommitmentScheme == NonceCommitmentScheme {
+		_, _ = fmt.Fprintf(
+			hasher,
+			"%s\n%s\n%s\n%d\n%d\n%s\n",
+			config.BenchmarkID,
+			config.BenchmarkVersion,
+			config.GeneratorVersion,
+			config.Seed,
+			config.DatasetVersionID,
+			config.CommitmentScheme,
+		)
+		return
+	}
+	_, _ = fmt.Fprintf(hasher, "%s\n%s\n%s\n%d\n", config.BenchmarkID, config.BenchmarkVersion, config.GeneratorVersion, config.Seed)
 }

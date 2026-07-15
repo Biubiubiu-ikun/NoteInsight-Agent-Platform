@@ -1,6 +1,6 @@
 # Project Excellence Review
 
-Review date: 2026-07-15
+Review date: 2026-07-16
 
 ## Interviewer Assessment
 
@@ -14,9 +14,9 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 
 1. Identity comes from verified JWT context and refresh sessions rotate safely.
 2. Business facts and Outbox events commit atomically; consumers are idempotent.
-3. Project, dataset, visibility, source version and deletion boundaries exist before retrieval.
+3. Project, dataset, visibility, source version and deletion boundaries exist before retrieval; immutable dataset snapshots pin experiments to exact source hashes.
 4. Redis/NATS are treated as derivatives or transport, never the source of truth.
-5. Data sets are deterministic and meaningful; a separately generated, immutable 240-case adversarial benchmark now prevents tuning directly on pipeline-generated gold cases.
+5. Data sets are deterministic and meaningful; v4 independently authors eight task families, separates abstention semantics, binds a snapshot and seals holdout identities with random nonces.
 6. Operational claims have metrics, alerts, replay, maintenance, backup and restore evidence.
 7. The frontend exercises real workflows instead of presenting a marketing shell.
 8. CI covers backend, frontend, real PostgreSQL/NATS integration, Playwright, contracts, Prometheus, secrets, SBOM, image vulnerabilities, Compose and authenticated acceptance.
@@ -30,6 +30,7 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 - Report per-task Recall/MRR/nDCG, no-answer and citation metrics, not one aggregate score.
 - Add consistency audit proving no active chunk references deleted or invisible source data.
 - Have an independent reviewer adjudicate a stratified holdout sample and record agreement before making public benchmark claims.
+- Keep authorization-boundary cases sealed and execute them with both authorized and unauthorized principals once the retrieval API exists.
 
 ### Before Production Claims
 
@@ -41,7 +42,7 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 
 ## Next Sequence
 
-1. Phase 7A canonical Evidence Store and deterministic ingestion.
+1. Phase 7A canonical Evidence Store and deterministic ingestion on dataset version `2`.
 2. Phase 7B PostgreSQL lexical retrieval and offline evaluation.
 3. Add vector/hybrid retrieval only after baseline failures are classified.
 4. Phase 8 single grounded Agent with structured claims and citations.
