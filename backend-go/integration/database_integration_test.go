@@ -234,4 +234,16 @@ WHERE benchmark_id=$1`, benchmarkID); err != nil {
 	if _, err := integrationDB.ExecContext(ctx, `UPDATE retrieval_benchmark_cases SET query='tampered' WHERE benchmark_id=$1`, benchmarkID); err == nil {
 		t.Fatal("frozen benchmark case update unexpectedly succeeded")
 	}
+
+	retiredID := benchmarkID + "_retired"
+	if _, err := integrationDB.ExecContext(ctx, `
+INSERT INTO retrieval_benchmarks (
+  benchmark_id, benchmark_version, source_run_id, generator_version, seed,
+  split_policy, status, case_count, manifest_checksum, frozen_at, retired_at, retired_reason
+) VALUES ($1, $1, $2, 'integration', 1, '{}', 'retired', 0, repeat('c',64), now(), now(), 'integration retirement')`, retiredID, runID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := integrationDB.ExecContext(ctx, `UPDATE retrieval_benchmarks SET retired_reason='tampered' WHERE benchmark_id=$1`, retiredID); err == nil {
+		t.Fatal("retired benchmark update unexpectedly succeeded")
+	}
 }

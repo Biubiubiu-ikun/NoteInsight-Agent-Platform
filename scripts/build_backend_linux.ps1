@@ -50,6 +50,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "DLQ control Linux build failed." }
     & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-evalfreeze" ./cmd/evalfreeze
     if ($LASTEXITCODE -ne 0) { throw "Evaluation benchmark freeze Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-datasetfreeze" ./cmd/datasetfreeze
+    if ($LASTEXITCODE -ne 0) { throw "Dataset snapshot Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled

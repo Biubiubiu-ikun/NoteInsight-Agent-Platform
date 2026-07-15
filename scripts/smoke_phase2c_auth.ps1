@@ -319,8 +319,8 @@ $secondPage = Invoke-Api -Method Get -Path "/api/v1/notes/$noteId/comments?limit
 Assert-Status $secondPage 200 "comment keyset next page"
 Assert-Status (Invoke-Api -Method Delete -Path "/api/v1/comments/$secondCommentId" -Token $peerToken) 403 "non-owner delete comment"
 Assert-Status (Invoke-Api -Method Delete -Path "/api/v1/comments/$secondCommentId" -Token $ownerToken) 200 "owner delete comment"
-$deletedCommentSource = Invoke-Psql "SELECT COUNT(*) FROM evidence_sources WHERE source_type='note_comment' AND source_id=$secondCommentId AND index_status='deleted' AND deleted_at IS NOT NULL;"
-if ($deletedCommentSource -ne "1") { throw "Comment deletion did not propagate to evidence source." }
+$deletedCommentSource = Invoke-Psql "SELECT (SELECT COUNT(*) FROM evidence_sources WHERE source_type='note_comment' AND source_id=$secondCommentId AND (index_status<>'deleted' OR deleted_at IS NULL)),(SELECT COUNT(*) FROM evidence_sources es JOIN note_comments c ON c.id=es.source_id AND c.content_version=es.source_version JOIN evidence_source_payloads esp ON esp.evidence_source_id=es.id WHERE es.source_type='note_comment' AND es.source_id=$secondCommentId AND es.index_status='deleted' AND es.deleted_at IS NOT NULL);"
+if ($deletedCommentSource -ne "0|1") { throw "Comment deletion did not produce one payload-backed tombstone and retire every prior source: $deletedCommentSource" }
 
 Invoke-Psql "UPDATE users SET status='banned', updated_at=now() WHERE id=$peerId;" | Out-Null
 foreach ($case in @(

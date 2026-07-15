@@ -25,6 +25,11 @@ The final post-acceptance archive is `noteinsight_20260715_065618.dump` (12,893,
 SHA-256 `CE2E7486F9F736EFD27A8B26485D9006A9ADB0A8C8C136DE437B0089F659439C`).
 Its archive directory was verified after migration 10 and contains 262 entries.
 
+The Phase 7A-0 archive is `noteinsight_20260716_033326.dump` with SHA-256
+`3424FEF52C080F432E6F230DB579EAE51379CC90C8F1C90CDCED89745F140E92`.
+Its custom-format TOC parses successfully with 316 entries after migration 15. The
+2026-07-15 isolated restore remains the latest full restore exercise.
+
 ## Restore
 
 Stop API and worker traffic before an in-place restore. Run `./scripts/restore_postgres.ps1 -BackupFile <dump> -ConfirmRestore`, then execute the four verification steps above.

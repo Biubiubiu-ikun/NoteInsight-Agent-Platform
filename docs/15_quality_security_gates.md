@@ -1,6 +1,6 @@
 # Quality And Security Gates
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 ## Release Baseline
 
@@ -8,19 +8,21 @@ Commit `f0dee23` and annotated tag `v0.6.4` preserve the Phase 6C baseline. Retr
 
 ## Retrieval Benchmark
 
-`evaluation/benchmarks/retrieval_v3` is the only approved pre-retrieval benchmark. It contains 80 public development cases and ordered SHA-256 commitments for all 240 cases across six balanced adversarial task families. The 160 holdout questions and answers remain in Git-ignored private artifacts. `evalfreeze -verify-only` validates either representation against the same frozen manifest checksum.
+`evaluation/benchmarks/retrieval_v4` is the only approved pre-retrieval benchmark. It is bound to immutable dataset version `2`, contains 80 public development cases and random-nonce SHA-256 commitments for all 240 cases across eight balanced task families. The 160 holdout questions, answers, sources and nonces remain in Git-ignored private artifacts. `evalfreeze -verify-only` validates either representation against manifest checksum `851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74`.
+
+`retrieval_v3` is retired because its deterministic public inputs reproduce every case checksum. It remains historical audit evidence and is forbidden for tuning or quality claims.
 
 ```powershell
 cd backend-go
 go run ./cmd/evalfreeze -verify-only `
-  -output-dir ../evaluation/benchmarks/retrieval_v3
+  -output-dir ../evaluation/benchmarks/retrieval_v4
 ```
 
 ## Test Layers
 
-- Go unit/contract tests: `go test ./...`; statement coverage floor 25%, current 26.13%.
+- Go unit/contract tests: `go test ./...`; statement coverage floor 25%, current 27.72%.
 - Linux race: official `golang:1.25.12-bookworm` over the full repository mount.
-- Integration tag: disposable PostgreSQL database plus live NATS for refresh replay, concurrent rotation, unique interactions, transaction rollback, Outbox lease recovery, frozen rows, DLQ and replay.
+- Integration tag: disposable PostgreSQL database plus live NATS for refresh replay, concurrent rotation, unique interactions, transaction rollback, Outbox lease recovery, evidence history, concurrent dataset freeze/reuse, frozen/retired rows, DLQ and replay.
 - Frontend: Vitest/jsdom with coverage floors of 60/45/55/64 for statements/branches/functions/lines.
 - Playwright: live API desktop and Pixel 7 flows; full authenticated publish/comment/interaction flow runs on desktop.
 - Compose smoke: auth, ownership, banned users, project visibility, source propagation, idempotency and async convergence.

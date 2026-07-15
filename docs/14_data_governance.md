@@ -1,12 +1,13 @@
 # Data Governance Baseline
 
-Updated: 2026-07-15
+Updated: 2026-07-16
 
 ## Scope And Ownership
 
 - Every note belongs to one `project`; project membership is the authorization boundary.
-- Every project owns a default `community` dataset. `dataset_notes` records the note version included in that dataset.
-- `evidence_sources` is the canonical source registry for notes, media OCR/captions, and comments. It records project, dataset, visibility, content hash, source version, index state, and deletion state.
+- Every project owns a default `community` dataset. `dataset_notes` is mutable current membership; `dataset_versions` and `dataset_version_sources` preserve immutable experiment snapshots.
+- `evidence_sources` is the source registry for notes, media OCR/captions, and comments. It records project, dataset, visibility, content hash, immutable source version, index state, and deletion state.
+- `evidence_source_payloads` preserves canonical text and the complete source payload for each version; frozen dataset references are rejected if any payload is unavailable.
 - PostgreSQL rows and transactional Outbox events are facts. Redis, NATS, rankings, and future search indexes are rebuildable derivatives.
 
 ## Deletion Propagation
@@ -14,7 +15,7 @@ Updated: 2026-07-15
 1. Note and comment API deletes are soft deletes with a deletion timestamp.
 2. Database triggers immediately mark current and child Evidence Sources as `deleted`.
 3. `note.deleted` and `comment.deleted` events invalidate cache/ranking state and will remove future lexical/vector index entries.
-4. Previous Evidence Source versions remain as audit history but are never eligible for active retrieval.
+4. Previous Evidence Source versions remain as audit history but are never eligible for active current-dataset retrieval. Frozen experiments resolve their exact recorded source version.
 5. A future hard-delete maintenance job must remove credentials, sessions, PII, source rows, index entries, and generated-report citations in one auditable workflow.
 
 ## Retention
@@ -45,6 +46,8 @@ Updated: 2026-07-15
 - Citations must resolve to an active source version and include source ID, version, selector/offset, content hash, and ingestion version.
 - Banned-user content remains excluded from new writes; product/legal policy must decide whether existing content is hidden or retained.
 - No-answer evaluation cases must not be satisfied from another project or deleted evidence.
+- `no_relevant_document` and `insufficient_evidence` are separate outcomes; the latter may cite relevant sources while refusing an unsupported claim.
+- Retrieval experiments and benchmark claims must name an immutable `dataset_version_id` and parser/tokenizer version.
 
 ## Audit Evidence
 

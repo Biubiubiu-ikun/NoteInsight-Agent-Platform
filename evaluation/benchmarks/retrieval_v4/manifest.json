@@ -1,0 +1,33 @@
+{
+  "benchmark_id": "retrieval_v4_20260716",
+  "benchmark_version": "retrieval_v4",
+  "source_run_id": "phase6c_quality_v2_20260715",
+  "generator_version": "private_authored_eval_v4",
+  "seed": 0,
+  "status": "frozen",
+  "case_count": 240,
+  "split_counts": {
+    "development": 80,
+    "holdout": 160
+  },
+  "task_counts": {
+    "authorization_boundary": 30,
+    "cross_note_compare": 30,
+    "insufficient_evidence": 30,
+    "no_relevant_document": 30,
+    "ocr_detail": 30,
+    "semantic_paraphrase": 30,
+    "temporal_conflict": 30,
+    "typo_robustness": 30
+  },
+  "review_counts": {
+    "machine_validated": 240
+  },
+  "manifest_checksum": "851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74",
+  "dataset_version_id": 2,
+  "commitment_scheme": "sha256_nonce_case_checksum_v1",
+  "approval_status": "approved",
+  "artifact_scope": "public_development_with_sealed_holdout",
+  "development_file": "development.jsonl",
+  "commitments_file": "case_commitments.jsonl"
+}
