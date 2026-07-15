@@ -41,12 +41,17 @@ function Invoke-Api {
         }
 
         $status = [int]$errorResponse.StatusCode
-        $raw = $null
-        if ($null -ne $errorResponse.Content -and
+        $raw = $errorRecord.ErrorDetails.Message
+        if (-not $raw -and $null -ne $errorResponse.Content -and
             $errorResponse.Content.PSObject.Methods.Name -contains "ReadAsStringAsync") {
-            $raw = $errorResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            try {
+                $raw = $errorResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+            }
+            catch [System.ObjectDisposedException] {
+                $raw = $null
+            }
         }
-        elseif ($errorResponse.PSObject.Methods.Name -contains "GetResponseStream") {
+        if (-not $raw -and $errorResponse.PSObject.Methods.Name -contains "GetResponseStream") {
             $reader = [IO.StreamReader]::new($errorResponse.GetResponseStream())
             try {
                 $raw = $reader.ReadToEnd()
@@ -54,9 +59,6 @@ function Invoke-Api {
             finally {
                 $reader.Dispose()
             }
-        }
-        elseif ($errorRecord.ErrorDetails.Message) {
-            $raw = $errorRecord.ErrorDetails.Message
         }
 
         $content = if ($raw) { $raw | ConvertFrom-Json } else { $null }

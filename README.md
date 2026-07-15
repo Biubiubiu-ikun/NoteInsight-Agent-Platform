@@ -4,6 +4,8 @@ NoteInsight is a creator-insight platform built on a Xiaohongshu-style image-tex
 
 `最新项目规划.md` is the only authoritative plan. Files with old-version prefixes are historical references.
 
+Private development remote: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform).
+
 ## Current Status
 
 - Go + Gin + sqlx + PostgreSQL note community; GORM is not used.
@@ -16,7 +18,7 @@ NoteInsight is a creator-insight platform built on a Xiaohongshu-style image-tex
 - Meaningful Chinese note/OCR/comment corpus plus a separate frozen six-task adversarial retrieval benchmark.
 - React console for feed, search, ranking, auth, publishing, detail, comments and interactions.
 - Prometheus metrics/alerts, provisioned Grafana dashboard, maintenance and recovery tools.
-- OpenAPI/Gin drift checks, domain-event JSON Schema, Go/React/integration/E2E tests, Compose acceptance, CodeQL, SBOM and vulnerability gates.
+- OpenAPI/Gin drift checks, domain-event JSON Schema, Go/React/integration/E2E tests, Compose acceptance, CodeQL SARIF, SBOM and vulnerability gates.
 
 Phase 6C is complete. Phase 7A canonical Evidence Store ingestion is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
 

@@ -17,7 +17,7 @@ Audit date: 2026-07-15
 | Phase 6A | Complete | capacity matrix, cold/warm/hotspot/spike evidence |
 | Phase 6B | Implemented; long-soak gate open | 4.21M-row isolated data and 10-minute mixed soak |
 | Phase 6C | Complete | project/dataset boundaries, Evidence Source registry, auth/event/ops/test hardening |
-| Release hardening | Complete locally; remote record pending | frozen independent benchmark, integration/E2E depth, contracts, SBOM and vulnerability gates |
+| Release hardening | Complete; remote CI enabled | frozen independent benchmark, integration/E2E depth, contracts, SBOM and vulnerability gates |
 | Frontend console | MVP complete | feed, search, ranking, auth, publish, detail, comments, interactions and status |
 | Phase 7A | Next | canonical evidence documents/chunks and deterministic ingestion |
 
@@ -44,6 +44,8 @@ Audit date: 2026-07-15
 - Disposable-database integration tests cover refresh replay/concurrency, unique interactions, transaction rollback, Outbox lease recovery and benchmark immutability; live NATS covers DLQ and replay.
 - Frontend coverage floors and committed Playwright desktop/mobile E2E now protect the real product workflow.
 - Phase 6C is preserved by commit `f0dee23` and annotated tag `v0.6.4`; subsequent hardening is a separate change.
+- The private GitHub remote preserves `main`, `v0.6.4` and `v0.6.5`; Actions now exercises the Linux release chain instead of relying only on local workflow validation.
+- CodeQL runs in local-SARIF gate mode while the private repository lacks GitHub Code Security; setting repository variable `CODEQL_UPLOAD=true` restores platform upload when that product is enabled.
 - Product gaps such as unlike/uncollect, viewer state, author projection, deep links, server-side search and ranking N+1 were closed.
 
 ## Open Production Gates
@@ -52,6 +54,6 @@ Audit date: 2026-07-15
 - Full OpenTelemetry export, `pg_stat_statements`, multi-instance tests and external load generation remain.
 - Managed secrets, TLS, service authentication, private networking, image signing/registry policy and PostgreSQL PITR require a deployment environment.
 - A stratified independent human review of the holdout set is still needed before public quality claims.
-- Git remote Actions evidence, protected branches and environment promotion require the code-hosting platform.
+- Protected-branch review and environment promotion still depend on GitHub plan support and a deployment environment.
 
 These items do not block deterministic Evidence Store work, but they do block a production-ready claim.

@@ -31,6 +31,7 @@ go run ./cmd/evalfreeze -verify-only `
 - Go contract test compares every `/api/v1` Gin method/path with OpenAPI in both directions.
 - `promtool check config` loads Prometheus config and all nine alert rules.
 - Actionlint parses both GitHub Actions workflows.
+- CodeQL analyzes Go and JavaScript/TypeScript. Without private-repository GitHub Code Security, CI keeps SARIF as an artifact and fails on findings; set repository variable `CODEQL_UPLOAD=true` only after platform code scanning is enabled.
 
 ## Supply Chain
 
@@ -42,4 +43,4 @@ go run ./cmd/evalfreeze -verify-only `
 
 ## External Gates
 
-Local workflow syntax and every command are verified, but a Git host is still required for a real green Actions run, protected branch, required reviews, environment approvals and registry signing. These controls must not be claimed complete until their remote evidence exists.
+The private GitHub remote is established at `Biubiubiu-ikun/NoteInsight-Agent-Platform`, and Actions executes the Linux quality chain. Protected-branch reviews and environment approvals remain subject to GitHub plan support; registry signing requires a deployment registry. CodeQL platform upload also remains unavailable until GitHub Code Security is enabled, so the current workflow enforces local SARIF instead of silently skipping analysis.

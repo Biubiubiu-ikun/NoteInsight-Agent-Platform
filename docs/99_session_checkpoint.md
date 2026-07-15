@@ -4,14 +4,14 @@ Updated: 2026-07-15
 
 ## Authority
 
-`最新项目规划.md` V6.5 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V6.6 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
 - Phase 1 through Phase 6C are implemented; Phase 6B keeps a long-soak performance gate open.
 - Phase 5C fact materialization is complete.
-- Local P0/P1 pre-retrieval gaps are closed; remote CI/branch controls, independent human holdout review and explicitly recorded production/long-soak gates remain open.
-- Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; current release hardening is the next independent commit.
+- Local P0/P1 pre-retrieval gaps are closed and the private GitHub remote/Actions baseline is established; protected-branch controls, independent human holdout review and production/long-soak gates remain open.
+- Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; release hardening is preserved by tag `v0.6.5`.
 - Frozen retrieval benchmark v3 has 240 unique cases and checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
 - Frontend testing console is available at `http://127.0.0.1:15173/` while the dev server is running.
 - Next planned work is Phase 7A Evidence Store and deterministic ingestion.
@@ -94,6 +94,7 @@ Latest verified data:
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
 - Go statement coverage is 26.13% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
 - Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.
+- GitHub remote: `https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform`; CodeQL uses local-SARIF gate mode until GitHub Code Security is available for the private repository.
 
 ## Stop
 
