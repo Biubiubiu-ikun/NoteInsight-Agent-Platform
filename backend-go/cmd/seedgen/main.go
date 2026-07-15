@@ -627,6 +627,8 @@ type batchInserter struct {
 	rows      [][]any
 }
 
+const maxPostgresBindParameters = 65535
+
 func newBatchInserter(db *sqlx.DB, prefix string, suffix string, cols int, batchSize int) *batchInserter {
 	return &batchInserter{db: db, prefix: prefix, suffix: suffix, cols: cols, batchSize: batchSize}
 }
@@ -660,8 +662,12 @@ func (b *batchInserter) exec(ctx context.Context, rows [][]any) error {
 	if len(rows) == 0 {
 		return nil
 	}
+	argCapacity, err := batchArgumentCapacity(len(rows), b.cols)
+	if err != nil {
+		return err
+	}
 	var builder strings.Builder
-	args := make([]any, 0, len(rows)*b.cols)
+	args := make([]any, 0, argCapacity)
 	builder.WriteString(b.prefix)
 	argIndex := 1
 	for rowIndex, row := range rows {
@@ -680,8 +686,18 @@ func (b *batchInserter) exec(ctx context.Context, rows [][]any) error {
 		args = append(args, row...)
 	}
 	builder.WriteString(b.suffix)
-	_, err := b.db.ExecContext(ctx, builder.String(), args...)
+	_, err = b.db.ExecContext(ctx, builder.String(), args...)
 	return err
+}
+
+func batchArgumentCapacity(rowCount int, columnCount int) (int, error) {
+	if rowCount < 0 || columnCount <= 0 {
+		return 0, fmt.Errorf("invalid batch dimensions: rows=%d columns=%d", rowCount, columnCount)
+	}
+	if rowCount > maxPostgresBindParameters/columnCount {
+		return 0, fmt.Errorf("batch requires more than %d PostgreSQL bind parameters", maxPostgresBindParameters)
+	}
+	return rowCount * columnCount, nil
 }
 
 func seedUniquePairsDB(ctx context.Context, db *sqlx.DB, rng *rand.Rand, target int, leftCount int, rightCount int, leftStart int64, rightStart int64, prefix string, suffix string) error {

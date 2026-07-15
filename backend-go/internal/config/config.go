@@ -157,9 +157,9 @@ func Load() (Config, error) {
 		},
 		Postgres: PostgresConfig{
 			DSN:             getEnv("POSTGRES_DSN", "postgres://creatorinsight:creatorinsight@localhost:5432/creatorinsight?sslmode=disable"),
-			MaxConns:        int32(getEnvInt("POSTGRES_MAX_CONNS", 10)),
-			MinConns:        int32(getEnvInt("POSTGRES_MIN_CONNS", 1)),
-			MaxIdleConns:    int32(getEnvInt("POSTGRES_MAX_IDLE_CONNS", 5)),
+			MaxConns:        getEnvInt32("POSTGRES_MAX_CONNS", 10),
+			MinConns:        getEnvInt32("POSTGRES_MIN_CONNS", 1),
+			MaxIdleConns:    getEnvInt32("POSTGRES_MAX_IDLE_CONNS", 5),
 			ConnMaxIdleTime: getEnvDuration("POSTGRES_CONN_MAX_IDLE_TIME", 5*time.Minute),
 			ConnMaxLifetime: getEnvDuration("POSTGRES_CONN_MAX_LIFETIME", 30*time.Minute),
 			ConnectTimeout:  getEnvDuration("POSTGRES_CONNECT_TIMEOUT", 5*time.Second),
@@ -352,6 +352,18 @@ func getEnvInt(key string, fallback int) int {
 		return fallback
 	}
 	return parsed
+}
+
+func getEnvInt32(key string, fallback int32) int32 {
+	value, ok := os.LookupEnv(key)
+	if !ok || value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseInt(value, 10, 32)
+	if err != nil {
+		return fallback
+	}
+	return int32(parsed)
 }
 
 func getEnvDuration(key string, fallback time.Duration) time.Duration {

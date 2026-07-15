@@ -7,6 +7,25 @@ import (
 	"creatorinsight/backend-go/internal/contentgen"
 )
 
+func TestBatchArgumentCapacity(t *testing.T) {
+	t.Parallel()
+
+	got, err := batchArgumentCapacity(2000, 3)
+	if err != nil {
+		t.Fatalf("batchArgumentCapacity() error = %v", err)
+	}
+	if got != 6000 {
+		t.Fatalf("batchArgumentCapacity() = %d, want 6000", got)
+	}
+
+	if _, err := batchArgumentCapacity(21846, 3); err == nil {
+		t.Fatal("batchArgumentCapacity() expected PostgreSQL parameter limit error")
+	}
+	if _, err := batchArgumentCapacity(1, 0); err == nil {
+		t.Fatal("batchArgumentCapacity() expected invalid column count error")
+	}
+}
+
 func TestBuiltInProfilesAreValid(t *testing.T) {
 	t.Parallel()
 

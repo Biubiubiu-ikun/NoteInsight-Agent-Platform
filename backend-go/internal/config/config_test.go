@@ -46,6 +46,13 @@ func TestLoadDefaults(t *testing.T) {
 	}
 }
 
+func TestGetEnvInt32RejectsOverflow(t *testing.T) {
+	t.Setenv("POSTGRES_MAX_CONNS", "2147483648")
+	if got := getEnvInt32("POSTGRES_MAX_CONNS", 10); got != 10 {
+		t.Fatalf("getEnvInt32() = %d, want fallback 10", got)
+	}
+}
+
 func TestValidateRejectsInvalidPort(t *testing.T) {
 	cfg := Config{
 		HTTP: HTTPConfig{Port: 70000},
