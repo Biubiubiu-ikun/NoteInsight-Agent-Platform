@@ -54,6 +54,6 @@ Audit date: 2026-07-15
 - Full OpenTelemetry export, `pg_stat_statements`, multi-instance tests and external load generation remain.
 - Managed secrets, TLS, service authentication, private networking, image signing/registry policy and PostgreSQL PITR require a deployment environment.
 - A stratified independent human review of the holdout set is still needed before public quality claims.
-- Protected-branch review and environment promotion still depend on GitHub plan support and a deployment environment.
+- CODEOWNERS, a PR evidence template and a security policy are committed. The GitHub API confirms that branch protection for this private repository requires GitHub Pro or public visibility; environment promotion still requires a deployment environment.
 
 These items do not block deterministic Evidence Store work, but they do block a production-ready claim.

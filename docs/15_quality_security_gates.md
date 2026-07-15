@@ -43,4 +43,4 @@ go run ./cmd/evalfreeze -verify-only `
 
 ## External Gates
 
-The private GitHub remote is established at `Biubiubiu-ikun/NoteInsight-Agent-Platform`, and Actions executes the Linux quality chain. Protected-branch reviews and environment approvals remain subject to GitHub plan support; registry signing requires a deployment registry. CodeQL platform upload also remains unavailable until GitHub Code Security is enabled, so the current workflow enforces local SARIF instead of silently skipping analysis.
+The private GitHub remote is established at `Biubiubiu-ikun/NoteInsight-Agent-Platform`, and Actions executes the Linux quality chain. CODEOWNERS, a PR template and `SECURITY.md` document the review path. GitHub's API returns HTTP 403 for branch protection on this GitHub Free private repository, so enforcement requires GitHub Pro or a separately approved visibility change. Environment approvals and registry signing require deployment infrastructure. CodeQL platform upload also remains unavailable until GitHub Code Security is enabled, so the current workflow enforces local SARIF instead of silently skipping analysis.

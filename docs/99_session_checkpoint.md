@@ -10,7 +10,7 @@ Updated: 2026-07-15
 
 - Phase 1 through Phase 6C are implemented; Phase 6B keeps a long-soak performance gate open.
 - Phase 5C fact materialization is complete.
-- Local P0/P1 pre-retrieval gaps are closed and the private GitHub remote/Actions baseline is established; protected-branch controls, independent human holdout review and production/long-soak gates remain open.
+- Local P0/P1 pre-retrieval gaps are closed and the private GitHub remote/Actions baseline is established; CODEOWNERS/PR/security policy are present. Branch protection is blocked by the GitHub Free private-repository limit; independent human holdout review and production/long-soak gates remain open.
 - Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; release hardening is preserved by tag `v0.6.5`.
 - Frozen retrieval benchmark v3 has 240 unique cases and checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
 - Frontend testing console is available at `http://127.0.0.1:15173/` while the dev server is running.
