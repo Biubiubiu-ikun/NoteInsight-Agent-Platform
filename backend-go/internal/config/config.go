@@ -37,6 +37,8 @@ type HTTPConfig struct {
 	ReadTimeout       time.Duration
 	WriteTimeout      time.Duration
 	IdleTimeout       time.Duration
+	AllowedOrigins    []string
+	TrustedProxies    []string
 }
 
 func (c HTTPConfig) Addr() string {
@@ -55,11 +57,14 @@ type LogConfig struct {
 }
 
 type PostgresConfig struct {
-	DSN            string
-	MaxConns       int32
-	MinConns       int32
-	ConnectTimeout time.Duration
-	PingTimeout    time.Duration
+	DSN             string
+	MaxConns        int32
+	MinConns        int32
+	MaxIdleConns    int32
+	ConnMaxIdleTime time.Duration
+	ConnMaxLifetime time.Duration
+	ConnectTimeout  time.Duration
+	PingTimeout     time.Duration
 }
 
 type RedisConfig struct {
@@ -94,6 +99,7 @@ type NATSConfig struct {
 
 type RateLimitConfig struct {
 	Enabled          bool
+	Auth             RateLimitPolicyConfig
 	ContentWrite     RateLimitPolicyConfig
 	CommentWrite     RateLimitPolicyConfig
 	InteractionWrite RateLimitPolicyConfig
@@ -137,10 +143,12 @@ func Load() (Config, error) {
 			ReadTimeout:       getEnvDuration("HTTP_READ_TIMEOUT", 10*time.Second),
 			WriteTimeout:      getEnvDuration("HTTP_WRITE_TIMEOUT", 10*time.Second),
 			IdleTimeout:       getEnvDuration("HTTP_IDLE_TIMEOUT", 60*time.Second),
+			AllowedOrigins:    getEnvList("HTTP_ALLOWED_ORIGINS"),
+			TrustedProxies:    getEnvList("HTTP_TRUSTED_PROXIES"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:       getEnv("AUTH_JWT_SECRET", defaultDevelopmentJWTSecret),
-			AccessTokenTTL:  getEnvDuration("AUTH_ACCESS_TOKEN_TTL", 24*time.Hour),
+			AccessTokenTTL:  getEnvDuration("AUTH_ACCESS_TOKEN_TTL", 30*time.Minute),
 			RefreshTokenTTL: getEnvDuration("AUTH_REFRESH_TOKEN_TTL", 7*24*time.Hour),
 			BcryptCost:      getEnvInt("AUTH_BCRYPT_COST", 10),
 		},
@@ -148,11 +156,14 @@ func Load() (Config, error) {
 			Level: getEnv("LOG_LEVEL", "info"),
 		},
 		Postgres: PostgresConfig{
-			DSN:            getEnv("POSTGRES_DSN", "postgres://creatorinsight:creatorinsight@localhost:5432/creatorinsight?sslmode=disable"),
-			MaxConns:       int32(getEnvInt("POSTGRES_MAX_CONNS", 10)),
-			MinConns:       int32(getEnvInt("POSTGRES_MIN_CONNS", 1)),
-			ConnectTimeout: getEnvDuration("POSTGRES_CONNECT_TIMEOUT", 5*time.Second),
-			PingTimeout:    getEnvDuration("POSTGRES_PING_TIMEOUT", 3*time.Second),
+			DSN:             getEnv("POSTGRES_DSN", "postgres://creatorinsight:creatorinsight@localhost:5432/creatorinsight?sslmode=disable"),
+			MaxConns:        int32(getEnvInt("POSTGRES_MAX_CONNS", 10)),
+			MinConns:        int32(getEnvInt("POSTGRES_MIN_CONNS", 1)),
+			MaxIdleConns:    int32(getEnvInt("POSTGRES_MAX_IDLE_CONNS", 5)),
+			ConnMaxIdleTime: getEnvDuration("POSTGRES_CONN_MAX_IDLE_TIME", 5*time.Minute),
+			ConnMaxLifetime: getEnvDuration("POSTGRES_CONN_MAX_LIFETIME", 30*time.Minute),
+			ConnectTimeout:  getEnvDuration("POSTGRES_CONNECT_TIMEOUT", 5*time.Second),
+			PingTimeout:     getEnvDuration("POSTGRES_PING_TIMEOUT", 3*time.Second),
 		},
 		Redis: RedisConfig{
 			Addr:         getEnv("REDIS_ADDR", "localhost:6379"),
@@ -184,6 +195,10 @@ func Load() (Config, error) {
 		},
 		RateLimit: RateLimitConfig{
 			Enabled: getEnvBool("RATE_LIMIT_ENABLED", true),
+			Auth: RateLimitPolicyConfig{
+				Limit:  int64(getEnvInt("RATE_LIMIT_AUTH_LIMIT", 20)),
+				Window: getEnvDuration("RATE_LIMIT_AUTH_WINDOW", time.Minute),
+			},
 			ContentWrite: RateLimitPolicyConfig{
 				Limit:  int64(getEnvInt("RATE_LIMIT_CONTENT_WRITE_LIMIT", 30)),
 				Window: getEnvDuration("RATE_LIMIT_CONTENT_WRITE_WINDOW", time.Minute),
@@ -227,6 +242,13 @@ func (c Config) Validate() error {
 	if c.HTTP.Port <= 0 || c.HTTP.Port > 65535 {
 		return fmt.Errorf("HTTP_PORT must be between 1 and 65535, got %d", c.HTTP.Port)
 	}
+	for _, proxy := range c.HTTP.TrustedProxies {
+		if net.ParseIP(proxy) == nil {
+			if _, _, err := net.ParseCIDR(proxy); err != nil {
+				return fmt.Errorf("HTTP_TRUSTED_PROXIES contains invalid IP or CIDR %q", proxy)
+			}
+		}
+	}
 	if c.Postgres.DSN == "" {
 		return errors.New("POSTGRES_DSN is required")
 	}
@@ -235,6 +257,12 @@ func (c Config) Validate() error {
 	}
 	if c.Postgres.MaxConns < c.Postgres.MinConns {
 		return errors.New("POSTGRES_MAX_CONNS must be greater than or equal to POSTGRES_MIN_CONNS")
+	}
+	if c.Postgres.MaxIdleConns < 0 || c.Postgres.MaxIdleConns > c.Postgres.MaxConns {
+		return errors.New("POSTGRES_MAX_IDLE_CONNS must be between 0 and POSTGRES_MAX_CONNS")
+	}
+	if c.Postgres.ConnMaxIdleTime <= 0 || c.Postgres.ConnMaxLifetime <= 0 {
+		return errors.New("PostgreSQL connection idle time and lifetime must be greater than 0")
 	}
 	if c.Auth.JWTSecret == "" {
 		return errors.New("AUTH_JWT_SECRET is required")
@@ -245,6 +273,14 @@ func (c Config) Validate() error {
 		}
 		if len(c.Auth.JWTSecret) < 32 {
 			return errors.New("AUTH_JWT_SECRET must be at least 32 characters in production")
+		}
+		if c.Auth.AccessTokenTTL > 2*time.Hour {
+			return errors.New("AUTH_ACCESS_TOKEN_TTL must not exceed 2 hours in production")
+		}
+		for _, origin := range c.HTTP.AllowedOrigins {
+			if origin == "*" {
+				return errors.New("HTTP_ALLOWED_ORIGINS must not contain wildcard in production")
+			}
 		}
 	}
 	if c.Auth.AccessTokenTTL <= 0 {
@@ -267,6 +303,7 @@ func (c Config) Validate() error {
 	}
 	if c.RateLimit.Enabled {
 		policies := map[string]RateLimitPolicyConfig{
+			"auth":              c.RateLimit.Auth,
 			"content write":     c.RateLimit.ContentWrite,
 			"comment write":     c.RateLimit.CommentWrite,
 			"interaction write": c.RateLimit.InteractionWrite,
@@ -339,4 +376,20 @@ func getEnvBool(key string, fallback bool) bool {
 		return fallback
 	}
 	return parsed
+}
+
+func getEnvList(key string) []string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }

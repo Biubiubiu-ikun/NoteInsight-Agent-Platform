@@ -29,6 +29,12 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Migration Linux build failed." }
     go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-reconcile" ./cmd/reconcile
     if ($LASTEXITCODE -ne 0) { throw "Reconcile Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-materialize" ./cmd/materialize
+    if ($LASTEXITCODE -ne 0) { throw "Fact materialization Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-maintenance" ./cmd/maintenance
+    if ($LASTEXITCODE -ne 0) { throw "Maintenance Linux build failed." }
+    go build -trimpath -ldflags="-s -w" -o "bin/noteinsight-dlqctl" ./cmd/dlqctl
+    if ($LASTEXITCODE -ne 0) { throw "DLQ control Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled

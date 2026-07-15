@@ -185,6 +185,93 @@ WHERE refresh_token_hash = $1`,
 	return session, nil
 }
 
+func (r *Repository) RotateSession(
+	ctx context.Context,
+	oldRefreshTokenHash string,
+	newRefreshTokenHash string,
+	userAgent string,
+	ipAddress string,
+	expiresAt time.Time,
+) (sessionRecord, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return sessionRecord{}, fmt.Errorf("begin refresh token rotation: %w", err)
+	}
+	defer rollbackUnlessCommitted(tx)
+
+	var current sessionRecord
+	err = tx.QueryRowxContext(ctx, `
+SELECT id, user_id, refresh_token_hash, revoked, expires_at, replaced_by_session_id
+FROM user_sessions
+WHERE refresh_token_hash = $1
+FOR UPDATE`, oldRefreshTokenHash).Scan(
+		&current.ID,
+		&current.UserID,
+		&current.RefreshTokenHash,
+		&current.Revoked,
+		&current.ExpiresAt,
+		&current.ReplacedBy,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return sessionRecord{}, ErrUnauthorized
+	}
+	if err != nil {
+		return sessionRecord{}, mapDBError(err)
+	}
+	if current.Revoked || time.Now().After(current.ExpiresAt) {
+		if current.ReplacedBy.Valid {
+			if _, revokeErr := tx.ExecContext(ctx, `
+UPDATE user_sessions
+SET revoked = TRUE, updated_at = now()
+WHERE user_id = $1 AND revoked = FALSE`, current.UserID); revokeErr != nil {
+				return sessionRecord{}, mapDBError(revokeErr)
+			}
+			if commitErr := tx.Commit(); commitErr != nil {
+				return sessionRecord{}, fmt.Errorf("commit refresh token reuse revocation: %w", commitErr)
+			}
+		}
+		return sessionRecord{}, ErrUnauthorized
+	}
+
+	var replacement sessionRecord
+	err = tx.QueryRowxContext(ctx, `
+INSERT INTO user_sessions (
+    user_id, refresh_token_hash, user_agent, ip_address,
+    revoked, expires_at, created_at, updated_at
+)
+VALUES ($1, $2, NULLIF($3, ''), NULLIF($4, ''), FALSE, $5, now(), now())
+RETURNING id, user_id, refresh_token_hash, revoked, expires_at`,
+		current.UserID,
+		newRefreshTokenHash,
+		userAgent,
+		ipAddress,
+		expiresAt,
+	).Scan(
+		&replacement.ID,
+		&replacement.UserID,
+		&replacement.RefreshTokenHash,
+		&replacement.Revoked,
+		&replacement.ExpiresAt,
+	)
+	if err != nil {
+		return sessionRecord{}, mapDBError(err)
+	}
+
+	if _, err := tx.ExecContext(ctx, `
+UPDATE user_sessions
+SET revoked = TRUE,
+    last_used_at = now(),
+    replaced_by_session_id = $2,
+    updated_at = now()
+WHERE id = $1`, current.ID, replacement.ID); err != nil {
+		return sessionRecord{}, mapDBError(err)
+	}
+	if err := tx.Commit(); err != nil {
+		return sessionRecord{}, fmt.Errorf("commit refresh token rotation: %w", err)
+	}
+	return replacement, nil
+}
+
 func (r *Repository) RevokeSessionByRefreshHash(ctx context.Context, refreshTokenHash string) error {
 	result, err := r.db.ExecContext(ctx, `
 UPDATE user_sessions

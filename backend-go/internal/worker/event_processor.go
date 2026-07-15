@@ -65,6 +65,12 @@ func (p *EventProcessor) Process(ctx context.Context, envelope messaging.EventEn
 	if envelope.EventID == "" || envelope.EventType == "" {
 		return false, fmt.Errorf("event_id and event_type are required")
 	}
+	if envelope.SchemaVersion == 0 {
+		envelope.SchemaVersion = 1
+	}
+	if envelope.SchemaVersion != 1 {
+		return false, fmt.Errorf("unsupported event schema version %d", envelope.SchemaVersion)
+	}
 
 	var payload eventPayload
 	if len(envelope.Payload) > 0 {
@@ -111,7 +117,7 @@ func (p *EventProcessor) refreshDerivedData(ctx context.Context, eventType strin
 		return nil
 	}
 	switch eventType {
-	case "note.created", "note.liked", "note.collected", "note.shared":
+	case "note.created", "note.updated", "note.viewed", "note.liked", "note.unliked", "note.collected", "note.uncollected", "note.shared":
 		if payload.NoteID <= 0 {
 			return nil
 		}
@@ -119,6 +125,14 @@ func (p *EventProcessor) refreshDerivedData(ctx context.Context, eventType strin
 			return err
 		}
 		return p.refreshNoteRanking(ctx, payload.NoteID)
+	case "note.deleted":
+		if payload.NoteID <= 0 {
+			return nil
+		}
+		if err := p.invalidateNoteCache(ctx, payload.NoteID); err != nil {
+			return err
+		}
+		return p.removeNoteRankings(ctx, payload.NoteID)
 	case "comment.created", "comment.deleted":
 		if payload.NoteID <= 0 {
 			return nil
@@ -132,7 +146,7 @@ func (p *EventProcessor) refreshDerivedData(ctx context.Context, eventType strin
 			}
 		}
 		return p.refreshNoteRanking(ctx, payload.NoteID)
-	case "comment.liked":
+	case "comment.liked", "comment.unliked":
 		if payload.NoteID > 0 {
 			if err := p.redis.Del(ctx, commentFirstPageCacheKey(payload.NoteID)).Err(); err != nil {
 				return err
@@ -145,6 +159,20 @@ func (p *EventProcessor) refreshDerivedData(ctx context.Context, eventType strin
 	default:
 		return nil
 	}
+}
+
+func (p *EventProcessor) removeNoteRankings(ctx context.Context, noteID int64) error {
+	member := strconv.FormatInt(noteID, 10)
+	if err := p.redis.ZRem(ctx, "ranking:notes:daily", member).Err(); err != nil {
+		return err
+	}
+	iter := p.redis.Scan(ctx, 0, "ranking:notes:*:daily", 100).Iterator()
+	for iter.Next(ctx) {
+		if err := p.redis.ZRem(ctx, iter.Val(), member).Err(); err != nil {
+			return err
+		}
+	}
+	return iter.Err()
 }
 
 func (p *EventProcessor) invalidateNoteCache(ctx context.Context, noteID int64) error {
@@ -199,18 +227,30 @@ func behaviorEventType(eventType string) string {
 	switch eventType {
 	case "note.created":
 		return "note_created"
+	case "note.updated":
+		return "note_updated"
+	case "note.deleted":
+		return "note_deleted"
+	case "note.viewed":
+		return "note_viewed"
 	case "comment.created":
 		return "comment_created"
 	case "comment.deleted":
 		return "comment_deleted"
 	case "note.liked":
 		return "note_liked"
+	case "note.unliked":
+		return "note_unliked"
 	case "note.collected":
 		return "note_collected"
+	case "note.uncollected":
+		return "note_uncollected"
 	case "note.shared":
 		return "note_shared"
 	case "comment.liked":
 		return "comment_liked"
+	case "comment.unliked":
+		return "comment_unliked"
 	default:
 		return eventType
 	}

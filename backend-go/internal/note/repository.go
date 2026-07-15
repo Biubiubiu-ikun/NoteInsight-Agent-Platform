@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"creatorinsight/backend-go/internal/outbox"
@@ -60,9 +61,9 @@ func (r *Repository) CreateNote(ctx context.Context, input CreateNoteInput) (Not
 
 	note, err := scanNote(tx.QueryRowxContext(ctx, `
 INSERT INTO notes (
-    project_id, author_id, title, body, category, topics, tags, location, product_entities
+    project_id, author_id, title, body, category, topics, tags, location, product_entities, visibility
 )
-VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9::jsonb)
+VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9::jsonb, $10)
 RETURNING `+noteSelectColumns(),
 		input.ProjectID,
 		input.AuthorID,
@@ -73,6 +74,7 @@ RETURNING `+noteSelectColumns(),
 		tags,
 		location,
 		productEntities,
+		input.Visibility,
 	))
 	if err != nil {
 		return Note{}, mapDBError(err)
@@ -119,6 +121,9 @@ RETURNING id, note_id, media_type, COALESCE(url, ''), COALESCE(caption, ''), COA
 	if err := tx.Commit(); err != nil {
 		return Note{}, fmt.Errorf("commit create note: %w", err)
 	}
+	if notes := []Note{note}; r.attachAuthors(ctx, notes) == nil {
+		note = notes[0]
+	}
 	return note, nil
 }
 
@@ -139,7 +144,83 @@ WHERE id = $1 AND status = 'published'`,
 		return Note{}, err
 	}
 	note.Media = media
+	notes := []Note{note}
+	if err := r.attachAuthors(ctx, notes); err != nil {
+		return Note{}, err
+	}
+	note = notes[0]
 	return note, nil
+}
+
+func (r *Repository) CanReadNote(ctx context.Context, noteID int64, userID int64) (bool, error) {
+	var allowed bool
+	err := r.db.QueryRowContext(ctx, `
+SELECT visibility = 'public' OR EXISTS (
+    SELECT 1 FROM project_members pm
+    WHERE pm.project_id = notes.project_id
+      AND pm.user_id = $2
+      AND pm.status = 'active'
+)
+FROM notes
+WHERE id = $1 AND status = 'published'`, noteID, userID).Scan(&allowed)
+	if err != nil {
+		return false, mapDBError(err)
+	}
+	return allowed, nil
+}
+
+func (r *Repository) CanWriteProject(ctx context.Context, projectID int64, userID int64) (bool, error) {
+	var allowed bool
+	if err := r.db.QueryRowContext(ctx, `
+SELECT EXISTS (
+    SELECT 1
+    FROM projects p
+    JOIN project_members pm ON pm.project_id = p.id
+    WHERE p.id = $1
+      AND p.status = 'active'
+      AND pm.user_id = $2
+      AND pm.status = 'active'
+      AND pm.role IN ('owner', 'admin', 'member')
+)`, projectID, userID).Scan(&allowed); err != nil {
+		return false, mapDBError(err)
+	}
+	return allowed, nil
+}
+
+func (r *Repository) GetViewerState(ctx context.Context, noteID int64, userID int64) (bool, bool, error) {
+	var liked, collected bool
+	err := r.db.QueryRowContext(ctx, `
+SELECT EXISTS (SELECT 1 FROM note_likes WHERE note_id = $1 AND user_id = $2),
+       EXISTS (SELECT 1 FROM note_collects WHERE note_id = $1 AND user_id = $2)`, noteID, userID).Scan(&liked, &collected)
+	return liked, collected, mapDBError(err)
+}
+
+func (r *Repository) RecordNoteView(ctx context.Context, noteID int64, userID int64) error {
+	if userID <= 0 {
+		return nil
+	}
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin note view: %w", err)
+	}
+	defer rollbackUnlessCommitted(tx)
+	projectID, err := publishedNoteProjectID(ctx, tx, noteID)
+	if err != nil {
+		return err
+	}
+	if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
+		AggregateType: "note",
+		AggregateID:   noteID,
+		EventType:     "note.viewed",
+		Payload: map[string]any{
+			"project_id": projectID,
+			"user_id":    userID,
+			"note_id":    noteID,
+		},
+	}); err != nil {
+		return mapDBError(err)
+	}
+	return tx.Commit()
 }
 
 func (r *Repository) ListNotes(ctx context.Context, input ListNotesInput, cursor keysetCursor) ([]Note, bool, error) {
@@ -152,25 +233,43 @@ func (r *Repository) ListNotes(ctx context.Context, input ListNotesInput, cursor
 	)
 	if input.Cursor == "" {
 		rows, err = r.db.QueryxContext(ctx, `
-SELECT `+noteSelectColumns()+`
+SELECT `+noteSummarySelectColumns()+`
 FROM notes
 WHERE status = 'published'
   AND ($1 = '' OR category = $1)
+  AND ($2 = 0 OR project_id = $2)
+  AND ($3 = '' OR title ILIKE '%%' || $3 || '%%' OR body ILIKE '%%' || $3 || '%%')
+  AND (visibility = 'public' OR EXISTS (
+      SELECT 1 FROM project_members pm
+      WHERE pm.project_id = notes.project_id AND pm.user_id = $4 AND pm.status = 'active'
+  ))
 ORDER BY created_at DESC, id DESC
-LIMIT $2`,
+LIMIT $5`,
 			input.Category,
+			input.ProjectID,
+			input.Query,
+			input.ViewerID,
 			limitWithLookahead,
 		)
 	} else {
 		rows, err = r.db.QueryxContext(ctx, `
-SELECT `+noteSelectColumns()+`
+SELECT `+noteSummarySelectColumns()+`
 FROM notes
 WHERE status = 'published'
   AND ($1 = '' OR category = $1)
-  AND (created_at, id) < ($2, $3)
+  AND ($2 = 0 OR project_id = $2)
+  AND ($3 = '' OR title ILIKE '%%' || $3 || '%%' OR body ILIKE '%%' || $3 || '%%')
+  AND (visibility = 'public' OR EXISTS (
+      SELECT 1 FROM project_members pm
+      WHERE pm.project_id = notes.project_id AND pm.user_id = $4 AND pm.status = 'active'
+  ))
+  AND (created_at, id) < ($5, $6)
 ORDER BY created_at DESC, id DESC
-LIMIT $4`,
+LIMIT $7`,
 			input.Category,
+			input.ProjectID,
+			input.Query,
+			input.ViewerID,
 			cursor.CreatedAt,
 			cursor.ID,
 			limitWithLookahead,
@@ -197,7 +296,50 @@ LIMIT $4`,
 	if hasMore {
 		notes = notes[:input.Limit]
 	}
+	if err := r.attachAuthors(ctx, notes); err != nil {
+		return nil, false, err
+	}
+	if err := r.attachViewerStates(ctx, notes, input.ViewerID); err != nil {
+		return nil, false, err
+	}
 	return notes, hasMore, nil
+}
+
+func (r *Repository) GetNotesByIDs(ctx context.Context, ids []int64, viewerID int64) ([]Note, error) {
+	if len(ids) == 0 {
+		return []Note{}, nil
+	}
+	rows, err := r.db.QueryxContext(ctx, `
+SELECT `+noteSummarySelectColumns()+`
+FROM notes
+WHERE id = ANY($1::bigint[])
+  AND status = 'published'
+  AND (visibility = 'public' OR EXISTS (
+      SELECT 1 FROM project_members pm
+      WHERE pm.project_id = notes.project_id AND pm.user_id = $2 AND pm.status = 'active'
+  ))`, ids, viewerID)
+	if err != nil {
+		return nil, mapDBError(err)
+	}
+	defer rows.Close()
+	notes := make([]Note, 0, len(ids))
+	for rows.Next() {
+		found, err := scanNote(rows)
+		if err != nil {
+			return nil, mapDBError(err)
+		}
+		notes = append(notes, found)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, mapDBError(err)
+	}
+	if err := r.attachAuthors(ctx, notes); err != nil {
+		return nil, err
+	}
+	if err := r.attachViewerStates(ctx, notes, viewerID); err != nil {
+		return nil, err
+	}
+	return notes, nil
 }
 
 func (r *Repository) CreateComment(ctx context.Context, noteID int64, input CreateCommentInput) (NoteComment, error) {
@@ -208,7 +350,8 @@ func (r *Repository) CreateComment(ctx context.Context, noteID int64, input Crea
 	}
 	defer rollbackUnlessCommitted(tx)
 
-	if err := ensurePublishedNote(ctx, tx, noteID); err != nil {
+	projectID, err := publishedNoteProjectID(ctx, tx, noteID)
+	if err != nil {
 		return NoteComment{}, err
 	}
 
@@ -248,6 +391,7 @@ RETURNING `+commentSelectColumns(),
 		EventType:     "comment.created",
 		Payload: map[string]any{
 			"user_id":    input.UserID,
+			"project_id": projectID,
 			"note_id":    noteID,
 			"comment_id": comment.ID,
 			"parent_id":  input.ParentID,
@@ -327,7 +471,8 @@ func (r *Repository) LikeNote(ctx context.Context, noteID int64, userID int64) (
 	}
 	defer rollbackUnlessCommitted(tx)
 
-	if err := ensurePublishedNote(ctx, tx, noteID); err != nil {
+	projectID, err := publishedNoteProjectID(ctx, tx, noteID)
+	if err != nil {
 		return IdempotentActionResult{}, err
 	}
 
@@ -354,8 +499,9 @@ RETURNING true`,
 			AggregateID:   noteID,
 			EventType:     "note.liked",
 			Payload: map[string]any{
-				"user_id": userID,
-				"note_id": noteID,
+				"project_id": projectID,
+				"user_id":    userID,
+				"note_id":    noteID,
 			},
 		}); err != nil {
 			return IdempotentActionResult{}, mapDBError(err)
@@ -376,7 +522,8 @@ func (r *Repository) CollectNote(ctx context.Context, noteID int64, userID int64
 	}
 	defer rollbackUnlessCommitted(tx)
 
-	if err := ensurePublishedNote(ctx, tx, noteID); err != nil {
+	projectID, err := publishedNoteProjectID(ctx, tx, noteID)
+	if err != nil {
 		return IdempotentActionResult{}, err
 	}
 
@@ -404,6 +551,7 @@ RETURNING true`,
 			AggregateID:   noteID,
 			EventType:     "note.collected",
 			Payload: map[string]any{
+				"project_id":      projectID,
 				"user_id":         userID,
 				"note_id":         noteID,
 				"collection_name": collectionName,
@@ -427,7 +575,8 @@ func (r *Repository) ShareNote(ctx context.Context, noteID int64, userID int64, 
 	}
 	defer rollbackUnlessCommitted(tx)
 
-	if err := ensurePublishedNote(ctx, tx, noteID); err != nil {
+	projectID, err := publishedNoteProjectID(ctx, tx, noteID)
+	if err != nil {
 		return ShareNoteResult{}, err
 	}
 
@@ -453,10 +602,11 @@ RETURNING id`,
 		AggregateID:   noteID,
 		EventType:     "note.shared",
 		Payload: map[string]any{
-			"user_id":  userID,
-			"note_id":  noteID,
-			"share_id": shareID,
-			"channel":  channel,
+			"project_id": projectID,
+			"user_id":    userID,
+			"note_id":    noteID,
+			"share_id":   shareID,
+			"channel":    channel,
 		},
 	}); err != nil {
 		return ShareNoteResult{}, mapDBError(err)
@@ -494,8 +644,12 @@ RETURNING true`,
 	}
 
 	if applied {
-		var noteID int64
-		if err := tx.QueryRowContext(ctx, `SELECT note_id FROM note_comments WHERE id = $1`, commentID).Scan(&noteID); err != nil {
+		var noteID, projectID int64
+		if err := tx.QueryRowContext(ctx, `
+SELECT c.note_id, n.project_id
+FROM note_comments c
+JOIN notes n ON n.id = c.note_id
+WHERE c.id = $1 AND c.status = 1`, commentID).Scan(&noteID, &projectID); err != nil {
 			return IdempotentActionResult{}, mapDBError(err)
 		}
 		if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
@@ -503,6 +657,7 @@ RETURNING true`,
 			AggregateID:   commentID,
 			EventType:     "comment.liked",
 			Payload: map[string]any{
+				"project_id": projectID,
 				"user_id":    userID,
 				"note_id":    noteID,
 				"comment_id": commentID,
@@ -518,8 +673,117 @@ RETURNING true`,
 	return IdempotentActionResult{ResourceID: commentID, UserID: userID, Applied: applied, Count: count, CountPending: applied, Action: "like_comment"}, nil
 }
 
+func (r *Repository) UnlikeNote(ctx context.Context, noteID int64, userID int64) (IdempotentActionResult, error) {
+	return r.removeNoteInteraction(ctx, noteID, userID, "note_likes", "note.unliked", "unlike_note", "like_count")
+}
+
+func (r *Repository) UncollectNote(ctx context.Context, noteID int64, userID int64) (IdempotentActionResult, error) {
+	return r.removeNoteInteraction(ctx, noteID, userID, "note_collects", "note.uncollected", "uncollect_note", "collect_count")
+}
+
+func (r *Repository) removeNoteInteraction(
+	ctx context.Context,
+	noteID int64,
+	userID int64,
+	table string,
+	eventType string,
+	action string,
+	countColumn string,
+) (IdempotentActionResult, error) {
+	defer observability.ObserveDB(action, time.Now())
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return IdempotentActionResult{}, fmt.Errorf("begin %s: %w", action, err)
+	}
+	defer rollbackUnlessCommitted(tx)
+	projectID, err := publishedNoteProjectID(ctx, tx, noteID)
+	if err != nil {
+		return IdempotentActionResult{}, err
+	}
+	query := fmt.Sprintf("DELETE FROM %s WHERE note_id = $1 AND user_id = $2 RETURNING true", table)
+	applied, err := insertIdempotent(ctx, tx, query, noteID, userID)
+	if err != nil {
+		return IdempotentActionResult{}, mapDBError(err)
+	}
+	countQuery := fmt.Sprintf("SELECT %s FROM notes WHERE id = $1", countColumn)
+	count, err := readMaterializedCount(ctx, tx, countQuery, noteID)
+	if err != nil {
+		return IdempotentActionResult{}, mapDBError(err)
+	}
+	if applied {
+		if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
+			AggregateType: "note",
+			AggregateID:   noteID,
+			EventType:     eventType,
+			Payload: map[string]any{
+				"project_id": projectID,
+				"user_id":    userID,
+				"note_id":    noteID,
+			},
+		}); err != nil {
+			return IdempotentActionResult{}, mapDBError(err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return IdempotentActionResult{}, fmt.Errorf("commit %s: %w", action, err)
+	}
+	return IdempotentActionResult{ResourceID: noteID, UserID: userID, Applied: applied, Count: count, CountPending: applied, Action: action}, nil
+}
+
+func (r *Repository) UnlikeComment(ctx context.Context, commentID int64, userID int64) (IdempotentActionResult, error) {
+	defer observability.ObserveDB("comment_unlike", time.Now())
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return IdempotentActionResult{}, fmt.Errorf("begin unlike comment: %w", err)
+	}
+	defer rollbackUnlessCommitted(tx)
+	var noteID, projectID int64
+	if err := tx.QueryRowContext(ctx, `
+SELECT c.note_id, n.project_id
+FROM note_comments c
+JOIN notes n ON n.id = c.note_id
+WHERE c.id = $1 AND c.status = 1`, commentID).Scan(&noteID, &projectID); err != nil {
+		return IdempotentActionResult{}, mapDBError(err)
+	}
+	applied, err := insertIdempotent(ctx, tx, `
+DELETE FROM note_comment_likes
+WHERE comment_id = $1 AND user_id = $2
+RETURNING true`, commentID, userID)
+	if err != nil {
+		return IdempotentActionResult{}, mapDBError(err)
+	}
+	count, err := readMaterializedCount(ctx, tx, `SELECT like_count FROM note_comments WHERE id = $1`, commentID)
+	if err != nil {
+		return IdempotentActionResult{}, mapDBError(err)
+	}
+	if applied {
+		if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
+			AggregateType: "comment",
+			AggregateID:   commentID,
+			EventType:     "comment.unliked",
+			Payload: map[string]any{
+				"project_id": projectID,
+				"user_id":    userID,
+				"note_id":    noteID,
+				"comment_id": commentID,
+			},
+		}); err != nil {
+			return IdempotentActionResult{}, mapDBError(err)
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		return IdempotentActionResult{}, fmt.Errorf("commit unlike comment: %w", err)
+	}
+	return IdempotentActionResult{ResourceID: commentID, UserID: userID, Applied: applied, Count: count, CountPending: applied, Action: "unlike_comment"}, nil
+}
+
 func (r *Repository) UpdateNote(ctx context.Context, noteID int64, input UpdateNoteInput) (Note, error) {
 	defer observability.ObserveDB("note_update", time.Now())
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return Note{}, fmt.Errorf("begin update note: %w", err)
+	}
+	defer rollbackUnlessCommitted(tx)
 	title := ""
 	body := ""
 	category := ""
@@ -536,11 +800,12 @@ func (r *Repository) UpdateNote(ctx context.Context, noteID int64, input UpdateN
 		category = *input.Category
 	}
 
-	note, err := scanNote(r.db.QueryRowxContext(ctx, `
+	note, err := scanNote(tx.QueryRowxContext(ctx, `
 UPDATE notes
 SET title = CASE WHEN $2 THEN $3 ELSE title END,
     body = CASE WHEN $4 THEN $5 ELSE body END,
     category = CASE WHEN $6 THEN $7 ELSE category END,
+    content_version = content_version + 1,
     updated_at = now()
 WHERE id = $1 AND status = 'published'
 RETURNING `+noteSelectColumns(),
@@ -555,34 +820,66 @@ RETURNING `+noteSelectColumns(),
 	if err != nil {
 		return Note{}, mapDBError(err)
 	}
+	if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
+		AggregateType: "note",
+		AggregateID:   noteID,
+		EventType:     "note.updated",
+		Payload: map[string]any{
+			"project_id":      note.ProjectID,
+			"user_id":         input.ActorUserID,
+			"note_id":         noteID,
+			"content_version": note.ContentVersion,
+		},
+	}); err != nil {
+		return Note{}, mapDBError(err)
+	}
+	if err := tx.Commit(); err != nil {
+		return Note{}, fmt.Errorf("commit update note: %w", err)
+	}
 
 	media, err := r.listMedia(ctx, noteID)
 	if err != nil {
 		return Note{}, err
 	}
 	note.Media = media
+	if notes := []Note{note}; r.attachAuthors(ctx, notes) == nil {
+		note = notes[0]
+	}
 	return note, nil
 }
 
-func (r *Repository) SoftDeleteNote(ctx context.Context, noteID int64) error {
+func (r *Repository) SoftDeleteNote(ctx context.Context, noteID int64, actorUserID int64) error {
 	defer observability.ObserveDB("note_soft_delete", time.Now())
-	result, err := r.db.ExecContext(ctx, `
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin soft delete note: %w", err)
+	}
+	defer rollbackUnlessCommitted(tx)
+	var projectID, contentVersion int64
+	err = tx.QueryRowContext(ctx, `
 UPDATE notes
-SET status = 'deleted', updated_at = now()
-WHERE id = $1 AND status <> 'deleted'`,
+SET status = 'deleted', deleted_at = now(), content_version = content_version + 1, updated_at = now()
+WHERE id = $1 AND status <> 'deleted'
+RETURNING project_id, content_version`,
 		noteID,
-	)
+	).Scan(&projectID, &contentVersion)
 	if err != nil {
 		return mapDBError(err)
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("read soft delete note rows affected: %w", err)
+	if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
+		AggregateType: "note",
+		AggregateID:   noteID,
+		EventType:     "note.deleted",
+		Payload: map[string]any{
+			"project_id":      projectID,
+			"user_id":         actorUserID,
+			"note_id":         noteID,
+			"content_version": contentVersion,
+		},
+	}); err != nil {
+		return mapDBError(err)
 	}
-	if affected == 0 {
-		return ErrNotFound
-	}
-	return nil
+	return tx.Commit()
 }
 
 func (r *Repository) SoftDeleteComment(ctx context.Context, commentID int64, actorUserID int64) (int64, error) {
@@ -596,12 +893,16 @@ func (r *Repository) SoftDeleteComment(ctx context.Context, commentID int64, act
 	var noteID, parentID int64
 	if err := tx.QueryRowContext(ctx, `
 UPDATE note_comments
-SET status = 0, updated_at = now()
+SET status = 0, deleted_at = now(), updated_at = now()
 WHERE id = $1 AND status = 1
 RETURNING note_id, parent_id`,
 		commentID,
 	).Scan(&noteID, &parentID); err != nil {
 		return 0, mapDBError(err)
+	}
+	projectID, err := noteProjectID(ctx, tx, noteID)
+	if err != nil {
+		return 0, err
 	}
 
 	if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
@@ -609,6 +910,7 @@ RETURNING note_id, parent_id`,
 		AggregateID:   commentID,
 		EventType:     "comment.deleted",
 		Payload: map[string]any{
+			"project_id": projectID,
 			"user_id":    actorUserID,
 			"note_id":    noteID,
 			"comment_id": commentID,
@@ -739,7 +1041,11 @@ COALESCE(tags, '[]'::jsonb)::text,
 COALESCE(location, '{}'::jsonb)::text,
 COALESCE(product_entities, '[]'::jsonb)::text,
 note_type, view_count, like_count, collect_count, comment_count, share_count,
-hot_score, quality_score, status, created_at, updated_at`
+hot_score, quality_score, status, visibility, content_version, deleted_at, created_at, updated_at`
+}
+
+func noteSummarySelectColumns() string {
+	return strings.Replace(noteSelectColumns(), "title, body, category", "title, LEFT(body, 600) AS body, category", 1)
 }
 
 func commentSelectColumns() string {
@@ -770,6 +1076,9 @@ func scanNote(row scanner) (Note, error) {
 		&note.HotScore,
 		&note.QualityScore,
 		&note.Status,
+		&note.Visibility,
+		&note.ContentVersion,
+		&note.DeletedAt,
 		&note.CreatedAt,
 		&note.UpdatedAt,
 	); err != nil {
@@ -852,6 +1161,95 @@ func ensurePublishedNote(ctx context.Context, tx *sqlx.Tx, noteID int64) error {
 	}
 	if !exists {
 		return ErrNotFound
+	}
+	return nil
+}
+
+func publishedNoteProjectID(ctx context.Context, tx *sqlx.Tx, noteID int64) (int64, error) {
+	var projectID int64
+	if err := tx.QueryRowContext(ctx, `SELECT project_id FROM notes WHERE id = $1 AND status = 'published'`, noteID).Scan(&projectID); err != nil {
+		return 0, mapDBError(err)
+	}
+	return projectID, nil
+}
+
+func noteProjectID(ctx context.Context, tx *sqlx.Tx, noteID int64) (int64, error) {
+	var projectID int64
+	if err := tx.QueryRowContext(ctx, `SELECT project_id FROM notes WHERE id = $1`, noteID).Scan(&projectID); err != nil {
+		return 0, mapDBError(err)
+	}
+	return projectID, nil
+}
+
+func (r *Repository) attachAuthors(ctx context.Context, notes []Note) error {
+	if len(notes) == 0 {
+		return nil
+	}
+	ids := make([]int64, 0, len(notes))
+	seen := make(map[int64]struct{}, len(notes))
+	for _, item := range notes {
+		if _, ok := seen[item.AuthorID]; ok {
+			continue
+		}
+		seen[item.AuthorID] = struct{}{}
+		ids = append(ids, item.AuthorID)
+	}
+	query, args, err := sqlx.In(`
+SELECT id,
+       username,
+       COALESCE(nickname, '') AS nickname,
+       COALESCE(avatar_url, '') AS avatar_url
+FROM users
+WHERE id IN (?)`, ids)
+	if err != nil {
+		return err
+	}
+	var authors []AuthorSummary
+	if err := r.db.SelectContext(ctx, &authors, r.db.Rebind(query), args...); err != nil {
+		return mapDBError(err)
+	}
+	byID := make(map[int64]AuthorSummary, len(authors))
+	for _, author := range authors {
+		byID[author.ID] = author
+	}
+	for index := range notes {
+		if author, ok := byID[notes[index].AuthorID]; ok {
+			copy := author
+			notes[index].Author = &copy
+		}
+	}
+	return nil
+}
+
+func (r *Repository) attachViewerStates(ctx context.Context, notes []Note, viewerID int64) error {
+	if viewerID <= 0 || len(notes) == 0 {
+		return nil
+	}
+	ids := make([]int64, len(notes))
+	for index := range notes {
+		ids[index] = notes[index].ID
+	}
+	type viewerState struct {
+		NoteID    int64 `db:"note_id"`
+		Liked     bool  `db:"liked"`
+		Collected bool  `db:"collected"`
+	}
+	var states []viewerState
+	if err := r.db.SelectContext(ctx, &states, `
+SELECT requested.note_id,
+       EXISTS (SELECT 1 FROM note_likes l WHERE l.note_id = requested.note_id AND l.user_id = $2) AS liked,
+       EXISTS (SELECT 1 FROM note_collects c WHERE c.note_id = requested.note_id AND c.user_id = $2) AS collected
+FROM unnest($1::bigint[]) AS requested(note_id)`, ids, viewerID); err != nil {
+		return mapDBError(err)
+	}
+	byID := make(map[int64]viewerState, len(states))
+	for _, state := range states {
+		byID[state.NoteID] = state
+	}
+	for index := range notes {
+		state := byID[notes[index].ID]
+		notes[index].ViewerLiked = state.Liked
+		notes[index].ViewerCollected = state.Collected
 	}
 	return nil
 }

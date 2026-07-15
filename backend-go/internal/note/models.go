@@ -25,9 +25,22 @@ type Note struct {
 	HotScore        float64         `json:"hot_score"`
 	QualityScore    float64         `json:"quality_score"`
 	Status          string          `json:"status"`
+	Visibility      string          `json:"visibility"`
+	ContentVersion  int64           `json:"content_version"`
+	DeletedAt       *time.Time      `json:"deleted_at,omitempty"`
+	ViewerLiked     bool            `json:"viewer_liked"`
+	ViewerCollected bool            `json:"viewer_collected"`
+	Author          *AuthorSummary  `json:"author,omitempty"`
 	Media           []NoteMedia     `json:"media,omitempty"`
 	CreatedAt       time.Time       `json:"created_at"`
 	UpdatedAt       time.Time       `json:"updated_at"`
+}
+
+type AuthorSummary struct {
+	ID        int64  `json:"id" db:"id"`
+	Username  string `json:"username" db:"username"`
+	Nickname  string `json:"nickname" db:"nickname"`
+	AvatarURL string `json:"avatar_url" db:"avatar_url"`
 }
 
 type NoteMedia struct {
@@ -70,13 +83,15 @@ type CreateNoteInput struct {
 	Location        map[string]any
 	ProductEntities []string
 	Media           []CreateNoteMediaInput
+	Visibility      string
 }
 
 type UpdateNoteInput struct {
-	NoteID   string
-	Title    *string
-	Body     *string
-	Category *string
+	NoteID      string
+	ActorUserID int64
+	Title       *string
+	Body        *string
+	Category    *string
 }
 
 type CreateNoteMediaInput struct {
@@ -89,9 +104,12 @@ type CreateNoteMediaInput struct {
 }
 
 type ListNotesInput struct {
-	Category string
-	Limit    int
-	Cursor   string
+	Category  string
+	Query     string
+	ProjectID int64
+	ViewerID  int64
+	Limit     int
+	Cursor    string
 }
 
 type NotePage struct {
@@ -102,6 +120,7 @@ type NotePage struct {
 type HotNoteItem struct {
 	NoteID int64   `json:"note_id"`
 	Score  float64 `json:"score"`
+	Note   *Note   `json:"note,omitempty"`
 }
 
 type HotNotePage struct {
@@ -117,9 +136,10 @@ type CreateCommentInput struct {
 }
 
 type ListCommentsInput struct {
-	NoteID string
-	Limit  int
-	Cursor string
+	NoteID   string
+	ViewerID int64
+	Limit    int
+	Cursor   string
 }
 
 type CommentPage struct {

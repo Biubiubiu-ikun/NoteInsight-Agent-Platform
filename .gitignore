@@ -3,8 +3,14 @@
 .env
 .env.*
 !.env.example
+.tools/
 
 backend-go/bin/
 backend-go/tmp/
 backend-go/coverage*
 load-tests/results/
+frontend/node_modules/
+frontend/dist/
+frontend/*.log
+frontend/*.tsbuildinfo
+artifacts/backups/

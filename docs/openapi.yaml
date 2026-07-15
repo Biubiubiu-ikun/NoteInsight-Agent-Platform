@@ -1,0 +1,340 @@
+openapi: 3.1.0
+info:
+  title: NoteInsight API
+  version: 0.6.3
+  description: Phase 6C public community and authenticated content API.
+servers:
+  - url: http://localhost:18080
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201': { $ref: '#/components/responses/AuthResponse' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200': { $ref: '#/components/responses/AuthResponse' }
+        '401': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      description: Rotates the HttpOnly refresh cookie. A refresh_token body remains supported for CLI clients.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200': { $ref: '#/components/responses/AuthResponse' }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      responses:
+        '200':
+          description: Session revoked and refresh cookie cleared.
+  /api/v1/me:
+    get:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Current user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname: { type: string, maxLength: 64 }
+                avatar_url: { type: string, maxLength: 512 }
+                bio: { type: string, maxLength: 500 }
+      responses:
+        '200':
+          description: Updated user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+  /api/v1/notes:
+    get:
+      tags: [Notes]
+      parameters:
+        - { in: query, name: category, schema: { type: string } }
+        - { in: query, name: q, schema: { type: string } }
+        - { in: query, name: project_id, schema: { type: integer, format: int64 } }
+        - { in: query, name: cursor, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+      responses:
+        '200':
+          description: Keyset-paginated note summaries.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotePage' }
+    post:
+      tags: [Notes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateNoteRequest' }
+      responses:
+        '201':
+          description: Created note.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Note' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/v1/notes/{note_id}:
+    parameters:
+      - { $ref: '#/components/parameters/NoteID' }
+    get:
+      tags: [Notes]
+      responses:
+        '200':
+          description: Full note with media, author projection, and optional viewer state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Note' }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      tags: [Notes]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, maxLength: 255 }
+                body: { type: string, maxLength: 20000 }
+                category: { type: string, maxLength: 64 }
+      responses:
+        '200':
+          description: Updated note; emits note.updated v1.
+        '403': { $ref: '#/components/responses/Error' }
+    delete:
+      tags: [Notes]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Soft-deleted note; emits note.deleted v1. }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/v1/notes/{note_id}/comments:
+    parameters:
+      - { $ref: '#/components/parameters/NoteID' }
+    get:
+      tags: [Comments]
+      parameters:
+        - { in: query, name: cursor, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Keyset-paginated active comments. }
+    post:
+      tags: [Comments]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                parent_id: { type: integer, format: int64, minimum: 0 }
+                content: { type: string, maxLength: 2000 }
+                intent: { type: string, maxLength: 64 }
+      responses:
+        '201': { description: Created comment. }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/v1/comments/{comment_id}:
+    parameters:
+      - $ref: '#/components/parameters/CommentID'
+    delete:
+      tags: [Comments]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Soft-deleted comment; emits comment.deleted v1. }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /api/v1/notes/{note_id}/like:
+    parameters: [{ $ref: '#/components/parameters/NoteID' }]
+    post: &idempotentCreate
+      tags: [Interactions]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Idempotent state transition. }
+        '401': { $ref: '#/components/responses/Error' }
+    delete: &idempotentDelete
+      tags: [Interactions]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Idempotent state removal. }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/v1/notes/{note_id}/collect:
+    parameters: [{ $ref: '#/components/parameters/NoteID' }]
+    post: *idempotentCreate
+    delete: *idempotentDelete
+  /api/v1/comments/{comment_id}/like:
+    parameters:
+      - $ref: '#/components/parameters/CommentID'
+    post: *idempotentCreate
+    delete: *idempotentDelete
+  /api/v1/notes/{note_id}/share:
+    parameters: [{ $ref: '#/components/parameters/NoteID' }]
+    post:
+      tags: [Interactions]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel: { type: string, maxLength: 64 }
+      responses:
+        '200': { description: Recorded share interaction. }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/v1/rankings/notes/daily:
+    get:
+      tags: [Rankings]
+      parameters:
+        - { in: query, name: category, schema: { type: string } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200':
+          description: Ranked note summaries without client-side N+1 requests.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    NoteID:
+      in: path
+      name: note_id
+      required: true
+      schema: { type: integer, format: int64, minimum: 1 }
+    CommentID:
+      in: path
+      name: comment_id
+      required: true
+      schema: { type: integer, format: int64, minimum: 1 }
+  responses:
+    AuthResponse:
+      description: Access token response; refresh token is also set as HttpOnly cookie.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/AuthResponse' }
+    Error:
+      description: Error response.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error: { type: string }
+              detail: { type: string }
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, pattern: '^[a-zA-Z0-9_]{3,32}$' }
+        password: { type: string, minLength: 8, maxLength: 128 }
+        nickname: { type: string, maxLength: 64 }
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string }
+        password: { type: string }
+    AuthResponse:
+      type: object
+      required: [user, access_token, expires_in]
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        access_token: { type: string }
+        refresh_token: { type: string, description: CLI compatibility; browsers should use the HttpOnly cookie. }
+        expires_in: { type: integer, format: int64 }
+    User:
+      type: object
+      required: [id, username, nickname, role, status]
+      properties:
+        id: { type: integer, format: int64 }
+        username: { type: string }
+        nickname: { type: string }
+        avatar_url: { type: string }
+        bio: { type: string }
+        role: { type: string }
+        status: { type: string }
+    CreateNoteRequest:
+      type: object
+      required: [title, body, category]
+      properties:
+        project_id: { type: integer, format: int64, default: 1 }
+        visibility: { type: string, enum: [public, project], default: public }
+        title: { type: string, maxLength: 255 }
+        body: { type: string, maxLength: 20000 }
+        category: { type: string, maxLength: 64 }
+        topics: { type: array, items: { type: string } }
+        tags: { type: array, items: { type: string } }
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              media_type: { type: string }
+              caption: { type: string }
+              ocr_text: { type: string }
+              position: { type: integer }
+    Note:
+      type: object
+      required: [id, project_id, author_id, title, body, category, status, visibility, content_version]
+      properties:
+        id: { type: integer, format: int64 }
+        project_id: { type: integer, format: int64 }
+        author_id: { type: integer, format: int64 }
+        title: { type: string }
+        body: { type: string }
+        category: { type: string }
+        status: { type: string }
+        visibility: { type: string, enum: [public, project] }
+        content_version: { type: integer, format: int64 }
+        viewer_liked: { type: boolean }
+        viewer_collected: { type: boolean }
+        author: { $ref: '#/components/schemas/User' }
+        media: { type: array, items: { type: object } }
+    NotePage:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Note' } }
+        next_cursor: { type: string }

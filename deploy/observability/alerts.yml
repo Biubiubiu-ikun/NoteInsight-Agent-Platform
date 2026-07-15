@@ -1,0 +1,63 @@
+groups:
+  - name: noteinsight-readiness
+    rules:
+      - alert: NoteInsightHighHTTPErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.001) > 0.02
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: NoteInsight HTTP 5xx rate exceeds 2 percent
+
+      - alert: NoteInsightHighP95Latency
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 0.75
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: NoteInsight p95 latency exceeds 750 ms
+
+      - alert: NoteInsightOutboxBacklog
+        expr: sum(outbox_events{status=~"pending|processing|retry"}) > 1000 or outbox_oldest_unsent_age_seconds > 120
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: Outbox backlog or lag exceeds the readiness threshold
+
+      - alert: NoteInsightNATSDisconnected
+        expr: nats_connected == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: Worker is disconnected from NATS
+
+      - alert: NoteInsightDomainEventLag
+        expr: histogram_quantile(0.95, sum by (le) (rate(domain_event_lag_seconds_bucket[5m]))) > 30
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Domain event p95 lag exceeds 30 seconds
+
+      - alert: NoteInsightDBPoolSaturation
+        expr: db_pool_connections{state="in_use"} / clamp_min(db_pool_connections{state="max_open"}, 1) > 0.85
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Database pool usage exceeds 85 percent
+
+      - alert: NoteInsightDBPoolWaits
+        expr: rate(db_pool_wait_total[5m]) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Requests are waiting for database connections
+
+      - alert: NoteInsightDeadLetterGrowth
+        expr: increase(jetstream_dead_letters_total[15m]) > 0
+        labels: { severity: critical }
+        annotations:
+          summary: New domain events entered the dead-letter stream
+
+      - alert: NoteInsightReconcileFailure
+        expr: increase(reconcile_runs_total{result="error"}[1h]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: Derived-data reconciliation failed

@@ -76,15 +76,20 @@ func (s *Service) Refresh(ctx context.Context, input RefreshInput) (AuthResponse
 		return AuthResponse{}, ValidationError{Field: "refresh_token", Message: "is required"}
 	}
 
-	session, err := s.repo.GetSessionByRefreshHash(ctx, hashToken(input.RefreshToken))
+	refreshToken, err := randomToken(32)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return AuthResponse{}, ErrUnauthorized
-		}
 		return AuthResponse{}, err
 	}
-	if session.Revoked || time.Now().After(session.ExpiresAt) {
-		return AuthResponse{}, ErrUnauthorized
+	session, err := s.repo.RotateSession(
+		ctx,
+		hashToken(input.RefreshToken),
+		hashToken(refreshToken),
+		input.UserAgent,
+		input.IPAddress,
+		time.Now().Add(s.cfg.RefreshTokenTTL),
+	)
+	if err != nil {
+		return AuthResponse{}, err
 	}
 
 	user, err := s.repo.GetUserByID(ctx, session.UserID)
@@ -99,7 +104,7 @@ func (s *Service) Refresh(ctx context.Context, input RefreshInput) (AuthResponse
 	return AuthResponse{
 		User:         user,
 		AccessToken:  accessToken,
-		RefreshToken: input.RefreshToken,
+		RefreshToken: refreshToken,
 		ExpiresIn:    expiresIn,
 	}, nil
 }

@@ -56,8 +56,18 @@ func Generate(cfg Config, userIDs []int64, creatorIDs []int64) (Corpus, Report, 
 			item.Comments = append(item.Comments, comment)
 		}
 		item.EvalCases = GenerateEvalCases(document, cfg.EvalCasesPerNote)
-		acc.record(item)
 		corpus.Items = append(corpus.Items, item)
+	}
+	for _, evalCase := range GenerateCrossNoteEvalCases(corpus.Items) {
+		for index := range corpus.Items {
+			if corpus.Items[index].Document.ID == evalCase.NoteID {
+				corpus.Items[index].EvalCases = append(corpus.Items[index].EvalCases, evalCase)
+				break
+			}
+		}
+	}
+	for _, item := range corpus.Items {
+		acc.record(item)
 	}
 	return corpus, acc.finish(cfg), nil
 }
@@ -306,15 +316,75 @@ func GenerateEvalCases(document Document, limit int) []EvalCase {
 			ExpectedAnswer: document.Scenario.KeyMetric,
 			GoldSources:    []GoldSource{{SourceType: "media_ocr", Position: 3}},
 		},
+		{
+			NoteID:         document.ID,
+			TaskType:       "conflict_resolution",
+			Question:       fmt.Sprintf("关于%s，正文中的正向结论与评论区风险提醒应该如何同时理解？", document.Scenario.Subject),
+			ExpectedAnswer: fmt.Sprintf("正向结果是%s，但必须同时保留风险边界：%s；个人样本不能直接外推。", document.Scenario.PositiveFeedback[0], document.Scenario.Concerns[0]),
+			GoldSources: []GoldSource{
+				{SourceType: "note_body", NoteID: document.ID, Topic: document.Scenario.PositiveFeedback[0]},
+				{SourceType: "comment_cluster", NoteID: document.ID, Topic: document.Scenario.Concerns[0]},
+			},
+		},
+		{
+			NoteID:         document.ID,
+			TaskType:       "temporal_constraint",
+			Question:       fmt.Sprintf("截至这篇记录发布时，能否证明%s具有长期效果？", document.Scenario.Subject),
+			ExpectedAnswer: fmt.Sprintf("不能。资料只覆盖当前观察周期，已记录的数据是%s，仍需更长时间的跟踪。", document.Scenario.KeyMetric),
+			GoldSources:    []GoldSource{{SourceType: "note_body", NoteID: document.ID, Topic: "观察周期"}, {SourceType: "media_ocr", NoteID: document.ID, Position: 3}},
+		},
+		{
+			NoteID:         document.ID,
+			TaskType:       "no_answer",
+			Question:       fmt.Sprintf("%s使用的具体品牌批次号和购买订单号是什么？", document.Scenario.Subject),
+			ExpectedAnswer: "现有资料没有提供品牌批次号或购买订单号，不能据此推断。",
+			GoldSources:    []GoldSource{},
+		},
 	}
 	for index := range cases {
 		cases[index].Metadata = map[string]any{
 			"synthetic":        true,
 			"scenario_subject": document.Scenario.Subject,
-			"schema_version":   "phase5b_v1",
+			"schema_version":   "phase6c_v2",
+			"difficulty":       map[bool]string{true: "hard", false: "medium"}[cases[index].TaskType == "no_answer" || cases[index].TaskType == "conflict_resolution"],
+			"answerable":       cases[index].TaskType != "no_answer",
+		}
+		for sourceIndex := range cases[index].GoldSources {
+			if cases[index].GoldSources[sourceIndex].NoteID == 0 {
+				cases[index].GoldSources[sourceIndex].NoteID = document.ID
+			}
 		}
 	}
 	return append([]EvalCase(nil), cases[:limit]...)
+}
+
+func GenerateCrossNoteEvalCases(items []Item) []EvalCase {
+	if len(items) < 2 {
+		return nil
+	}
+	cases := make([]EvalCase, 0, len(items)/10+1)
+	for first := 0; first+10 < len(items); first += 10 {
+		left := items[first].Document
+		right := items[first+10].Document
+		cases = append(cases, EvalCase{
+			NoteID:         left.ID,
+			TaskType:       "cross_note_compare",
+			Question:       fmt.Sprintf("比较%s与%s两份记录，它们共同强调的执行原则和各自风险是什么？", left.Scenario.Subject, right.Scenario.Subject),
+			ExpectedAnswer: fmt.Sprintf("共同原则是先控制变量并持续记录。%s的主要风险是%s；%s的主要风险是%s。", left.Scenario.Subject, left.Scenario.Concerns[0], right.Scenario.Subject, right.Scenario.Concerns[0]),
+			GoldSources: []GoldSource{
+				{SourceType: "note_body", NoteID: left.ID, Topic: left.Scenario.Concerns[0]},
+				{SourceType: "note_body", NoteID: right.ID, Topic: right.Scenario.Concerns[0]},
+			},
+			Metadata: map[string]any{
+				"synthetic":      true,
+				"schema_version": "phase6c_v2",
+				"difficulty":     "hard",
+				"answerable":     true,
+				"paired_note_id": right.ID,
+			},
+		})
+	}
+	return cases
 }
 
 type reportAccumulator struct {
@@ -391,7 +461,7 @@ func (a *reportAccumulator) finish(cfg Config) Report {
 	a.report.SemanticAlignmentRatio = roundedRatio(int(a.semanticAligned), a.report.Comments)
 	a.report.AverageBodyCharacters = rounded(float64(a.bodyCharacters) / float64(a.report.Notes))
 	expectedCategories := min(len(categoryOrder), cfg.Notes)
-	expectedEvalTypes := min(5, cfg.EvalCasesPerNote)
+	expectedEvalTypes := min(8, cfg.EvalCasesPerNote)
 	a.report.Checks = []QualityCheck{
 		{Name: "category_diversity", Value: float64(len(a.report.CategoryCounts)), Target: fmt.Sprintf(">= %d", expectedCategories), Passed: len(a.report.CategoryCounts) >= expectedCategories},
 		{Name: "unique_titles", Value: a.report.UniqueTitleRatio, Target: ">= 0.98", Passed: a.report.UniqueTitleRatio >= 0.98},

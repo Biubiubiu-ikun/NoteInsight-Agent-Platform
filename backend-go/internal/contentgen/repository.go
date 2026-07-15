@@ -128,8 +128,8 @@ INSERT INTO content_corpus_runs (
 
 	notes := newTxBatch(tx, `INSERT INTO notes (
 id, project_id, author_id, title, body, category, topics, tags, location,
-product_entities, note_type, quality_score, status, created_at, updated_at
-) VALUES `, "", 15, 250)
+product_entities, note_type, comment_count, hot_score, quality_score, status, created_at, updated_at
+) VALUES `, "", 17, 250)
 	media := newTxBatch(tx, `INSERT INTO note_media (
 note_id, media_type, url, caption, ocr_text, position, metadata, created_at
 ) VALUES `, "", 8, 500)
@@ -161,7 +161,8 @@ run_id, note_id, task_type, question, expected_answer, gold_sources, metadata, c
 		if err != nil {
 			return fmt.Errorf("encode product entities: %w", err)
 		}
-		notes.add(document.ID, document.ProjectID, document.AuthorID, document.Title, document.Body, document.Category, string(topics), string(tags), string(location), string(products), "image_text", document.QualityScore, "published", document.CreatedAt, document.CreatedAt)
+		commentCount := int64(len(item.Comments))
+		notes.add(document.ID, document.ProjectID, document.AuthorID, document.Title, document.Body, document.Category, string(topics), string(tags), string(location), string(products), "image_text", commentCount, float64(commentCount*6), document.QualityScore, "published", document.CreatedAt, document.CreatedAt)
 
 		for _, asset := range document.Media {
 			metadata, err := json.Marshal(asset.Metadata)
@@ -204,6 +205,20 @@ run_id, note_id, task_type, question, expected_answer, gold_sources, metadata, c
 		if err := current.batch.flush(ctx); err != nil {
 			return fmt.Errorf("insert corpus %s: %w", current.label, err)
 		}
+	}
+	var inconsistentNotes int64
+	if err := tx.GetContext(ctx, &inconsistentNotes, `
+SELECT COUNT(*)
+FROM notes n
+JOIN content_scenarios s ON s.note_id = n.id
+WHERE s.run_id = $1
+  AND n.comment_count <> (
+      SELECT COUNT(*) FROM note_comments c WHERE c.note_id = n.id AND c.status = 1
+  )`, corpus.Config.RunID); err != nil {
+		return fmt.Errorf("validate corpus note counters: %w", err)
+	}
+	if inconsistentNotes != 0 {
+		return fmt.Errorf("validate corpus note counters: %d notes are inconsistent", inconsistentNotes)
 	}
 
 	reportJSON, err := json.Marshal(report)

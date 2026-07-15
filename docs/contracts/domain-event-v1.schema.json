@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteinsight.local/contracts/domain-event-v1.schema.json",
+  "title": "NoteInsight Domain Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "aggregate_type",
+    "aggregate_id",
+    "schema_version",
+    "producer",
+    "payload",
+    "occurred_at"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "event_type": { "type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$" },
+    "aggregate_type": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "aggregate_id": { "type": "integer", "minimum": 1 },
+    "schema_version": { "const": 1 },
+    "producer": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "correlation_id": { "type": "string", "maxLength": 128 },
+    "trace_id": { "type": "string", "maxLength": 128 },
+    "payload": {
+      "type": "object",
+      "required": ["project_id", "user_id"],
+      "properties": {
+        "project_id": { "type": "integer", "minimum": 1 },
+        "user_id": { "type": "integer", "minimum": 1 },
+        "note_id": { "type": "integer", "minimum": 1 },
+        "comment_id": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "occurred_at": { "type": "string", "format": "date-time" }
+  }
+}

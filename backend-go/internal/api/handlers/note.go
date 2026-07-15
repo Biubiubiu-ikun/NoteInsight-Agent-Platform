@@ -31,6 +31,7 @@ type createNoteRequest struct {
 	Location        map[string]any           `json:"location"`
 	ProductEntities []string                 `json:"product_entities"`
 	Media           []createNoteMediaRequest `json:"media"`
+	Visibility      string                   `json:"visibility"`
 }
 
 type createNoteMediaRequest struct {
@@ -98,6 +99,7 @@ func (h NoteHandler) CreateNote(ctx *gin.Context) {
 		Location:        req.Location,
 		ProductEntities: req.ProductEntities,
 		Media:           media,
+		Visibility:      req.Visibility,
 	})
 	if err != nil {
 		writeNoteError(ctx, err)
@@ -150,7 +152,11 @@ func (h NoteHandler) DeleteNote(ctx *gin.Context) {
 }
 
 func (h NoteHandler) GetNote(ctx *gin.Context) {
-	found, err := h.service.GetNote(ctx.Request.Context(), ctx.Param("note_id"))
+	viewerID := int64(0)
+	if currentUser, ok := ctxauth.CurrentUser(ctx); ok {
+		viewerID = currentUser.ID
+	}
+	found, err := h.service.GetNote(ctx.Request.Context(), ctx.Param("note_id"), viewerID)
 	if err != nil {
 		writeNoteError(ctx, err)
 		return
@@ -160,10 +166,17 @@ func (h NoteHandler) GetNote(ctx *gin.Context) {
 }
 
 func (h NoteHandler) ListNotes(ctx *gin.Context) {
+	viewerID := int64(0)
+	if currentUser, ok := ctxauth.CurrentUser(ctx); ok {
+		viewerID = currentUser.ID
+	}
 	page, err := h.service.ListNotes(ctx.Request.Context(), note.ListNotesInput{
-		Category: ctx.Query("category"),
-		Limit:    parseQueryInt(ctx, "limit", 0),
-		Cursor:   ctx.Query("cursor"),
+		Category:  ctx.Query("category"),
+		Query:     ctx.Query("q"),
+		ProjectID: int64(parseQueryInt(ctx, "project_id", 0)),
+		ViewerID:  viewerID,
+		Limit:     parseQueryInt(ctx, "limit", 0),
+		Cursor:    ctx.Query("cursor"),
 	})
 	if err != nil {
 		writeNoteError(ctx, err)
@@ -217,10 +230,15 @@ func (h NoteHandler) DeleteComment(ctx *gin.Context) {
 }
 
 func (h NoteHandler) ListComments(ctx *gin.Context) {
+	viewerID := int64(0)
+	if currentUser, ok := ctxauth.CurrentUser(ctx); ok {
+		viewerID = currentUser.ID
+	}
 	page, err := h.service.ListComments(ctx.Request.Context(), note.ListCommentsInput{
-		NoteID: ctx.Param("note_id"),
-		Limit:  parseQueryInt(ctx, "limit", 0),
-		Cursor: ctx.Query("cursor"),
+		NoteID:   ctx.Param("note_id"),
+		ViewerID: viewerID,
+		Limit:    parseQueryInt(ctx, "limit", 0),
+		Cursor:   ctx.Query("cursor"),
 	})
 	if err != nil {
 		writeNoteError(ctx, err)
@@ -231,7 +249,11 @@ func (h NoteHandler) ListComments(ctx *gin.Context) {
 }
 
 func (h NoteHandler) ListHotNotes(ctx *gin.Context) {
-	page, err := h.service.ListHotNotes(ctx.Request.Context(), ctx.Query("category"), parseQueryInt(ctx, "limit", 50))
+	viewerID := int64(0)
+	if currentUser, ok := ctxauth.CurrentUser(ctx); ok {
+		viewerID = currentUser.ID
+	}
+	page, err := h.service.ListHotNotes(ctx.Request.Context(), ctx.Query("category"), parseQueryInt(ctx, "limit", 50), viewerID)
 	if err != nil {
 		writeNoteError(ctx, err)
 		return
@@ -259,6 +281,20 @@ func (h NoteHandler) LikeNote(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result)
 }
 
+func (h NoteHandler) UnlikeNote(ctx *gin.Context) {
+	currentUser, ok := ctxauth.CurrentUser(ctx)
+	if !ok {
+		writeNoteError(ctx, auth.ErrUnauthorized)
+		return
+	}
+	result, err := h.service.UnlikeNote(ctx.Request.Context(), note.UserActionInput{ResourceID: ctx.Param("note_id"), UserID: currentUser.ID})
+	if err != nil {
+		writeNoteError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, result)
+}
+
 func (h NoteHandler) CollectNote(ctx *gin.Context) {
 	currentUser, ok := ctxauth.CurrentUser(ctx)
 	if !ok {
@@ -282,6 +318,20 @@ func (h NoteHandler) CollectNote(ctx *gin.Context) {
 		return
 	}
 
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (h NoteHandler) UncollectNote(ctx *gin.Context) {
+	currentUser, ok := ctxauth.CurrentUser(ctx)
+	if !ok {
+		writeNoteError(ctx, auth.ErrUnauthorized)
+		return
+	}
+	result, err := h.service.UncollectNote(ctx.Request.Context(), note.UserActionInput{ResourceID: ctx.Param("note_id"), UserID: currentUser.ID})
+	if err != nil {
+		writeNoteError(ctx, err)
+		return
+	}
 	ctx.JSON(http.StatusOK, result)
 }
 
@@ -327,6 +377,20 @@ func (h NoteHandler) LikeComment(ctx *gin.Context) {
 		return
 	}
 
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (h NoteHandler) UnlikeComment(ctx *gin.Context) {
+	currentUser, ok := ctxauth.CurrentUser(ctx)
+	if !ok {
+		writeNoteError(ctx, auth.ErrUnauthorized)
+		return
+	}
+	result, err := h.service.UnlikeComment(ctx.Request.Context(), note.UserActionInput{ResourceID: ctx.Param("comment_id"), UserID: currentUser.ID})
+	if err != nil {
+		writeNoteError(ctx, err)
+		return
+	}
 	ctx.JSON(http.StatusOK, result)
 }
 

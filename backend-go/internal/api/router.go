@@ -31,13 +31,23 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	}
 
 	router := gin.New()
+	if err := router.SetTrustedProxies(deps.Config.HTTP.TrustedProxies); err != nil {
+		panic(err)
+	}
 	router.Use(ResponseCompression())
 	router.Use(gin.Recovery())
+	router.Use(CORS(deps.Config.HTTP.AllowedOrigins))
+	router.Use(DBPoolMetrics(deps.DB))
 	router.Use(RequestLogger(deps.Logger))
 
 	authService := auth.NewService(auth.NewRepository(deps.DB), deps.Config.Auth, deps.Config.App.Env)
 	noteService := note.NewService(note.NewRepository(deps.DB), deps.Redis)
 	writeLimiter := ratelimit.New(deps.Redis)
+	authPolicy := ratelimit.Policy{
+		Name:   "auth",
+		Limit:  deps.Config.RateLimit.Auth.Limit,
+		Window: deps.Config.RateLimit.Auth.Window,
+	}
 	contentWritePolicy := ratelimit.Policy{
 		Name:   "content_write",
 		Limit:  deps.Config.RateLimit.ContentWrite.Limit,
@@ -61,7 +71,11 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 		DB:    deps.DB,
 		Redis: deps.Redis,
 	})
-	authHandler := handlers.NewAuthHandler(authService)
+	authHandler := handlers.NewAuthHandler(
+		authService,
+		deps.Config.App.Env == "prod",
+		int(deps.Config.Auth.RefreshTokenTTL.Seconds()),
+	)
 	noteHandler := handlers.NewNoteHandler(noteService)
 
 	router.GET("/health", healthHandler.Health)
@@ -72,12 +86,12 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	v1.GET("/health", healthHandler.Health)
 	v1.GET("/ready", healthHandler.Ready)
 
-	v1.POST("/auth/register", authHandler.Register)
-	v1.POST("/auth/login", authHandler.Login)
-	v1.POST("/auth/refresh", authHandler.Refresh)
-	v1.POST("/auth/logout", RequireAuth(), authHandler.Logout)
+	v1.POST("/auth/register", IPRateLimit(writeLimiter, rateLimitEnabled, authPolicy), authHandler.Register)
+	v1.POST("/auth/login", IPRateLimit(writeLimiter, rateLimitEnabled, authPolicy), authHandler.Login)
+	v1.POST("/auth/refresh", IPRateLimit(writeLimiter, rateLimitEnabled, authPolicy), authHandler.Refresh)
+	v1.POST("/auth/logout", IPRateLimit(writeLimiter, rateLimitEnabled, authPolicy), authHandler.Logout)
 	v1.GET("/me", RequireAuth(), authHandler.Me)
-	v1.PATCH("/me", RequireAuth(), RequireActiveUser(), authHandler.UpdateMe)
+	v1.PATCH("/me", RequireAuth(), RequireActiveUser(), AuditMutation(deps.Logger, "user.profile.update"), authHandler.UpdateMe)
 
 	v1.GET("/notes", noteHandler.ListNotes)
 	v1.GET("/notes/:note_id", noteHandler.GetNote)
@@ -86,18 +100,21 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	v1.POST("/notes", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), noteHandler.CreateNote)
 	v1.PATCH("/notes/:note_id", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), RequireOwnerOrAdmin(func(ctx *gin.Context, currentUser auth.CurrentUser) (bool, error) {
 		return noteService.CanModifyNote(ctx.Request.Context(), ctx.Param("note_id"), currentUser)
-	}), noteHandler.UpdateNote)
+	}), AuditMutation(deps.Logger, "note.update"), noteHandler.UpdateNote)
 	v1.DELETE("/notes/:note_id", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), RequireOwnerOrAdmin(func(ctx *gin.Context, currentUser auth.CurrentUser) (bool, error) {
 		return noteService.CanModifyNote(ctx.Request.Context(), ctx.Param("note_id"), currentUser)
-	}), noteHandler.DeleteNote)
+	}), AuditMutation(deps.Logger, "note.delete"), noteHandler.DeleteNote)
 	v1.POST("/notes/:note_id/comments", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, commentWritePolicy), noteHandler.CreateComment)
 	v1.DELETE("/comments/:comment_id", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, commentWritePolicy), RequireOwnerOrAdmin(func(ctx *gin.Context, currentUser auth.CurrentUser) (bool, error) {
 		return noteService.CanModifyComment(ctx.Request.Context(), ctx.Param("comment_id"), currentUser)
-	}), noteHandler.DeleteComment)
+	}), AuditMutation(deps.Logger, "comment.delete"), noteHandler.DeleteComment)
 	v1.POST("/notes/:note_id/like", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.LikeNote)
+	v1.DELETE("/notes/:note_id/like", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.UnlikeNote)
 	v1.POST("/notes/:note_id/collect", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.CollectNote)
+	v1.DELETE("/notes/:note_id/collect", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.UncollectNote)
 	v1.POST("/notes/:note_id/share", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.ShareNote)
 	v1.POST("/comments/:comment_id/like", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.LikeComment)
+	v1.DELETE("/comments/:comment_id/like", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, interactionWritePolicy), noteHandler.UnlikeComment)
 
 	return router
 }

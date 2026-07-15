@@ -17,8 +17,9 @@ func NewPostgresDB(ctx context.Context, cfg config.PostgresConfig) (*sqlx.DB, er
 	}
 
 	db.SetMaxOpenConns(int(cfg.MaxConns))
-	db.SetMaxIdleConns(int(cfg.MinConns))
-	db.SetConnMaxIdleTime(cfg.ConnectTimeout)
+	db.SetMaxIdleConns(int(cfg.MaxIdleConns))
+	db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
+	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
 	pingCtx, cancel := context.WithTimeout(ctx, cfg.PingTimeout)
 	defer cancel()

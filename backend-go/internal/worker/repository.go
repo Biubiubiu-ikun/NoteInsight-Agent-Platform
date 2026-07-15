@@ -110,8 +110,12 @@ ON CONFLICT (source_event_id) DO NOTHING`,
 
 func rebuildDerivedCounters(ctx context.Context, tx *sqlx.Tx, input EventApplication) error {
 	switch input.Envelope.EventType {
-	case "note.created", "note.liked", "note.collected", "note.shared":
+	case "note.created", "note.liked", "note.unliked", "note.collected", "note.uncollected", "note.shared":
 		return rebuildNoteCounters(ctx, tx, input.NoteID)
+	case "note.viewed":
+		return incrementNoteView(ctx, tx, input.NoteID)
+	case "note.updated", "note.deleted":
+		return nil
 	case "comment.created", "comment.deleted":
 		if err := rebuildCommentCounters(ctx, tx, input.CommentID); err != nil {
 			return err
@@ -122,11 +126,29 @@ func rebuildDerivedCounters(ctx context.Context, tx *sqlx.Tx, input EventApplica
 			}
 		}
 		return rebuildNoteCounters(ctx, tx, input.NoteID)
-	case "comment.liked":
+	case "comment.liked", "comment.unliked":
 		return rebuildCommentCounters(ctx, tx, input.CommentID)
 	default:
 		return nil
 	}
+}
+
+func incrementNoteView(ctx context.Context, tx *sqlx.Tx, noteID int64) error {
+	if noteID <= 0 {
+		return errors.New("note_id must be positive for note view")
+	}
+	_, err := tx.ExecContext(ctx, `
+UPDATE notes
+SET view_count = view_count + 1,
+    hot_score = hot_score + 1,
+    updated_at = now()
+WHERE id = $1 AND status = 'published'`, noteID)
+	if err != nil {
+		return fmt.Errorf("increment note view: %w", err)
+	}
+	// A view may arrive after its note was deleted. The event remains a valid
+	// behavior fact, while the derived counter update becomes a no-op.
+	return nil
 }
 
 func rebuildNoteCounters(ctx context.Context, tx *sqlx.Tx, noteID int64) error {

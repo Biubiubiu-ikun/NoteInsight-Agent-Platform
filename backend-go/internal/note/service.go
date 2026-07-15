@@ -29,15 +29,23 @@ const (
 type noteRepository interface {
 	CreateNote(ctx context.Context, input CreateNoteInput) (Note, error)
 	GetNote(ctx context.Context, id int64) (Note, error)
+	GetNotesByIDs(ctx context.Context, ids []int64, viewerID int64) ([]Note, error)
+	CanReadNote(ctx context.Context, noteID int64, userID int64) (bool, error)
+	CanWriteProject(ctx context.Context, projectID int64, userID int64) (bool, error)
+	RecordNoteView(ctx context.Context, noteID int64, userID int64) error
+	GetViewerState(ctx context.Context, noteID int64, userID int64) (bool, bool, error)
 	ListNotes(ctx context.Context, input ListNotesInput, cursor keysetCursor) ([]Note, bool, error)
 	CreateComment(ctx context.Context, noteID int64, input CreateCommentInput) (NoteComment, error)
 	ListComments(ctx context.Context, noteID int64, input ListCommentsInput, cursor keysetCursor) ([]NoteComment, bool, error)
 	LikeNote(ctx context.Context, noteID int64, userID int64) (IdempotentActionResult, error)
+	UnlikeNote(ctx context.Context, noteID int64, userID int64) (IdempotentActionResult, error)
 	CollectNote(ctx context.Context, noteID int64, userID int64, collectionName string) (IdempotentActionResult, error)
+	UncollectNote(ctx context.Context, noteID int64, userID int64) (IdempotentActionResult, error)
 	ShareNote(ctx context.Context, noteID int64, userID int64, channel string) (ShareNoteResult, error)
 	LikeComment(ctx context.Context, commentID int64, userID int64) (IdempotentActionResult, error)
+	UnlikeComment(ctx context.Context, commentID int64, userID int64) (IdempotentActionResult, error)
 	UpdateNote(ctx context.Context, noteID int64, input UpdateNoteInput) (Note, error)
-	SoftDeleteNote(ctx context.Context, noteID int64) error
+	SoftDeleteNote(ctx context.Context, noteID int64, actorUserID int64) error
 	SoftDeleteComment(ctx context.Context, commentID int64, actorUserID int64) (int64, error)
 	GetNoteOwner(ctx context.Context, noteID int64) (int64, error)
 	GetCommentOwner(ctx context.Context, commentID int64) (int64, error)
@@ -65,9 +73,19 @@ func (s *Service) CreateNote(ctx context.Context, input CreateNoteInput) (Note, 
 	input.Title = strings.TrimSpace(input.Title)
 	input.Body = strings.TrimSpace(input.Body)
 	input.Category = normalizeToken(input.Category)
+	input.Visibility = normalizeToken(input.Visibility)
+	if input.ProjectID <= 0 {
+		input.ProjectID = 1
+	}
+	if input.Visibility == "" {
+		input.Visibility = "public"
+	}
 
 	if input.AuthorID <= 0 {
 		return Note{}, ValidationError{Field: "author_id", Message: "must be greater than 0"}
+	}
+	if input.Visibility != "public" && input.Visibility != "project" {
+		return Note{}, ValidationError{Field: "visibility", Message: "must be public or project"}
 	}
 	if input.Title == "" {
 		return Note{}, ValidationError{Field: "title", Message: "is required"}
@@ -86,6 +104,13 @@ func (s *Service) CreateNote(ctx context.Context, input CreateNoteInput) (Note, 
 	}
 	if len(input.Category) > 64 {
 		return Note{}, ValidationError{Field: "category", Message: "must be at most 64 characters"}
+	}
+	canWrite, err := s.repo.CanWriteProject(ctx, input.ProjectID, input.AuthorID)
+	if err != nil {
+		return Note{}, err
+	}
+	if !canWrite {
+		return Note{}, auth.ErrForbidden
 	}
 
 	for i := range input.Media {
@@ -167,6 +192,7 @@ func (s *Service) UpdateNote(ctx context.Context, current auth.CurrentUser, inpu
 		return Note{}, auth.ErrForbidden
 	}
 
+	input.ActorUserID = current.ID
 	updated, err := s.repo.UpdateNote(ctx, noteID, input)
 	if err != nil {
 		return Note{}, err
@@ -196,7 +222,7 @@ func (s *Service) DeleteNote(ctx context.Context, current auth.CurrentUser, rawI
 	if !allowed {
 		return auth.ErrForbidden
 	}
-	if err := s.repo.SoftDeleteNote(ctx, noteID); err != nil {
+	if err := s.repo.SoftDeleteNote(ctx, noteID, current.ID); err != nil {
 		return err
 	}
 	s.invalidateNoteCache(ctx, noteID)
@@ -204,13 +230,24 @@ func (s *Service) DeleteNote(ctx context.Context, current auth.CurrentUser, rawI
 	return nil
 }
 
-func (s *Service) GetNote(ctx context.Context, rawID string) (Note, error) {
+func (s *Service) GetNote(ctx context.Context, rawID string, viewerID ...int64) (Note, error) {
 	id, err := parseID("note_id", rawID)
 	if err != nil {
 		return Note{}, err
 	}
-	if note, ok := s.getNoteCache(ctx, id); ok {
-		return note, nil
+	viewer := int64(0)
+	if len(viewerID) > 0 {
+		viewer = viewerID[0]
+	}
+	allowed, err := s.repo.CanReadNote(ctx, id, viewer)
+	if err != nil {
+		return Note{}, err
+	}
+	if !allowed {
+		return Note{}, auth.ErrForbidden
+	}
+	if cached, ok := s.getNoteCache(ctx, id); ok {
+		return s.decorateViewedNote(ctx, cached, viewer), nil
 	}
 
 	resultChannel := s.noteLoads.DoChan(strconv.FormatInt(id, 10), func() (any, error) {
@@ -243,12 +280,28 @@ func (s *Service) GetNote(ctx context.Context, rawID string) (Note, error) {
 		if !ok {
 			return Note{}, fmt.Errorf("unexpected shared note result %T", result.Val)
 		}
-		return note, nil
+		return s.decorateViewedNote(ctx, note, viewer), nil
 	}
+}
+
+func (s *Service) decorateViewedNote(ctx context.Context, found Note, viewerID int64) Note {
+	found.ViewerLiked = false
+	found.ViewerCollected = false
+	if viewerID <= 0 {
+		return found
+	}
+	liked, collected, err := s.repo.GetViewerState(ctx, found.ID, viewerID)
+	if err == nil {
+		found.ViewerLiked = liked
+		found.ViewerCollected = collected
+	}
+	_ = s.repo.RecordNoteView(ctx, found.ID, viewerID)
+	return found
 }
 
 func (s *Service) ListNotes(ctx context.Context, input ListNotesInput) (NotePage, error) {
 	input.Category = normalizeToken(input.Category)
+	input.Query = strings.TrimSpace(input.Query)
 	if input.Limit <= 0 {
 		input.Limit = defaultNoteLimit
 	}
@@ -277,7 +330,7 @@ func (s *Service) ListNotes(ctx context.Context, input ListNotesInput) (NotePage
 	return page, nil
 }
 
-func (s *Service) ListHotNotes(ctx context.Context, category string, limit int) (HotNotePage, error) {
+func (s *Service) ListHotNotes(ctx context.Context, category string, limit int, viewerID ...int64) (HotNotePage, error) {
 	category = normalizeToken(category)
 	if limit <= 0 {
 		limit = 50
@@ -296,14 +349,38 @@ func (s *Service) ListHotNotes(ctx context.Context, category string, limit int) 
 	}
 
 	items := make([]HotNoteItem, 0, len(values))
+	ids := make([]int64, 0, len(values))
 	for _, value := range values {
 		noteID, err := strconv.ParseInt(fmt.Sprint(value.Member), 10, 64)
 		if err != nil {
 			continue
 		}
 		items = append(items, HotNoteItem{NoteID: noteID, Score: value.Score})
+		ids = append(ids, noteID)
 	}
-	return HotNotePage{Items: items}, nil
+	viewer := int64(0)
+	if len(viewerID) > 0 {
+		viewer = viewerID[0]
+	}
+	notes, err := s.repo.GetNotesByIDs(ctx, ids, viewer)
+	if err != nil {
+		return HotNotePage{}, err
+	}
+	byID := make(map[int64]Note, len(notes))
+	for _, found := range notes {
+		byID[found.ID] = found
+	}
+	filtered := items[:0]
+	for index := range items {
+		found, ok := byID[items[index].NoteID]
+		if !ok {
+			continue
+		}
+		copy := found
+		items[index].Note = &copy
+		filtered = append(filtered, items[index])
+	}
+	return HotNotePage{Items: filtered}, nil
 }
 
 func (s *Service) CreateComment(ctx context.Context, input CreateCommentInput) (NoteComment, error) {
@@ -350,6 +427,13 @@ func (s *Service) ListComments(ctx context.Context, input ListCommentsInput) (Co
 	}
 	if input.Limit > maxCommentLimit {
 		input.Limit = maxCommentLimit
+	}
+	allowed, err := s.repo.CanReadNote(ctx, noteID, input.ViewerID)
+	if err != nil {
+		return CommentPage{}, err
+	}
+	if !allowed {
+		return CommentPage{}, auth.ErrForbidden
 	}
 
 	cursor, err := decodeCommentCursor(input.Cursor)
@@ -440,6 +524,21 @@ func (s *Service) LikeNote(ctx context.Context, input UserActionInput) (Idempote
 	return result, nil
 }
 
+func (s *Service) UnlikeNote(ctx context.Context, input UserActionInput) (IdempotentActionResult, error) {
+	noteID, err := parseID("note_id", input.ResourceID)
+	if err != nil {
+		return IdempotentActionResult{}, err
+	}
+	if input.UserID <= 0 {
+		return IdempotentActionResult{}, ValidationError{Field: "user_id", Message: "must be greater than 0"}
+	}
+	result, err := s.repo.UnlikeNote(ctx, noteID, input.UserID)
+	if err == nil {
+		s.invalidateNoteCache(ctx, noteID)
+	}
+	return result, err
+}
+
 func (s *Service) CollectNote(ctx context.Context, input CollectNoteInput) (IdempotentActionResult, error) {
 	noteID, err := parseID("note_id", input.NoteID)
 	if err != nil {
@@ -458,6 +557,21 @@ func (s *Service) CollectNote(ctx context.Context, input CollectNoteInput) (Idem
 	}
 	s.invalidateNoteCache(ctx, noteID)
 	return result, nil
+}
+
+func (s *Service) UncollectNote(ctx context.Context, input UserActionInput) (IdempotentActionResult, error) {
+	noteID, err := parseID("note_id", input.ResourceID)
+	if err != nil {
+		return IdempotentActionResult{}, err
+	}
+	if input.UserID <= 0 {
+		return IdempotentActionResult{}, ValidationError{Field: "user_id", Message: "must be greater than 0"}
+	}
+	result, err := s.repo.UncollectNote(ctx, noteID, input.UserID)
+	if err == nil {
+		s.invalidateNoteCache(ctx, noteID)
+	}
+	return result, err
 }
 
 func (s *Service) ShareNote(ctx context.Context, input ShareNoteInput) (ShareNoteResult, error) {
@@ -496,6 +610,17 @@ func (s *Service) LikeComment(ctx context.Context, input UserActionInput) (Idemp
 		return IdempotentActionResult{}, err
 	}
 	return result, nil
+}
+
+func (s *Service) UnlikeComment(ctx context.Context, input UserActionInput) (IdempotentActionResult, error) {
+	commentID, err := parseID("comment_id", input.ResourceID)
+	if err != nil {
+		return IdempotentActionResult{}, err
+	}
+	if input.UserID <= 0 {
+		return IdempotentActionResult{}, ValidationError{Field: "user_id", Message: "must be greater than 0"}
+	}
+	return s.repo.UnlikeComment(ctx, commentID, input.UserID)
 }
 
 func (s *Service) DeleteComment(ctx context.Context, current auth.CurrentUser, rawID string) error {

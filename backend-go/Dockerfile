@@ -8,6 +8,9 @@ COPY bin/noteinsight-corpusgen /app/noteinsight-corpusgen
 COPY bin/noteinsight-seedgen /app/noteinsight-seedgen
 COPY bin/creatorinsight-migrate /app/creatorinsight-migrate
 COPY bin/noteinsight-reconcile /app/noteinsight-reconcile
+COPY bin/noteinsight-materialize /app/noteinsight-materialize
+COPY bin/noteinsight-maintenance /app/noteinsight-maintenance
+COPY bin/noteinsight-dlqctl /app/noteinsight-dlqctl
 COPY migrations /app/migrations
 
 USER 65532:65532

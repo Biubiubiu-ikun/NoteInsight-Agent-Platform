@@ -11,11 +11,15 @@ import (
 )
 
 type AuthHandler struct {
-	service *auth.Service
+	service       *auth.Service
+	secureCookie  bool
+	refreshMaxAge int
 }
 
-func NewAuthHandler(service *auth.Service) AuthHandler {
-	return AuthHandler{service: service}
+const refreshCookieName = "noteinsight_refresh"
+
+func NewAuthHandler(service *auth.Service, secureCookie bool, refreshMaxAge int) AuthHandler {
+	return AuthHandler{service: service, secureCookie: secureCookie, refreshMaxAge: refreshMaxAge}
 }
 
 type registerRequest struct {
@@ -30,11 +34,11 @@ type loginRequest struct {
 }
 
 type refreshRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type logoutRequest struct {
-	RefreshToken string `json:"refresh_token" binding:"required"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type updateMeRequest struct {
@@ -61,6 +65,7 @@ func (h AuthHandler) Register(ctx *gin.Context) {
 		writeAuthError(ctx, err)
 		return
 	}
+	h.setRefreshCookie(ctx, result.RefreshToken)
 
 	ctx.JSON(http.StatusCreated, result)
 }
@@ -82,14 +87,24 @@ func (h AuthHandler) Login(ctx *gin.Context) {
 		writeAuthError(ctx, err)
 		return
 	}
+	h.setRefreshCookie(ctx, result.RefreshToken)
 
 	ctx.JSON(http.StatusOK, result)
 }
 
 func (h AuthHandler) Refresh(ctx *gin.Context) {
 	var req refreshRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		writeError(ctx, http.StatusBadRequest, "invalid request body", err)
+	if ctx.Request.ContentLength > 0 {
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			writeError(ctx, http.StatusBadRequest, "invalid request body", err)
+			return
+		}
+	}
+	if req.RefreshToken == "" {
+		req.RefreshToken, _ = ctx.Cookie(refreshCookieName)
+	}
+	if req.RefreshToken == "" {
+		writeError(ctx, http.StatusBadRequest, "refresh token is required", errors.New("refresh token is required"))
 		return
 	}
 
@@ -102,23 +117,40 @@ func (h AuthHandler) Refresh(ctx *gin.Context) {
 		writeAuthError(ctx, err)
 		return
 	}
+	h.setRefreshCookie(ctx, result.RefreshToken)
 
 	ctx.JSON(http.StatusOK, result)
 }
 
 func (h AuthHandler) Logout(ctx *gin.Context) {
 	var req logoutRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		writeError(ctx, http.StatusBadRequest, "invalid request body", err)
-		return
+	if ctx.Request.ContentLength > 0 {
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			writeError(ctx, http.StatusBadRequest, "invalid request body", err)
+			return
+		}
+	}
+	if req.RefreshToken == "" {
+		req.RefreshToken, _ = ctx.Cookie(refreshCookieName)
 	}
 
 	if err := h.service.Logout(ctx.Request.Context(), auth.LogoutInput{RefreshToken: req.RefreshToken}); err != nil {
 		writeAuthError(ctx, err)
 		return
 	}
+	h.clearRefreshCookie(ctx)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func (h AuthHandler) setRefreshCookie(ctx *gin.Context, token string) {
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	ctx.SetCookie(refreshCookieName, token, h.refreshMaxAge, "/api/v1/auth", "", h.secureCookie, true)
+}
+
+func (h AuthHandler) clearRefreshCookie(ctx *gin.Context) {
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	ctx.SetCookie(refreshCookieName, "", -1, "/api/v1/auth", "", h.secureCookie, true)
 }
 
 func (h AuthHandler) Me(ctx *gin.Context) {

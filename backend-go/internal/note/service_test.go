@@ -25,6 +25,10 @@ type blockingReadRepository struct {
 	pageLimit    atomic.Int32
 }
 
+func (r *blockingReadRepository) CanReadNote(context.Context, int64, int64) (bool, error) {
+	return true, nil
+}
+
 func (r *blockingReadRepository) GetNote(ctx context.Context, _ int64) (Note, error) {
 	r.noteCalls.Add(1)
 	r.noteOnce.Do(func() { close(r.noteStarted) })

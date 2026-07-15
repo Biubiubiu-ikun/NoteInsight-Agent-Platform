@@ -31,6 +31,10 @@ type EventEnvelope struct {
 	EventType     string          `json:"event_type"`
 	AggregateType string          `json:"aggregate_type"`
 	AggregateID   int64           `json:"aggregate_id"`
+	SchemaVersion int             `json:"schema_version"`
+	Producer      string          `json:"producer"`
+	CorrelationID string          `json:"correlation_id,omitempty"`
+	TraceID       string          `json:"trace_id,omitempty"`
 	Payload       json.RawMessage `json:"payload"`
 	OccurredAt    time.Time       `json:"occurred_at"`
 }
@@ -148,6 +152,10 @@ func (b *Broker) PublishEvent(ctx context.Context, event outbox.Event) error {
 		EventType:     event.EventType,
 		AggregateType: event.AggregateType,
 		AggregateID:   event.AggregateID,
+		SchemaVersion: event.SchemaVersion,
+		Producer:      event.Producer,
+		CorrelationID: event.CorrelationID,
+		TraceID:       event.TraceID,
 		Payload:       event.Payload,
 		OccurredAt:    event.CreatedAt,
 	}

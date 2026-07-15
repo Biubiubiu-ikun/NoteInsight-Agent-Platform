@@ -89,6 +89,21 @@ func TestEventProcessorRejectsMissingUser(t *testing.T) {
 	}
 }
 
+func TestEventProcessorRejectsUnsupportedSchemaVersion(t *testing.T) {
+	repo := &fakeEventRepository{}
+	processor := NewEventProcessor(EventProcessorDeps{EventRepo: repo, RankingRepo: fakeRankingRepository{}, ConsumerName: "worker-v1"})
+	payload, _ := json.Marshal(map[string]any{"project_id": 1, "user_id": 42, "note_id": 9})
+	_, err := processor.Process(context.Background(), messaging.EventEnvelope{
+		EventID: "evt_v2", EventType: "note.updated", SchemaVersion: 2, Payload: payload,
+	})
+	if err == nil {
+		t.Fatal("Process() expected unsupported schema version error")
+	}
+	if len(repo.inputs) != 0 {
+		t.Fatalf("applications=%d, want 0", len(repo.inputs))
+	}
+}
+
 func TestBehaviorEventTypeIncludesCommentDeletion(t *testing.T) {
 	if got := behaviorEventType("comment.deleted"); got != "comment_deleted" {
 		t.Fatalf("behaviorEventType() = %q", got)

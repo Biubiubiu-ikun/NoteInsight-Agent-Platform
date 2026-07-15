@@ -84,6 +84,7 @@ type Scenario struct {
 
 type GoldSource struct {
 	SourceType string `json:"source_type"`
+	NoteID     int64  `json:"note_id,omitempty"`
 	Topic      string `json:"topic,omitempty"`
 	Position   int    `json:"position,omitempty"`
 }
@@ -146,8 +147,9 @@ func PresetFor(profile string, seed int64) (Config, error) {
 	base := Config{
 		Profile:          profile,
 		Seed:             seed,
+		ProjectID:        1,
 		MediaPerNote:     4,
-		EvalCasesPerNote: 5,
+		EvalCasesPerNote: 8,
 		StartAt:          time.Date(2026, 2, 1, 8, 0, 0, 0, time.UTC),
 	}
 	switch profile {
@@ -183,8 +185,8 @@ func (c Config) Validate() error {
 	if c.MediaPerNote < 1 || c.MediaPerNote > 9 {
 		return fmt.Errorf("media_per_note must be between 1 and 9")
 	}
-	if c.EvalCasesPerNote < 1 || c.EvalCasesPerNote > 5 {
-		return fmt.Errorf("eval_cases_per_note must be between 1 and 5")
+	if c.EvalCasesPerNote < 1 || c.EvalCasesPerNote > 8 {
+		return fmt.Errorf("eval_cases_per_note must be between 1 and 8")
 	}
 	if c.NoteIDStart <= 0 || c.CommentIDStart <= 0 {
 		return fmt.Errorf("ID starts must be positive")

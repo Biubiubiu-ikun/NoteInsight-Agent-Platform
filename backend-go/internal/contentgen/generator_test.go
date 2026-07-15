@@ -29,7 +29,7 @@ func TestGenerateIsDeterministicAndPassesQualityChecks(t *testing.T) {
 	if !reflect.DeepEqual(firstCorpus, secondCorpus) || !reflect.DeepEqual(firstReport, secondReport) {
 		t.Fatal("fixed seed corpus is not deterministic")
 	}
-	if firstReport.Notes != 20 || firstReport.Media != 60 || firstReport.Comments != 600 || firstReport.EvalCases != 100 {
+	if firstReport.Notes != 20 || firstReport.Media != 60 || firstReport.Comments != 600 || firstReport.EvalCases != 161 {
 		t.Fatalf("unexpected report counts: %+v", firstReport)
 	}
 	for _, check := range firstReport.Checks {
@@ -75,7 +75,8 @@ func TestGeneratedTextIsSubstantiveAndSemanticallyLinked(t *testing.T) {
 			}
 		}
 		for _, evalCase := range item.EvalCases {
-			if evalCase.Question == "" || evalCase.ExpectedAnswer == "" || len(evalCase.GoldSources) == 0 {
+			answerable, _ := evalCase.Metadata["answerable"].(bool)
+			if evalCase.Question == "" || evalCase.ExpectedAnswer == "" || (answerable && len(evalCase.GoldSources) == 0) {
 				t.Errorf("note %d has incomplete eval case: %+v", document.ID, evalCase)
 			}
 		}
@@ -98,7 +99,7 @@ func TestQualityProfilePassesAllChecks(t *testing.T) {
 			t.Errorf("quality check %s failed: value=%v target=%s", check.Name, check.Value, check.Target)
 		}
 	}
-	if report.Comments != 40000 || report.EvalCases != 1000 {
+	if report.Comments != 40000 || report.EvalCases != 1619 {
 		t.Fatalf("unexpected quality profile volume: %+v", report)
 	}
 }

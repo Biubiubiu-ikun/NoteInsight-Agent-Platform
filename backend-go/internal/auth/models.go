@@ -1,6 +1,9 @@
 package auth
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type User struct {
 	ID        int64     `json:"id" db:"id"`
@@ -67,9 +70,10 @@ type credentialRecord struct {
 }
 
 type sessionRecord struct {
-	ID               int64     `db:"id"`
-	UserID           int64     `db:"user_id"`
-	RefreshTokenHash string    `db:"refresh_token_hash"`
-	Revoked          bool      `db:"revoked"`
-	ExpiresAt        time.Time `db:"expires_at"`
+	ID               int64         `db:"id"`
+	UserID           int64         `db:"user_id"`
+	RefreshTokenHash string        `db:"refresh_token_hash"`
+	Revoked          bool          `db:"revoked"`
+	ExpiresAt        time.Time     `db:"expires_at"`
+	ReplacedBy       sql.NullInt64 `db:"replaced_by_session_id"`
 }

@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -63,6 +64,28 @@ var (
 			Buckets: prometheus.DefBuckets,
 		},
 		[]string{"operation"},
+	)
+
+	DBPoolConnections = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "db_pool_connections",
+			Help: "Current database pool connections by state.",
+		},
+		[]string{"state"},
+	)
+
+	DBPoolWaitTotal = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "db_pool_wait_total",
+			Help: "Cumulative count of waits for a database connection.",
+		},
+	)
+
+	DBPoolWaitDurationSeconds = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "db_pool_wait_duration_seconds_total",
+			Help: "Cumulative time spent waiting for database connections.",
+		},
 	)
 
 	HotRankingUpdatesTotal = prometheus.NewCounterVec(
@@ -250,6 +273,9 @@ func init() {
 		CacheBackendLoadsTotal,
 		CacheCoalescedRequestsTotal,
 		DBQueryDuration,
+		DBPoolConnections,
+		DBPoolWaitTotal,
+		DBPoolWaitDurationSeconds,
 		HotRankingUpdatesTotal,
 		OutboxEventsLockedTotal,
 		OutboxEventsProcessedTotal,
@@ -278,6 +304,15 @@ func init() {
 
 func ObserveDB(operation string, startedAt time.Time) {
 	DBQueryDuration.WithLabelValues(operation).Observe(time.Since(startedAt).Seconds())
+}
+
+func SetDBPoolStats(stats sql.DBStats) {
+	DBPoolConnections.WithLabelValues("max_open").Set(float64(stats.MaxOpenConnections))
+	DBPoolConnections.WithLabelValues("open").Set(float64(stats.OpenConnections))
+	DBPoolConnections.WithLabelValues("in_use").Set(float64(stats.InUse))
+	DBPoolConnections.WithLabelValues("idle").Set(float64(stats.Idle))
+	DBPoolWaitTotal.Set(float64(stats.WaitCount))
+	DBPoolWaitDurationSeconds.Set(stats.WaitDuration.Seconds())
 }
 
 func IncCacheHit(cache string) {

@@ -1,0 +1,78 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP request rate",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0},
+      "targets": [{"expr": "sum by (method, path) (rate(http_requests_total[5m]))", "legendFormat": "{{method}} {{path}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP p95 latency",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket[5m])))", "legendFormat": "{{path}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP 5xx rate",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0},
+      "targets": [{"expr": "sum by (path) (rate(http_requests_total{status=~\"5..\"}[5m]))", "legendFormat": "{{path}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Database pool",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8},
+      "targets": [{"expr": "db_pool_connections", "legendFormat": "{{state}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Database pool waits",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8},
+      "targets": [{"expr": "rate(db_pool_wait_total[5m])", "legendFormat": "waits/s", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Database query p95",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, operation) (rate(db_query_duration_seconds_bucket[5m])))", "legendFormat": "{{operation}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Outbox status",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+      "targets": [{"expr": "outbox_events", "legendFormat": "{{status}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "JetStream consumer state",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16},
+      "targets": [
+        {"expr": "jetstream_consumer_pending_messages", "legendFormat": "pending", "refId": "A"},
+        {"expr": "jetstream_consumer_ack_pending_messages", "legendFormat": "ack pending", "refId": "B"},
+        {"expr": "jetstream_consumer_redelivered_messages", "legendFormat": "redelivered", "refId": "C"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Domain event p95 lag",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, event_type) (rate(domain_event_lag_seconds_bucket[5m])))", "legendFormat": "{{event_type}}", "refId": "A"}]
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 40,
+  "tags": ["noteinsight", "platform"],
+  "templating": {"list": []},
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "title": "NoteInsight Platform Overview",
+  "uid": "noteinsight-platform",
+  "version": 1
+}

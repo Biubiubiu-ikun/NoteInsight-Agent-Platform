@@ -10,6 +10,8 @@ type EventInput struct {
 	AggregateID   int64
 	EventType     string
 	Payload       any
+	SchemaVersion int
+	Producer      string
 }
 
 type Event struct {
@@ -19,6 +21,10 @@ type Event struct {
 	AggregateID   int64           `db:"aggregate_id"`
 	EventType     string          `db:"event_type"`
 	Payload       json.RawMessage `db:"payload"`
+	SchemaVersion int             `db:"schema_version"`
+	Producer      string          `db:"producer"`
+	CorrelationID string          `db:"correlation_id"`
+	TraceID       string          `db:"trace_id"`
 	Status        string          `db:"status"`
 	RetryCount    int             `db:"retry_count"`
 	NextRetryAt   time.Time       `db:"next_retry_at"`

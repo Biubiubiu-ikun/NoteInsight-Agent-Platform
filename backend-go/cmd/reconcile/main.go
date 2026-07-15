@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
 	"time"
@@ -15,6 +16,8 @@ import (
 )
 
 func main() {
+	fullAudit := flag.Bool("full", false, "run an explicit full-table counter audit before rebuilding derived data")
+	flag.Parse()
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("load config failed", "error", err)
@@ -42,8 +45,17 @@ func main() {
 		logger.Error("recover stale outbox events failed", "error", err)
 		os.Exit(1)
 	}
+	repository := reconcile.NewRepository(pgDB)
+	fullResult := reconcile.CounterRepairResult{}
+	if *fullAudit {
+		fullResult, err = repository.ReconcileAllCounters(ctx)
+		if err != nil {
+			logger.Error("full counter audit failed", "error", err)
+			os.Exit(1)
+		}
+	}
 	reconciler := reconcile.New(reconcile.Deps{
-		Repository:   reconcile.NewRepository(pgDB),
+		Repository:   repository,
 		Redis:        redisClient,
 		Logger:       logger,
 		Enabled:      true,
@@ -58,9 +70,10 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("reconcile completed",
+		"full_audit", *fullAudit,
 		"stale_outbox_recovered", recovered,
-		"notes_repaired", result.NotesRepaired,
-		"comments_repaired", result.CommentsRepaired,
+		"notes_repaired", result.NotesRepaired+fullResult.NotesRepaired,
+		"comments_repaired", result.CommentsRepaired+fullResult.CommentsRepaired,
 		"note_ranking_keys", result.NoteRankingKeys,
 		"comment_ranking_keys", result.CommentRankingKeys,
 		"cache_keys_invalidated", result.InvalidatedCacheKeys,

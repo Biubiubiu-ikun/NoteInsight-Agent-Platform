@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"creatorinsight/backend-go/internal/platform/observability"
+	"creatorinsight/backend-go/internal/platform/requestmeta"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -38,14 +39,30 @@ func EnqueueTx(ctx context.Context, tx *sqlx.Tx, input EventInput) error {
 		return fmt.Errorf("marshal outbox payload: %w", err)
 	}
 
+	if input.SchemaVersion <= 0 {
+		input.SchemaVersion = 1
+	}
+	input.Producer = strings.TrimSpace(input.Producer)
+	if input.Producer == "" {
+		input.Producer = "noteinsight-api"
+	}
+	metadata := requestmeta.From(ctx)
 	_, err = tx.ExecContext(ctx, `
-INSERT INTO outbox_events (event_id, aggregate_type, aggregate_id, event_type, payload, status, next_retry_at, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5::jsonb, 'pending', now(), now(), now())`,
+INSERT INTO outbox_events (
+    event_id, aggregate_type, aggregate_id, event_type, payload,
+    schema_version, producer, correlation_id, trace_id,
+    status, next_retry_at, created_at, updated_at
+)
+VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NULLIF($8, ''), NULLIF($9, ''), 'pending', now(), now(), now())`,
 		NewEventID(input.EventType),
 		input.AggregateType,
 		input.AggregateID,
 		input.EventType,
 		string(payload),
+		input.SchemaVersion,
+		input.Producer,
+		metadata.RequestID,
+		metadata.TraceID,
 	)
 	return err
 }
@@ -73,7 +90,10 @@ SET status = 'processing',
 FROM picked
 WHERE e.id = picked.id
 RETURNING e.id, e.event_id, e.aggregate_type, e.aggregate_id, e.event_type,
-          e.payload, e.status, e.retry_count, e.next_retry_at, e.created_at, e.updated_at`,
+          e.payload, e.schema_version, e.producer,
+          COALESCE(e.correlation_id, '') AS correlation_id,
+          COALESCE(e.trace_id, '') AS trace_id,
+          e.status, e.retry_count, e.next_retry_at, e.created_at, e.updated_at`,
 		limit,
 	)
 	if err != nil {

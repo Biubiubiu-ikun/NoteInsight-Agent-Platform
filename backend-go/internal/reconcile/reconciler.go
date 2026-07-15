@@ -124,11 +124,11 @@ func (r *Reconciler) RunOnce(ctx context.Context) (result Result, err error) {
 		return result, nil
 	}
 
-	noteEntries, err := r.repo.ListNoteRankings(ctx)
+	noteEntries, err := r.repo.ListNoteRankings(ctx, r.rankingLimit)
 	if err != nil {
 		return result, fmt.Errorf("load note rankings: %w", err)
 	}
-	commentEntries, err := r.repo.ListCommentRankings(ctx)
+	commentEntries, err := r.repo.ListCommentRankings(ctx, r.rankingLimit)
 	if err != nil {
 		return result, fmt.Errorf("load comment rankings: %w", err)
 	}
@@ -150,8 +150,11 @@ func buildNoteSets(entries []NoteRankingEntry, limit int64) map[string][]redis.Z
 	categoryCounts := make(map[string]int64)
 	for index, entry := range entries {
 		member := strconv.FormatInt(entry.ID, 10)
-		if int64(index) < limit {
+		if entry.Scope == "global" || (entry.Scope == "" && int64(index) < limit) {
 			sets[globalNoteRankingKey] = append(sets[globalNoteRankingKey], redis.Z{Score: entry.Score, Member: member})
+		}
+		if entry.Scope == "global" {
+			continue
 		}
 		category := strings.TrimSpace(entry.Category)
 		if category == "" || categoryCounts[category] >= limit {
