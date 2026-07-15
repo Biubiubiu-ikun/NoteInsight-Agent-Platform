@@ -1,11 +1,32 @@
 openapi: 3.1.0
 info:
   title: NoteInsight API
-  version: 0.6.3
-  description: Phase 6C public community and authenticated content API.
+  version: 0.6.5
+  description: Phase 6C public community and authenticated content API with contract gates.
 servers:
   - url: http://localhost:18080
 paths:
+  /api/v1/health:
+    get:
+      tags: [Operations]
+      responses:
+        '200':
+          description: Process liveness probe.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, const: ok }
+  /api/v1/ready:
+    get:
+      tags: [Operations]
+      responses:
+        '200':
+          description: PostgreSQL and Redis are available.
+        '503':
+          description: At least one required dependency is unavailable.
   /api/v1/auth/register:
     post:
       tags: [Auth]

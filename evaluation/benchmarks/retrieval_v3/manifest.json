@@ -1,0 +1,26 @@
+{
+  "benchmark_id": "retrieval_v3_20260715",
+  "benchmark_version": "retrieval_v3",
+  "source_run_id": "phase6c_quality_v2_20260715",
+  "generator_version": "independent_eval_v3",
+  "seed": 20260715,
+  "status": "frozen",
+  "case_count": 240,
+  "split_counts": {
+    "development": 80,
+    "holdout": 160
+  },
+  "task_counts": {
+    "authorization_boundary": 40,
+    "cross_note_compare": 40,
+    "no_answer": 40,
+    "semantic_paraphrase": 40,
+    "temporal_conflict": 40,
+    "typo_robustness": 40
+  },
+  "review_counts": {
+    "machine_validated": 240
+  },
+  "manifest_checksum": "cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35",
+  "cases_file": "cases.jsonl"
+}

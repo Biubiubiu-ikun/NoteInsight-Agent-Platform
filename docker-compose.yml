@@ -1,5 +1,6 @@
 services:
   backend:
+    image: "${PLATFORM_IMAGE:-noteinsight/platform}:${IMAGE_TAG:-local}"
     build:
       context: ./backend-go
       dockerfile: Dockerfile
@@ -29,6 +30,7 @@ services:
     restart: unless-stopped
 
   worker:
+    image: "${PLATFORM_IMAGE:-noteinsight/platform}:${IMAGE_TAG:-local}"
     build:
       context: ./backend-go
       dockerfile: Dockerfile

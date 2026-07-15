@@ -243,9 +243,9 @@ export function NoteDetail({ noteId, onClose, onNeedAuth, onToast, onChanged }: 
             )}
 
             <div className="detail-actions" aria-label="笔记互动">
-              <button className={note.viewer_liked ? "active" : ""} type="button" disabled={busyAction === "like"} onClick={() => runAction("like")}><Heart size={18} />{formatCount(note.like_count)}</button>
-              <button className={note.viewer_collected ? "active" : ""} type="button" disabled={busyAction === "collect"} onClick={() => runAction("collect")}><Bookmark size={18} />{formatCount(note.collect_count)}</button>
-              <button type="button" disabled={busyAction === "share"} onClick={() => runAction("share")}><Share2 size={18} />{formatCount(note.share_count)}</button>
+              <button aria-label={note.viewer_liked ? "取消点赞" : "点赞笔记"} className={note.viewer_liked ? "active" : ""} type="button" disabled={busyAction === "like"} onClick={() => runAction("like")}><Heart size={18} />{formatCount(note.like_count)}</button>
+              <button aria-label={note.viewer_collected ? "取消收藏" : "收藏笔记"} className={note.viewer_collected ? "active" : ""} type="button" disabled={busyAction === "collect"} onClick={() => runAction("collect")}><Bookmark size={18} />{formatCount(note.collect_count)}</button>
+              <button aria-label="分享笔记" type="button" disabled={busyAction === "share"} onClick={() => runAction("share")}><Share2 size={18} />{formatCount(note.share_count)}</button>
               <span><MessageCircle size={18} />{formatCount(note.comment_count)}</span>
             </div>
 
@@ -263,7 +263,7 @@ export function NoteDetail({ noteId, onClose, onNeedAuth, onToast, onChanged }: 
                       <div><strong>用户 {comment.user_id}</strong><time>{formatDate(comment.created_at)}</time></div>
                       <p>{comment.content}</p>
                       <div className="comment-tools">
-                        <button type="button" onClick={() => likeComment(comment)}><Heart size={14} />{comment.like_count}</button>
+                        <button aria-label={`点赞评论 ${comment.id}`} type="button" onClick={() => likeComment(comment)}><Heart size={14} />{comment.like_count}</button>
                         {user && (user.id === comment.user_id || user.role === "admin") && <button className="danger-text" type="button" onClick={() => deleteComment(comment)}>删除</button>}
                       </div>
                     </div>

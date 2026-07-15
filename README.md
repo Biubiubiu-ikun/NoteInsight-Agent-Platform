@@ -13,10 +13,10 @@ NoteInsight is a creator-insight platform built on a Xiaohongshu-style image-tex
 - Project/dataset/visibility boundaries and versioned Evidence Source registry.
 - Soft-delete propagation from notes/comments to active evidence.
 - Deterministic behavior simulator, daily fact materialization and run lineage.
-- Meaningful Chinese note/OCR/comment corpus with nine retrieval task types.
+- Meaningful Chinese note/OCR/comment corpus plus a separate frozen six-task adversarial retrieval benchmark.
 - React console for feed, search, ranking, auth, publishing, detail, comments and interactions.
 - Prometheus metrics/alerts, provisioned Grafana dashboard, maintenance and recovery tools.
-- OpenAPI, domain-event JSON Schema, Go/React tests, Compose acceptance, CodeQL and dependency audit.
+- OpenAPI/Gin drift checks, domain-event JSON Schema, Go/React/integration/E2E tests, Compose acceptance, CodeQL, SBOM and vulnerability gates.
 
 Phase 6C is complete. Phase 7A canonical Evidence Store ingestion is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
 
@@ -24,6 +24,7 @@ Phase 6C is complete. Phase 7A canonical Evidence Store ingestion is next. The l
 
 ```text
 backend-go/             Go API, worker, migrations, data and ops commands
+evaluation/             immutable retrieval benchmark manifests and JSONL cases
 frontend/               React/Vite API testing console
 deploy/                 capacity and observability configuration
 docs/                   architecture, contracts, runbooks and phase evidence
@@ -79,6 +80,14 @@ Bulk text generation is deterministic and does not call an LLM API. Image URLs m
 
 The latest run produced 200 notes, 800 media rows, 40,000 comments and 1,619 evaluation cases across summary, procedure, controversy, audience, OCR, conflict, temporal, no-answer and cross-note tasks.
 
+The independent retrieval baseline is `retrieval_v3_20260715`: 240 unique cases, 80 development, 160 holdout, six adversarial task families and manifest checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
+
+```powershell
+cd backend-go
+go run ./cmd/evalfreeze -verify-only `
+  -output-dir ../evaluation/benchmarks/retrieval_v3
+```
+
 ## Fact Materialization
 
 ```powershell
@@ -96,14 +105,22 @@ cd backend-go
 go test ./...
 go vet ./...
 
+cd ..
+
 # Windows host does not need a local GCC for race detection
-docker run --rm --mount "type=bind,source=$((Get-Location).Path),target=/src" `
-  -w /src golang:1.25-bookworm /usr/local/go/bin/go test -race -count=1 ./...
+docker run --rm --mount "type=bind,source=$((Get-Location).Path),target=/workspace" `
+  -w /workspace/backend-go golang:1.25.12-bookworm go test -race ./...
+
+$env:POSTGRES_DSN = "postgres://creatorinsight:creatorinsight@127.0.0.1:15432/creatorinsight?sslmode=disable"
+$env:NATS_URL = "nats://127.0.0.1:14222"
+cd backend-go
+go test -tags=integration -count=1 ./integration
 
 cd ..\frontend
 npm test
 npm run typecheck
 npm run build
+npm run test:e2e
 
 cd ..
 .\scripts\migrate.ps1
@@ -111,7 +128,7 @@ cd ..
 .\scripts\smoke_phase2c_auth.ps1
 ```
 
-The acceptance suite covers registration, refresh rotation/replay rejection, identity, ownership/admin/banned rules, idempotent interactions, keyset pagination, project-private reads, Evidence Source versioning/deletion and async convergence.
+The acceptance suite covers registration, refresh rotation/replay rejection, identity, ownership/admin/banned rules, idempotent interactions, keyset pagination, project-private reads, Evidence Source versioning/deletion and async convergence. The integration tag adds real transaction, unique-constraint, lock/lease, crash-recovery and DLQ replay coverage.
 
 ## Operations
 
@@ -152,3 +169,4 @@ The isolated capacity environment and 4.21-million-row evidence are documented i
 - `docs/contracts/domain-event-v1.schema.json`: event envelope contract.
 - `docs/13_recovery_runbook.md`: backup/recovery procedure.
 - `docs/14_data_governance.md`: scope, deletion, retention and retrieval rules.
+- `docs/15_quality_security_gates.md`: benchmark, test, contract and supply-chain gates.

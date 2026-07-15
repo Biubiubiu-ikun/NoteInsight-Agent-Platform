@@ -4,13 +4,15 @@ Updated: 2026-07-15
 
 ## Authority
 
-`最新项目规划.md` V6.4 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V6.5 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
 - Phase 1 through Phase 6C are implemented; Phase 6B keeps a long-soak performance gate open.
 - Phase 5C fact materialization is complete.
-- P0/P1 pre-retrieval gaps are closed; only the explicitly recorded production and long-soak gates remain open.
+- Local P0/P1 pre-retrieval gaps are closed; remote CI/branch controls, independent human holdout review and explicitly recorded production/long-soak gates remain open.
+- Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; current release hardening is the next independent commit.
+- Frozen retrieval benchmark v3 has 240 unique cases and checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
 - Frontend testing console is available at `http://127.0.0.1:15173/` while the dev server is running.
 - Next planned work is Phase 7A Evidence Store and deterministic ingestion.
 
@@ -53,17 +55,29 @@ cd backend-go
 go test ./...
 go vet ./...
 
-docker run --rm --mount "type=bind,source=$((Get-Location).Path),target=/src" `
-  -w /src golang:1.25-bookworm /usr/local/go/bin/go test -race -count=1 ./...
+cd ..
+docker run --rm --mount "type=bind,source=$((Get-Location).Path),target=/workspace" `
+  -w /workspace/backend-go golang:1.25.12-bookworm go test -race ./...
+
+$env:POSTGRES_DSN = "postgres://creatorinsight:creatorinsight@127.0.0.1:15432/creatorinsight?sslmode=disable"
+$env:NATS_URL = "nats://127.0.0.1:14222"
+cd backend-go
+go test -tags=integration -count=1 ./integration
 
 cd ..\frontend
 npm test
 npm run typecheck
 npm run build
+npm run test:e2e
 
 cd ..
 .\scripts\smoke_phase2c_auth.ps1
 
+cd backend-go
+go run ./cmd/evalfreeze -verify-only `
+  -output-dir ../evaluation/benchmarks/retrieval_v3
+
+cd ..
 docker compose run --rm --no-deps `
   --entrypoint /app/noteinsight-reconcile worker --full
 ```
@@ -72,11 +86,14 @@ Latest verified data:
 
 - quality run: `phase6c_quality_v2_20260715`, 200 notes, 40,000 comments, 1,619 eval cases;
 - fact run: `phase6c_final_20260715`, 812 note facts, 481 user facts;
-- main database: 5,475 active notes, 6,759 media, 101,626 active comments and 113,880 Evidence Sources;
+- independent benchmark: `retrieval_v3_20260715`, 80 development + 160 holdout, 240 unique queries/checksums;
+- main database after final acceptance: 5,479 active notes, 6,774 media, 101,631 active comments and 113,858 active Evidence Sources;
 - invariants: zero missing dataset source, counter drift, duplicate dataset, active Outbox, JetStream pending or redelivery;
 - isolated PostgreSQL restore drill passed; final archive is `artifacts/backups/noteinsight_20260715_065618.dump`;
 - delayed deleted-note view replay passed and DLQ did not grow.
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
+- Go statement coverage is 26.13% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
+- Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.
 
 ## Stop
 

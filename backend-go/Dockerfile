@@ -11,6 +11,7 @@ COPY bin/noteinsight-reconcile /app/noteinsight-reconcile
 COPY bin/noteinsight-materialize /app/noteinsight-materialize
 COPY bin/noteinsight-maintenance /app/noteinsight-maintenance
 COPY bin/noteinsight-dlqctl /app/noteinsight-dlqctl
+COPY bin/noteinsight-evalfreeze /app/noteinsight-evalfreeze
 COPY migrations /app/migrations
 
 USER 65532:65532

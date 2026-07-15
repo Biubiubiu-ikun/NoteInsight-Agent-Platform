@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
@@ -54,10 +54,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: backend-go/go.mod
           cache-dependency-path: backend-go/go.sum
@@ -71,14 +71,21 @@ jobs:
       - name: Unit tests with race detector
         run: go test -race -coverprofile=coverage.out ./...
 
+      - name: Enforce Go coverage floor
+        shell: pwsh
+        run: ../scripts/check_go_coverage.ps1 -CoverageFile coverage.out -MinimumPercent 25.0
+
       - name: Vet
         run: go vet ./...
 
       - name: Go vulnerability scan
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.4 ./...
 
       - name: Build all commands
         run: go build ./cmd/...
+
+      - name: Verify frozen retrieval benchmark checksums
+        run: go run ./cmd/evalfreeze -verify-only -output-dir ../evaluation/benchmarks/retrieval_v3
 
       - name: Simulator quality smoke
         run: go run ./cmd/simulator --profile=smoke --sessions=100 --no-event-files --strict=true
@@ -87,7 +94,7 @@ jobs:
         run: go run ./cmd/seedgen --profile=capacity --dry-run
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: go-coverage
           path: backend-go/coverage.out
@@ -97,7 +104,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Validate Compose
         run: |
@@ -111,6 +120,31 @@ jobs:
         run: |
           python -m json.tool docs/contracts/domain-event-v1.schema.json >/dev/null
           python -m json.tool deploy/observability/grafana/dashboards/platform-overview.json >/dev/null
+          python -m pip install --disable-pip-version-check openapi-spec-validator==0.7.2
+          openapi-spec-validator docs/openapi.yaml
+
+      - name: Validate Prometheus configuration and alert rules
+        run: |
+          docker run --rm \
+            -v "$PWD/deploy/observability:/etc/prometheus:ro" \
+            --entrypoint promtool \
+            prom/prometheus:v2.55.1 \
+            check config /etc/prometheus/prometheus.yml
+
+      - name: Scan Git history for secrets
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            zricethezav/gitleaks:v8.24.3 \
+            git --redact --verbose
+
+      - name: Lint GitHub Actions workflows
+        run: |
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo \
+            rhysd/actionlint:1.7.7
 
       - name: Parse PowerShell scripts
         shell: pwsh
@@ -130,20 +164,29 @@ jobs:
   integration:
     needs: [go-quality, frontend-quality, compose-validation]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       RATE_LIMIT_ENABLED: "false"
       RECONCILE_ENABLED: "false"
+      POSTGRES_DSN: postgres://creatorinsight:creatorinsight@127.0.0.1:15432/creatorinsight?sslmode=disable
+      NATS_URL: nats://127.0.0.1:14222
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: backend-go/go.mod
           cache-dependency-path: backend-go/go.sum
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Build Linux service binaries
         shell: pwsh
@@ -161,6 +204,55 @@ jobs:
       - name: Run authenticated API and async pipeline acceptance
         shell: pwsh
         run: ./scripts/smoke_phase2c_auth.ps1 -ConvergenceTimeoutSeconds 60
+
+      - name: Run PostgreSQL, concurrency, Outbox, and DLQ integration tests
+        working-directory: backend-go
+        run: go test -tags=integration -count=1 -v ./integration
+
+      - name: Install browser test dependencies
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run live desktop and mobile E2E
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Generate SPDX image SBOM
+        run: |
+          mkdir -p artifacts
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD/artifacts:/out" \
+            anchore/syft:v1.20.0 \
+            noteinsight/platform:local -o spdx-json=/out/platform-sbom.spdx.json
+
+      - name: Scan runtime image for fixable high and critical vulnerabilities
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$HOME/.cache/trivy:/root/.cache/" \
+            aquasec/trivy:0.59.1 \
+            image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL --scanners vuln noteinsight/platform:local
+
+      - name: Upload image SBOM
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: platform-image-sbom
+          path: artifacts/platform-sbom.spdx.json
+          if-no-files-found: ignore
+
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          if-no-files-found: ignore
 
       - name: Show diagnostics on failure
         if: failure()

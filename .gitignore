@@ -11,6 +11,10 @@ backend-go/coverage*
 load-tests/results/
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
 frontend/*.log
 frontend/*.tsbuildinfo
 artifacts/backups/
+artifacts/*.spdx.json

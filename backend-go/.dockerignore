@@ -1,5 +1,7 @@
 .git
 tmp
 coverage.out
+coverage*
+bin/*.exe
 *.test
 go.work

@@ -16,10 +16,10 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 2. Business facts and Outbox events commit atomically; consumers are idempotent.
 3. Project, dataset, visibility, source version and deletion boundaries exist before retrieval.
 4. Redis/NATS are treated as derivatives or transport, never the source of truth.
-5. Data sets are deterministic, meaningful and paired with nine-task gold evaluation cases.
+5. Data sets are deterministic and meaningful; a separately generated, immutable 240-case adversarial benchmark now prevents tuning directly on pipeline-generated gold cases.
 6. Operational claims have metrics, alerts, replay, maintenance, backup and restore evidence.
 7. The frontend exercises real workflows instead of presenting a marketing shell.
-8. CI covers backend, frontend, contracts, security checks, Compose and authenticated acceptance.
+8. CI covers backend, frontend, real PostgreSQL/NATS integration, Playwright, contracts, Prometheus, secrets, SBOM, image vulnerabilities, Compose and authenticated acceptance.
 
 ## Remaining High-Value Work
 
@@ -29,14 +29,15 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 - Establish PostgreSQL FTS lexical baseline before adding embeddings.
 - Report per-task Recall/MRR/nDCG, no-answer and citation metrics, not one aggregate score.
 - Add consistency audit proving no active chunk references deleted or invisible source data.
+- Have an independent reviewer adjudicate a stratified holdout sample and record agreement before making public benchmark claims.
 
 ### Before Production Claims
 
 - Pass a 30-minute warm large-data mixed soak and explain P95/P99 with traces and query evidence.
 - Add real OpenTelemetry export and `pg_stat_statements`/slow-query diagnostics.
 - Prove multi-instance behavior, external load, managed secrets, TLS, service auth and PITR.
-- Expand container-backed Go integration tests for concurrency, rollback, leases and redelivery.
-- Configure protected branches, releases and environment promotion on the eventual Git host.
+- Split production runtime/tooling images if registry size and least-functionality policy justify the operational complexity.
+- Configure protected branches, required green checks, releases, registry signing and environment promotion on the Git host.
 
 ## Next Sequence
 
