@@ -8,7 +8,7 @@ Commit `f0dee23` and annotated tag `v0.6.4` preserve the Phase 6C baseline. Retr
 
 ## Retrieval Benchmark
 
-`evaluation/benchmarks/retrieval_v3` is the only approved pre-retrieval benchmark. It contains 240 unique cases with an 80/160 development/holdout split and six balanced adversarial task families. The database and files are immutable; `evalfreeze -verify-only` recalculates every checksum and manifest statistic.
+`evaluation/benchmarks/retrieval_v3` is the only approved pre-retrieval benchmark. It contains 80 public development cases and ordered SHA-256 commitments for all 240 cases across six balanced adversarial task families. The 160 holdout questions and answers remain in Git-ignored private artifacts. `evalfreeze -verify-only` validates either representation against the same frozen manifest checksum.
 
 ```powershell
 cd backend-go
@@ -31,7 +31,7 @@ go run ./cmd/evalfreeze -verify-only `
 - Go contract test compares every `/api/v1` Gin method/path with OpenAPI in both directions.
 - `promtool check config` loads Prometheus config and all nine alert rules.
 - Actionlint parses both GitHub Actions workflows.
-- CodeQL analyzes Go and JavaScript/TypeScript. Without private-repository GitHub Code Security, CI keeps SARIF as an artifact and fails on findings; set repository variable `CODEQL_UPLOAD=true` only after platform code scanning is enabled.
+- CodeQL analyzes Go and JavaScript/TypeScript and uploads findings to GitHub Code Scanning on the public remote. Private mirrors can set `CODEQL_UPLOAD=false` to retain SARIF artifacts and fail locally on findings.
 
 ## Supply Chain
 
@@ -43,4 +43,4 @@ go run ./cmd/evalfreeze -verify-only `
 
 ## External Gates
 
-The private GitHub remote is established at `Biubiubiu-ikun/NoteInsight-Agent-Platform`, and Actions executes the Linux quality chain. CODEOWNERS, a PR template and `SECURITY.md` document the review path. GitHub's API returns HTTP 403 for branch protection on this GitHub Free private repository, so enforcement requires GitHub Pro or a separately approved visibility change. Environment approvals and registry signing require deployment infrastructure. CodeQL platform upload also remains unavailable until GitHub Code Security is enabled, so the current workflow enforces local SARIF instead of silently skipping analysis.
+The sanitized public GitHub remote is established at `Biubiubiu-ikun/NoteInsight-Agent-Platform`, and Actions executes the Linux quality chain. CODEOWNERS, a PR template, `SECURITY.md`, protected `main`, required checks and review rules define the merge path. The pre-public repository remains a private archive so full holdout content is never reachable from public history. Environment approvals, registry signing and managed deployment secrets still require deployment infrastructure.

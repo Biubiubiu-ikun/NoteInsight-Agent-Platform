@@ -2,10 +2,12 @@ package evalbench
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -93,6 +95,69 @@ func TestWriteArtifactsCreatesReviewableManifestAndJSONL(t *testing.T) {
 	}
 	if verified.ManifestChecksum != benchmark.Manifest.ManifestChecksum {
 		t.Fatalf("verified checksum = %s, want %s", verified.ManifestChecksum, benchmark.Manifest.ManifestChecksum)
+	}
+}
+
+func TestWritePublicArtifactsSealsHoldoutContent(t *testing.T) {
+	benchmark, err := Generate(testConfig(), testDocuments(13))
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	if err := WritePublicArtifacts(directory, benchmark); err != nil {
+		t.Fatalf("WritePublicArtifacts() error = %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(directory, "cases.jsonl")); !os.IsNotExist(err) {
+		t.Fatal("public artifacts must not contain the full cases file")
+	}
+
+	developmentRaw, err := os.ReadFile(filepath.Join(directory, "development.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lines := bytes.Count(developmentRaw, []byte{'\n'}); lines != benchmark.Manifest.SplitCounts["development"] {
+		t.Fatalf("development lines = %d, want %d", lines, benchmark.Manifest.SplitCounts["development"])
+	}
+	commitmentsRaw, err := os.ReadFile(filepath.Join(directory, "case_commitments.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(commitmentsRaw, []byte(`"query"`)) || bytes.Contains(commitmentsRaw, []byte(`"expected_answer"`)) {
+		t.Fatal("public commitments exposed holdout question or answer fields")
+	}
+	if lines := bytes.Count(commitmentsRaw, []byte{'\n'}); lines != benchmark.Manifest.CaseCount {
+		t.Fatalf("commitment lines = %d, want %d", lines, benchmark.Manifest.CaseCount)
+	}
+
+	verified, err := VerifyArtifacts(directory)
+	if err != nil {
+		t.Fatalf("VerifyArtifacts() error = %v", err)
+	}
+	if verified.ManifestChecksum != benchmark.Manifest.ManifestChecksum {
+		t.Fatalf("verified checksum = %s, want %s", verified.ManifestChecksum, benchmark.Manifest.ManifestChecksum)
+	}
+}
+
+func TestVerifyPublicArtifactsRejectsTamperedCommitment(t *testing.T) {
+	benchmark, err := Generate(testConfig(), testDocuments(13))
+	if err != nil {
+		t.Fatal(err)
+	}
+	directory := t.TempDir()
+	if err := WritePublicArtifacts(directory, benchmark); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(directory, "case_commitments.jsonl")
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tampered := bytes.Replace(raw, []byte(benchmark.Cases[0].CaseChecksum), []byte(strings.Repeat("0", 64)), 1)
+	if err := os.WriteFile(path, tampered, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := VerifyArtifacts(directory); err == nil {
+		t.Fatal("VerifyArtifacts() accepted a tampered public commitment")
 	}
 }
 

@@ -18,3 +18,4 @@ frontend/*.log
 frontend/*.tsbuildinfo
 artifacts/backups/
 artifacts/*.spdx.json
+evaluation/private/

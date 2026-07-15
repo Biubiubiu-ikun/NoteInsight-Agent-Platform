@@ -4,13 +4,13 @@ Updated: 2026-07-15
 
 ## Authority
 
-`最新项目规划.md` V6.6 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V6.7 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
 - Phase 1 through Phase 6C are implemented; Phase 6B keeps a long-soak performance gate open.
 - Phase 5C fact materialization is complete.
-- Local P0/P1 pre-retrieval gaps are closed and the private GitHub remote/Actions baseline is established; CODEOWNERS/PR/security policy are present. Branch protection is blocked by the GitHub Free private-repository limit; independent human holdout review and production/long-soak gates remain open.
+- Local P0/P1 pre-retrieval gaps are closed. The sanitized public GitHub remote has Actions, CodeQL upload, CODEOWNERS, PR/security policy and protected `main`; the full holdout and pre-public history remain in a private archive. Independent human holdout review and production/long-soak gates remain open.
 - Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; release hardening is preserved by tag `v0.6.5`.
 - Frozen retrieval benchmark v3 has 240 unique cases and checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
 - Frontend testing console is available at `http://127.0.0.1:15173/` while the dev server is running.
@@ -86,7 +86,7 @@ Latest verified data:
 
 - quality run: `phase6c_quality_v2_20260715`, 200 notes, 40,000 comments, 1,619 eval cases;
 - fact run: `phase6c_final_20260715`, 812 note facts, 481 user facts;
-- independent benchmark: `retrieval_v3_20260715`, 80 development + 160 holdout, 240 unique queries/checksums;
+- independent benchmark: `retrieval_v3_20260715`, 80 public development cases + 160 sealed holdout cases, with 240 public ordered checksum commitments;
 - main database after final acceptance: 5,479 active notes, 6,774 media, 101,631 active comments and 113,858 active Evidence Sources;
 - invariants: zero missing dataset source, counter drift, duplicate dataset, active Outbox, JetStream pending or redelivery;
 - isolated PostgreSQL restore drill passed; final archive is `artifacts/backups/noteinsight_20260715_065618.dump`;
@@ -94,7 +94,7 @@ Latest verified data:
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
 - Go statement coverage is 26.13% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
 - Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.
-- GitHub remote: `https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform`; CodeQL uses local-SARIF gate mode until GitHub Code Security is available for the private repository.
+- Public GitHub remote: `https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform`; CodeQL uploads to GitHub Code Scanning, while the private archive uses local-SARIF mode.
 
 ## Stop
 

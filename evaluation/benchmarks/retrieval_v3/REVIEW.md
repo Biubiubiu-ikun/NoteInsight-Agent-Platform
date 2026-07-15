@@ -24,6 +24,10 @@ All six task families contain 40 cases: semantic paraphrase, typo robustness, te
 
 - Retrieval development may read only the `development` split.
 - The `holdout` split must not be used for prompt, parser, ranking, or threshold tuning.
+- `development.jsonl` is the only public file containing questions, answers, and gold sources.
+- `case_commitments.jsonl` preserves ordinal, split, task, review status, and SHA-256 for all 240 cases without exposing holdout content.
+- The full `cases.jsonl` exists only under the Git-ignored `evaluation/private/retrieval_v3` path and in the private pre-public history bundle.
+- `evalfreeze -verify-only` validates either the private full artifact or the public development-plus-commitment artifact and must reproduce the same manifest checksum.
 - Report per-task and per-split metrics. Never publish only one aggregate score.
 - A no-answer case has no gold source and must not be forced into a citation.
 - Authorization cases must apply project/dataset/visibility filters before scoring.

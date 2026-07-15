@@ -103,7 +103,18 @@ type Manifest struct {
 	TaskCounts       map[string]int `json:"task_counts"`
 	ReviewCounts     map[string]int `json:"review_counts"`
 	ManifestChecksum string         `json:"manifest_checksum"`
-	CasesFile        string         `json:"cases_file"`
+	ArtifactScope    string         `json:"artifact_scope,omitempty"`
+	CasesFile        string         `json:"cases_file,omitempty"`
+	DevelopmentFile  string         `json:"development_file,omitempty"`
+	CommitmentsFile  string         `json:"commitments_file,omitempty"`
+}
+
+type CaseCommitment struct {
+	Ordinal      int    `json:"ordinal"`
+	Split        string `json:"split"`
+	TaskType     string `json:"task_type"`
+	ReviewStatus string `json:"review_status"`
+	CaseChecksum string `json:"case_checksum"`
 }
 
 type Benchmark struct {

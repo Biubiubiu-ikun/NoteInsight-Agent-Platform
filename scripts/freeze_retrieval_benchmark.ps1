@@ -11,6 +11,7 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $BackendRoot = Join-Path $ProjectRoot "backend-go"
 $OutputDir = Join-Path $ProjectRoot "evaluation/benchmarks/retrieval_v3"
+$PrivateOutputDir = Join-Path $ProjectRoot "evaluation/private/retrieval_v3"
 
 & (Join-Path $PSScriptRoot "migrate.ps1")
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -28,7 +29,8 @@ try {
         --cases=$Cases `
         --development-cases=$DevelopmentCases `
         --seed=$Seed `
-        --output-dir=$OutputDir
+        --output-dir=$OutputDir `
+        --private-output-dir=$PrivateOutputDir
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 finally {

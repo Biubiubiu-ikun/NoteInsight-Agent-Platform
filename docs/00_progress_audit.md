@@ -27,7 +27,7 @@ Audit date: 2026-07-15
 - Main data after acceptance: more than 5.4K notes, 101K comments and 113K Evidence Sources.
 - Every current note/media/comment has a 64-character source hash and dataset boundary.
 - Quality corpus run `phase6c_quality_v2_20260715` produced 1,619 cases across nine task types; all strict checks passed.
-- Independent benchmark `retrieval_v3_20260715` contains 240 unique cases with an 80/160 development/holdout split; manifest checksum is `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
+- Independent benchmark `retrieval_v3_20260715` contains 240 unique cases with an 80/160 development/holdout split; the public repository contains development content plus ordered commitments, while sealed holdout content remains private. Manifest checksum is `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
 - Fact run `phase6c_final_20260715` materialized 812 note facts and 481 user facts.
 - Auth/API/async/Evidence Source acceptance passes end to end, including private-project isolation and deletion propagation.
 - A 12.8 MB PostgreSQL custom dump was parsed and restored into an isolated database; restored counts matched before teardown.
@@ -44,8 +44,8 @@ Audit date: 2026-07-15
 - Disposable-database integration tests cover refresh replay/concurrency, unique interactions, transaction rollback, Outbox lease recovery and benchmark immutability; live NATS covers DLQ and replay.
 - Frontend coverage floors and committed Playwright desktop/mobile E2E now protect the real product workflow.
 - Phase 6C is preserved by commit `f0dee23` and annotated tag `v0.6.4`; subsequent hardening is a separate change.
-- The private GitHub remote preserves `main`, `v0.6.4` and `v0.6.5`; Actions now exercises the Linux release chain instead of relying only on local workflow validation.
-- CodeQL runs in local-SARIF gate mode while the private repository lacks GitHub Code Security; setting repository variable `CODEQL_UPLOAD=true` restores platform upload when that product is enabled.
+- A private archive preserves the pre-public history and complete benchmark. The sanitized public GitHub remote preserves `main`, `v0.6.4` and `v0.6.5`; Actions exercises the Linux release chain.
+- CodeQL uploads Go and JavaScript/TypeScript results to GitHub Code Scanning; local SARIF mode remains available for private mirrors.
 - Product gaps such as unlike/uncollect, viewer state, author projection, deep links, server-side search and ranking N+1 were closed.
 
 ## Open Production Gates
@@ -54,6 +54,6 @@ Audit date: 2026-07-15
 - Full OpenTelemetry export, `pg_stat_statements`, multi-instance tests and external load generation remain.
 - Managed secrets, TLS, service authentication, private networking, image signing/registry policy and PostgreSQL PITR require a deployment environment.
 - A stratified independent human review of the holdout set is still needed before public quality claims.
-- CODEOWNERS, a PR evidence template and a security policy are committed. The GitHub API confirms that branch protection for this private repository requires GitHub Pro or public visibility; environment promotion still requires a deployment environment.
+- CODEOWNERS, a PR evidence template, security policy, protected `main`, required status checks and review rules are configured. Environment promotion still requires a deployment environment.
 
 These items do not block deterministic Evidence Store work, but they do block a production-ready claim.

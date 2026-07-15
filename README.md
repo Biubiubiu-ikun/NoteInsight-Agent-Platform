@@ -4,7 +4,7 @@ NoteInsight is a creator-insight platform built on a Xiaohongshu-style image-tex
 
 `最新项目规划.md` is the only authoritative plan. Files with old-version prefixes are historical references.
 
-Private development remote: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform).
+Public repository: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform).
 
 ## Current Status
 
@@ -82,7 +82,7 @@ Bulk text generation is deterministic and does not call an LLM API. Image URLs m
 
 The latest run produced 200 notes, 800 media rows, 40,000 comments and 1,619 evaluation cases across summary, procedure, controversy, audience, OCR, conflict, temporal, no-answer and cross-note tasks.
 
-The independent retrieval baseline is `retrieval_v3_20260715`: 240 unique cases, 80 development, 160 holdout, six adversarial task families and manifest checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`.
+The independent retrieval baseline is `retrieval_v3_20260715`: 240 unique cases, 80 public development cases, 160 sealed holdout cases, six adversarial task families and manifest checksum `cb1494b76b38a23e0e20190614c104e1e7e22baa35bbb771cc340236335a3d35`. The repository publishes full development cases and ordered SHA-256 commitments for every case, but never publishes holdout questions or answers.
 
 ```powershell
 cd backend-go

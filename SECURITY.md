@@ -6,7 +6,7 @@ Security fixes target the latest `main` revision and the most recent release tag
 
 ## Reporting
 
-Do not open a public issue containing credentials, personal data, exploit details, or private evaluation content. Repository collaborators should report a suspected vulnerability to the repository owner through a private GitHub channel and include:
+Do not open a public issue containing credentials, personal data, exploit details, or sealed evaluation content. Report suspected vulnerabilities through the repository Security tab or a private GitHub Security Advisory and include:
 
 - affected commit and component;
 - reproduction steps and expected impact;

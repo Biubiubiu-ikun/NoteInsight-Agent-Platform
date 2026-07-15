@@ -25,7 +25,8 @@ func main() {
 	seed := flag.Int64("seed", 20260715, "deterministic split seed")
 	caseCount := flag.Int("cases", 240, "total independent benchmark cases")
 	developmentCases := flag.Int("development-cases", 80, "cases visible for retrieval development")
-	outputDir := flag.String("output-dir", "../evaluation/benchmarks/retrieval_v3", "manifest and JSONL output directory")
+	outputDir := flag.String("output-dir", "../evaluation/benchmarks/retrieval_v3", "public development and sealed holdout commitment directory")
+	privateOutputDir := flag.String("private-output-dir", "../evaluation/private/retrieval_v3", "git-ignored full benchmark artifact directory")
 	verifyOnly := flag.Bool("verify-only", false, "verify committed artifacts without connecting to PostgreSQL")
 	flag.Parse()
 	if *verifyOnly {
@@ -94,8 +95,12 @@ func main() {
 		}
 		os.Exit(1)
 	}
-	if err := evalbench.WriteArtifacts(*outputDir, benchmark); err != nil {
-		logger.Error("write benchmark artifacts failed", "error", err)
+	if err := evalbench.WriteArtifacts(*privateOutputDir, benchmark); err != nil {
+		logger.Error("write private benchmark artifacts failed", "error", err)
+		os.Exit(1)
+	}
+	if err := evalbench.WritePublicArtifacts(*outputDir, benchmark); err != nil {
+		logger.Error("write public benchmark artifacts failed", "error", err)
 		os.Exit(1)
 	}
 	logger.Info("retrieval benchmark frozen",
