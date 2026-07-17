@@ -1,6 +1,6 @@
 # NoteInsight Agent Platform
 
-NoteInsight is a creator-insight platform built on a Xiaohongshu-style image-text note community. The current system provides a production-minded Go data plane, deterministic Chinese corpora, retrieval evaluation cases, and a React testing console. Evidence ingestion, retrieval, and the grounded Agent are the next phases.
+NoteInsight is a creator-insight platform built on a Xiaohongshu-style image-text note community. The current system provides a production-minded Go data plane, deterministic Chinese corpora, a canonical Evidence Store, retrieval evaluation cases, and a React testing console. Retrieval and the grounded Agent are the next phases.
 
 `最新项目规划.md` is the only authoritative plan. Files with old-version prefixes are historical references.
 
@@ -13,6 +13,7 @@ Public repository: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.co
 - Redis detail/comment caches and note/comment rankings.
 - Transactional Outbox, NATS JetStream, idempotent worker, retry, DLQ and replay tooling.
 - Project/dataset/visibility boundaries, versioned Evidence Source registry and immutable source payloads.
+- Deterministic EvidenceDocument/EvidenceChunk ingestion with exact UTF-8 citations and versioned daily-fact evidence.
 - Soft-delete propagation from notes/comments to active evidence.
 - Deterministic behavior simulator, daily fact materialization and run lineage.
 - Meaningful Chinese note/OCR/comment corpus plus a dataset-bound frozen eight-task adversarial retrieval benchmark.
@@ -20,7 +21,7 @@ Public repository: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.co
 - Prometheus metrics/alerts, provisioned Grafana dashboard, maintenance and recovery tools.
 - OpenAPI/Gin drift checks, domain-event JSON Schema, Go/React/integration/E2E tests, Compose acceptance, CodeQL SARIF, SBOM and vulnerability gates.
 
-Phase 7A-0 retrieval preflight is complete: source versions/payloads, immutable dataset snapshots and a sealed v4 benchmark are in place. Phase 7A canonical Evidence Store ingestion is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
+Phase 7A is complete: source versions/payloads, immutable dataset snapshots, canonical documents/chunks, exact citations, deterministic rebuilds and a sealed v4 benchmark are in place. Phase 7B PostgreSQL lexical retrieval and offline evaluation is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
 
 ## Layout
 
@@ -100,6 +101,15 @@ docker compose run --rm --no-deps `
 
 Facts retain `source_run_id` and can be rebuilt from behavior events.
 
+## Evidence Ingestion
+
+```powershell
+.\scripts\evidence.ps1 -Operation ingest -DatasetVersionId 2
+.\scripts\evidence.ps1 -Operation audit -RunId phase7a_dv2_v1_20260718
+```
+
+The approved frozen snapshot produces 25,448 documents, 56,349 chunks and 153,348 exact citations. See `docs/17_phase7a_evidence_store.md` for parser contracts, retry/rebuild operations and acceptance checksums.
+
 ## Verification
 
 ```powershell
@@ -173,4 +183,5 @@ The isolated capacity environment and 4.21-million-row evidence are documented i
 - `docs/14_data_governance.md`: scope, deletion, retention and retrieval rules.
 - `docs/15_quality_security_gates.md`: benchmark, test, contract and supply-chain gates.
 - `docs/16_phase7a0_retrieval_preflight.md`: frozen source/dataset/evaluation baseline for Phase 7.
+- `docs/17_phase7a_evidence_store.md`: canonical evidence schema, ingestion operations and Phase 7A acceptance.
 - `docs/adr/`: accepted evidence, citation and evaluation design decisions.

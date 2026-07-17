@@ -1,6 +1,6 @@
 # Project Progress And Quality Audit
 
-Audit date: 2026-07-16
+Audit date: 2026-07-18
 
 ## Planning Rule
 
@@ -20,11 +20,12 @@ Audit date: 2026-07-16
 | Release hardening | Complete; remote CI enabled | frozen independent benchmark, integration/E2E depth, contracts, SBOM and vulnerability gates |
 | Frontend console | MVP complete | feed, search, ranking, auth, publish, detail, comments, interactions and status |
 | Phase 7A-0 | Complete | immutable source history, dataset snapshots, v3 retirement, sealed v4 benchmark and retrieval ADRs |
-| Phase 7A | Next | canonical evidence documents/chunks and deterministic ingestion |
+| Phase 7A | Complete | canonical documents/chunks, exact citations, fact versions, retry/rebuild/deletion audit |
+| Phase 7B | Next | authorization-filtered PostgreSQL lexical retrieval and offline evaluation |
 
 ## Verified Snapshot
 
-- Fifteen checksum-protected migrations apply idempotently.
+- Sixteen checksum-protected migrations apply idempotently.
 - Main data after final Phase 7A-0 acceptance: 5,511 active notes, 6,813 media, 101,635 active comments and 113,927 active Evidence Sources.
 - Every current note/media/comment has a 64-character source hash and dataset boundary.
 - All 113,927 active sources and every frozen source reference resolve to immutable canonical text/payload; 114,005 current or historical payload rows have valid SHA-256 values.
@@ -33,6 +34,8 @@ Audit date: 2026-07-16
 - Independent benchmark `retrieval_v4_20260716` contains 240 unique cases with an 80/160 development/holdout split and eight balanced task families. Random nonce commitments seal private holdout identities; manifest checksum is `851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74`.
 - `retrieval_v3` is retired after proving that deterministic public inputs reconstruct all 240 commitments.
 - Fact run `phase6c_final_20260715` materialized 812 note facts and 481 user facts.
+- Phase 7A ingested dataset version `2` into 25,448 canonical documents, 56,349 chunks and 153,348 citations. A full rebuild reused every document and reproduced output checksum `3f372c59b8108bd95fb747e5d04aa73fe35ea6657f7219022ce047b07da3ee1a`.
+- Ingestion audits and a full registry-backed citation byte-slice comparison report zero mismatches or active deleted-source leaks.
 - Auth/API/async/Evidence Source acceptance passes end to end, including private-project isolation and deletion propagation.
 - A 12.8 MB PostgreSQL custom dump was parsed and restored into an isolated database; restored counts matched before teardown.
 - Delayed `note.viewed` events for already deleted notes now settle as behavior facts without new DLQ entries; two historical messages were replayed successfully.
@@ -60,4 +63,4 @@ Audit date: 2026-07-16
 - A stratified independent human review of the holdout set is still needed before public quality claims.
 - CODEOWNERS, a PR evidence template, security policy, protected `main`, required status checks and review rules are configured. Environment promotion still requires a deployment environment.
 
-These items do not block deterministic Evidence Store work, but they do block a production-ready claim.
+These items do not block lexical retrieval/evaluation work, but they do block a production-ready claim.
