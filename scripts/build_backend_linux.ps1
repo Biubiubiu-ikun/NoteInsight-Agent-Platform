@@ -52,6 +52,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Evaluation benchmark freeze Linux build failed." }
     & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-datasetfreeze" ./cmd/datasetfreeze
     if ($LASTEXITCODE -ne 0) { throw "Dataset snapshot Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-evidence" ./cmd/evidence
+    if ($LASTEXITCODE -ne 0) { throw "Evidence ingestion Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled

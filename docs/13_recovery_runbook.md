@@ -30,6 +30,12 @@ The Phase 7A-0 archive is `noteinsight_20260716_033326.dump` with SHA-256
 Its custom-format TOC parses successfully with 316 entries after migration 15. The
 2026-07-15 isolated restore remains the latest full restore exercise.
 
+The Phase 7A completion archive is `noteinsight_20260718_062530.dump` (97,180,232 bytes),
+SHA-256 `45F2E285534DE9D3E94BBE1949D11318B8D40CB04DB44F608840A5F36C973CB0`.
+Its custom-format TOC parses successfully with 434 entries after migration 16. It includes
+the canonical Evidence Store; an isolated restore of this archive is still required by the
+monthly restore schedule.
+
 ## Restore
 
 Stop API and worker traffic before an in-place restore. Run `./scripts/restore_postgres.ps1 -BackupFile <dump> -ConfirmRestore`, then execute the four verification steps above.
@@ -44,4 +50,4 @@ Stop API and worker traffic before an in-place restore. Run `./scripts/restore_p
 
 ## Evidence indexes
 
-Evidence indexes must be reproducible from `evidence_sources`, source content, and ingestion version. A restore is incomplete until deleted sources are removed from the index and indexed hashes match PostgreSQL.
+Evidence indexes must be reproducible from frozen dataset sources, immutable source/fact payloads, and the parser contract. After restore, run `scripts/evidence.ps1 -Operation reconcile`, audit the restored completed run, and perform a checksum-identical rebuild when the existing Evidence Store is not restored. A restore is incomplete until no ready document references a deleted source and citation byte slices verify.

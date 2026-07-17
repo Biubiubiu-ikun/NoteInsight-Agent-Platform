@@ -1,0 +1,7 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Phase 7A Chinese tokenizer contract identifier"
+regexTarget = "match"
+regexes = ['''zh_unigram_bigram_latin_v1''']

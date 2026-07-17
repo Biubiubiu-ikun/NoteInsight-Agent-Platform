@@ -1,6 +1,6 @@
 # Project Excellence Review
 
-Review date: 2026-07-16
+Review date: 2026-07-18
 
 ## Interviewer Assessment
 
@@ -8,7 +8,7 @@ At this checkpoint, NoteInsight is a strong senior-level platform project rather
 
 The strongest interview signal is that failures are retained and corrected: migration drift is rejected, latency gates remain visible, late events were found through the DLQ and replayed after a semantic fix, and backup claims are backed by an isolated restore.
 
-The project is not yet a finished Agent product. Its name will be fully justified only after versioned evidence ingestion, measured retrieval and citation-grounded reports exist.
+The project is not yet a finished Agent product. Versioned evidence ingestion now exists; measured retrieval and citation-grounded reports remain before the name is fully justified.
 
 ## What Is Already Strong
 
@@ -20,15 +20,15 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 6. Operational claims have metrics, alerts, replay, maintenance, backup and restore evidence.
 7. The frontend exercises real workflows instead of presenting a marketing shell.
 8. CI covers backend, frontend, real PostgreSQL/NATS integration, Playwright, contracts, Prometheus, secrets, SBOM, image vulnerabilities, Compose and authenticated acceptance.
+9. Canonical evidence is reproducible: immutable run inputs, deterministic document/chunk keys, exact UTF-8 citation ranges, deletion propagation and checksum-identical rebuilds are tested on the full frozen corpus.
 
 ## Remaining High-Value Work
 
 ### Before Retrieval Quality Claims
 
-- Build canonical Evidence Documents/Chunks with source offsets, parser version and ingestion run lineage.
 - Establish PostgreSQL FTS lexical baseline before adding embeddings.
 - Report per-task Recall/MRR/nDCG, no-answer and citation metrics, not one aggregate score.
-- Add consistency audit proving no active chunk references deleted or invisible source data.
+- Extend the existing consistency audit through the retrieval API and authorization principals, proving filters execute before scoring.
 - Have an independent reviewer adjudicate a stratified holdout sample and record agreement before making public benchmark claims.
 - Keep authorization-boundary cases sealed and execute them with both authorized and unauthorized principals once the retrieval API exists.
 
@@ -42,10 +42,9 @@ The project is not yet a finished Agent product. Its name will be fully justifie
 
 ## Next Sequence
 
-1. Phase 7A canonical Evidence Store and deterministic ingestion on dataset version `2`.
-2. Phase 7B PostgreSQL lexical retrieval and offline evaluation.
-3. Add vector/hybrid retrieval only after baseline failures are classified.
-4. Phase 8 single grounded Agent with structured claims and citations.
-5. Phase 9 report/evidence UI and deployment hardening.
+1. Phase 7B PostgreSQL lexical retrieval and offline evaluation.
+2. Add vector/hybrid retrieval only after baseline failures are classified.
+3. Phase 8 single grounded Agent with structured claims and citations.
+4. Phase 9 report/evidence UI and deployment hardening.
 
 From a large-company interview perspective, the project is already credible for backend/platform/data-engineering discussion. Phase 7B and Phase 8 will supply the missing AI-system evaluation story.

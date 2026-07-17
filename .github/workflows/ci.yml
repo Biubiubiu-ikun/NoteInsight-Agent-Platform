@@ -135,10 +135,10 @@ jobs:
       - name: Scan Git history for secrets
         run: |
           docker run --rm \
-            -v "$PWD:/repo" \
-            -w /repo \
-            zricethezav/gitleaks:v8.24.3 \
-            git --redact --verbose
+              -v "$PWD:/repo" \
+              -w /repo \
+              zricethezav/gitleaks:v8.24.3 \
+              git --config .gitleaks.toml --redact --verbose
 
       - name: Lint GitHub Actions workflows
         run: |
