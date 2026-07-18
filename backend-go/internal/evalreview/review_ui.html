@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Retrieval v5 盲审台</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, "Microsoft YaHei", sans-serif; color: #17212b; background: #f4f6f8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    button, select, input { font: inherit; }
+    button { cursor: pointer; }
+    .topbar { height: 64px; display: flex; align-items: center; gap: 18px; padding: 0 22px; color: #fff; background: #17324d; border-bottom: 4px solid #d8a62a; }
+    .topbar h1 { margin: 0; font-size: 18px; letter-spacing: 0; }
+    .progress { margin-left: auto; font-variant-numeric: tabular-nums; }
+    .layout { display: grid; grid-template-columns: 310px minmax(0, 1fr); height: calc(100vh - 64px); }
+    .sidebar { overflow: auto; background: #fff; border-right: 1px solid #cfd7df; }
+    .filters { position: sticky; top: 0; z-index: 2; display: grid; gap: 8px; padding: 14px; background: #fff; border-bottom: 1px solid #d9e0e6; }
+    .filters input, .filters select { width: 100%; min-height: 38px; padding: 7px 9px; border: 1px solid #aeb9c3; border-radius: 4px; background: #fff; }
+    .case-list { margin: 0; padding: 0; list-style: none; }
+    .case-list button { width: 100%; min-height: 58px; padding: 9px 14px; text-align: left; color: #1b2b3a; background: #fff; border: 0; border-bottom: 1px solid #edf0f2; }
+    .case-list button:hover { background: #f2f7fa; }
+    .case-list button.active { background: #e8f1f7; box-shadow: inset 4px 0 #26799b; }
+    .case-list button.done .case-id::after { content: " 已审"; color: #13744a; font-weight: 700; }
+    .case-id { display: block; font-size: 12px; font-weight: 700; }
+    .case-task { display: block; margin-top: 5px; color: #66727c; font-size: 12px; }
+    .workspace { overflow: auto; padding: 22px clamp(18px, 3vw, 46px) 80px; }
+    .case-header { display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px solid #cfd7df; padding-bottom: 15px; }
+    .case-header h2 { margin: 0; font-size: 20px; }
+    .meta { margin-top: 5px; color: #66727c; font-size: 13px; }
+    .query { margin: 20px 0; padding: 16px 18px; font-size: 17px; line-height: 1.75; background: #fff; border-left: 4px solid #26799b; }
+    .context { margin: 0 0 18px; color: #485865; font-size: 13px; }
+    fieldset { margin: 0 0 22px; padding: 0; border: 0; }
+    legend { margin-bottom: 9px; font-size: 14px; font-weight: 700; }
+    .segments { display: flex; flex-wrap: wrap; gap: 8px; }
+    .segments label { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 7px 11px; background: #fff; border: 1px solid #aeb9c3; border-radius: 4px; }
+    .segments label:has(input:checked) { color: #fff; background: #26799b; border-color: #26799b; }
+    .segments input { margin: 0; }
+    .candidate { margin: 0 0 16px; background: #fff; border: 1px solid #cfd7df; border-radius: 6px; }
+    .candidate-header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 11px 14px; background: #f6f8fa; border-bottom: 1px solid #dce2e7; }
+    .source-id { font: 700 12px Consolas, monospace; color: #2c465a; }
+    .visibility { padding: 2px 6px; font-size: 11px; color: #6c4c00; background: #fff4cf; border-radius: 3px; }
+    .grade { margin-left: auto; }
+    .grade label { min-width: 31px; justify-content: center; padding: 5px 7px; }
+    .canonical { margin: 0; padding: 14px; max-height: 360px; overflow: auto; white-space: pre-wrap; word-break: break-word; font: 14px/1.65 "Microsoft YaHei", sans-serif; }
+    .actions { position: sticky; bottom: 0; display: flex; align-items: center; gap: 10px; padding: 12px 0; background: rgba(244,246,248,.96); border-top: 1px solid #cfd7df; }
+    .actions button { min-height: 40px; padding: 8px 14px; border-radius: 4px; border: 1px solid #82909d; background: #fff; }
+    .actions .primary { color: #fff; background: #176b4a; border-color: #176b4a; }
+    .actions .finalize { margin-left: auto; color: #fff; background: #9c3d2c; border-color: #9c3d2c; }
+    .actions button:disabled { cursor: not-allowed; opacity: .45; }
+    .status { min-height: 22px; color: #176b4a; font-size: 13px; }
+    .error { color: #b3261e; }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; height: auto; }
+      .sidebar { max-height: 34vh; border-right: 0; border-bottom: 1px solid #cfd7df; }
+      .workspace { padding: 18px 14px 70px; }
+      .topbar { padding: 0 14px; }
+      .topbar h1 { font-size: 15px; }
+      .grade { width: 100%; margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Retrieval v5 盲审台</h1>
+    <span id="reviewer"></span>
+    <span class="progress" id="progress">载入中</span>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="filters">
+        <input id="search" type="search" placeholder="搜索 case 或问题">
+        <select id="task"><option value="">全部任务</option></select>
+        <select id="state"><option value="">全部状态</option><option value="pending">待审</option><option value="done">已审</option></select>
+      </div>
+      <ul class="case-list" id="case-list"></ul>
+    </aside>
+    <section class="workspace" id="workspace"><p>正在载入盲审任务...</p></section>
+  </main>
+  <script>
+    const app = { assignments: [], submissions: {}, current: 0, finalized: false };
+    const labels = {
+      answerable: "可回答", insufficient_evidence: "证据不足",
+      no_relevant_document: "无相关文档", authorization_denied: "无权访问"
+    };
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+    async function api(path, options) {
+      const response = await fetch(path, options);
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
+      return body;
+    }
+    function filteredIndexes() {
+      const search = document.querySelector("#search").value.trim().toLowerCase();
+      const task = document.querySelector("#task").value;
+      const state = document.querySelector("#state").value;
+      return app.assignments.map((item, index) => ({item,index})).filter(({item}) => {
+        const done = Boolean(app.submissions[item.case_id]);
+        return (!task || item.task_type === task) && (!state || (state === "done") === done) &&
+          (!search || item.case_id.toLowerCase().includes(search) || item.query.toLowerCase().includes(search));
+      });
+    }
+    function renderList() {
+      const list = document.querySelector("#case-list");
+      list.innerHTML = filteredIndexes().map(({item,index}) => `<li><button data-index="${index}" class="${index===app.current?'active ':''}${app.submissions[item.case_id]?'done':''}"><span class="case-id">${esc(item.case_id)}</span><span class="case-task">${esc(item.task_type)} · ${esc(item.split)}</span></button></li>`).join("");
+      list.querySelectorAll("button").forEach(button => button.onclick = () => { app.current = Number(button.dataset.index); render(); });
+      document.querySelector("#progress").textContent = `${Object.keys(app.submissions).length} / ${app.assignments.length}` + (app.finalized ? " · 已定稿" : "");
+    }
+    function render() {
+      renderList();
+      const item = app.assignments[app.current];
+      if (!item) return;
+      const saved = app.submissions[item.case_id];
+      const answer = saved?.answerability || "";
+      const grades = Object.fromEntries((saved?.judgments || []).map(j => [`${j.source_type}:${j.source_id}:${j.source_version}`, j.relevance_grade]));
+      const answerHTML = Object.entries(labels).map(([value,label]) => `<label><input type="radio" name="answerability" value="${value}" ${answer===value?'checked':''} ${app.finalized?'disabled':''}>${label}</label>`).join("");
+      const candidates = item.candidate_pool.map((source, index) => {
+        const key = `${source.source_type}:${source.source_id}:${source.source_version}`;
+        const gradeHTML = [0,1,2,3].map(grade => `<label title="相关性 ${grade}"><input type="radio" name="grade-${index}" value="${grade}" ${grades[key]===grade?'checked':''} ${app.finalized?'disabled':''}>${grade}</label>`).join("");
+        return `<article class="candidate" data-key="${esc(key)}"><header class="candidate-header"><span class="source-id">${esc(key)} · note ${source.note_id}${source.position ? ` · position ${source.position}` : ''}</span><span class="visibility">${esc(source.visibility)}</span><div class="segments grade">${gradeHTML}</div></header><pre class="canonical">${esc(source.canonical_text)}</pre></article>`;
+      }).join("");
+      const context = item.review_context ? `<p class="context">审校上下文：${esc(JSON.stringify(item.review_context))}</p>` : "";
+      document.querySelector("#workspace").innerHTML = `<div class="case-header"><div><h2>${esc(item.case_id)}</h2><div class="meta">${esc(item.task_type)} · ${esc(item.split)} · ${esc(item.rubric_version)}</div></div></div><div class="query">${esc(item.query)}</div>${context}<fieldset><legend>可回答性</legend><div class="segments">${answerHTML}</div></fieldset><section>${candidates}</section><div class="status" id="status"></div><div class="actions"><button id="previous" ${app.current===0?'disabled':''}>上一条</button><button id="next" ${app.current===app.assignments.length-1?'disabled':''}>下一条</button><button class="primary" id="save" ${app.finalized?'disabled':''}>保存本条</button><button class="finalize" id="finalize" ${app.finalized?'disabled':''}>完成全部并定稿</button></div>`;
+      document.querySelector("#previous").onclick = () => { app.current--; render(); };
+      document.querySelector("#next").onclick = () => { app.current++; render(); };
+      document.querySelector("#save").onclick = saveCurrent;
+      document.querySelector("#finalize").onclick = finalize;
+    }
+    async function saveCurrent() {
+      const item = app.assignments[app.current];
+      const answerability = document.querySelector('input[name="answerability"]:checked')?.value;
+      const judgments = item.candidate_pool.map((source,index) => ({
+        source_type: source.source_type, source_id: source.source_id, source_version: source.source_version,
+        relevance_grade: Number(document.querySelector(`input[name="grade-${index}"]:checked`)?.value)
+      }));
+      const status = document.querySelector("#status");
+      if (!answerability || judgments.some(j => Number.isNaN(j.relevance_grade))) { status.className="status error"; status.textContent="请先选择可回答性，并为全部候选来源标注 0–3 分。"; return; }
+      try {
+        const saved = await api(`/api/reviews/${encodeURIComponent(item.case_id)}`, {method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({case_id:item.case_id,reviewer_id:item.reviewer_id,answerability,judgments,reviewed_at:new Date().toISOString()})});
+        app.submissions[item.case_id] = saved; status.className="status"; status.textContent="已保存到 D 盘私有审核工作区。"; renderList();
+      } catch (error) { status.className="status error"; status.textContent=error.message; }
+    }
+    async function finalize() {
+      if (Object.keys(app.submissions).length !== app.assignments.length) { alert(`还剩 ${app.assignments.length-Object.keys(app.submissions).length} 条未审核。`); return; }
+      if (!confirm("定稿后本审核包将不可修改，确认继续？")) return;
+      try { await api("/api/finalize", {method:"POST"}); app.finalized=true; render(); } catch (error) { alert(error.message); }
+    }
+    async function start() {
+      const state = await api("/api/review-state"); Object.assign(app,state); document.querySelector("#reviewer").textContent=state.reviewer_id;
+      const tasks = [...new Set(app.assignments.map(item => item.task_type))]; document.querySelector("#task").innerHTML += tasks.map(task => `<option>${esc(task)}</option>`).join("");
+      ["search","task","state"].forEach(id => document.querySelector(`#${id}`).addEventListener("input",renderList)); render();
+    }
+    start().catch(error => document.querySelector("#workspace").innerHTML=`<p class="error">${esc(error.message)}</p>`);
+  </script>
+</body>
+</html>

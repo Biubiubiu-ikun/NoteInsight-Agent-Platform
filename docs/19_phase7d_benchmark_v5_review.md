@@ -60,8 +60,10 @@ retrieval_v5_private/
   authoring_matrix.jsonl
   authored_cases.template.jsonl
   authored_cases.jsonl
+  draft_report.json
   resolved_sources.jsonl
   reviewer_a/assignments.jsonl
+  reviewer_a/submissions.in_progress.jsonl
   reviewer_a/submissions.jsonl
   reviewer_b/assignments.jsonl
   reviewer_b/submissions.jsonl
@@ -96,10 +98,19 @@ The engineering workflow is complete; this does not mean the human review is com
 # One-time deterministic 288-slot matrix initialization.
 .\scripts\review_retrieval_benchmark.ps1 -Operation init
 
-# After authors fill authored_cases.jsonl, resolve frozen evidence and create blind assignments.
+# Reproducible model-assisted author draft. This is not human approval.
+.\scripts\review_retrieval_benchmark.ps1 -Operation draft `
+  -AuthorId codex-draft-author
+
+# Resolve frozen evidence and create blind assignments.
 .\scripts\review_retrieval_benchmark.ps1 -Operation prepare `
   -ReviewerA reviewer-a-pseudonym `
   -ReviewerB reviewer-b-pseudonym
+
+# Each reviewer runs their own loopback-only UI and finalizes independently.
+.\scripts\review_retrieval_benchmark.ps1 -Operation serve `
+  -ReviewerSlot reviewer_a `
+  -Listen 127.0.0.1:18083
 
 # After each reviewer independently creates submissions.jsonl.
 .\scripts\review_retrieval_benchmark.ps1 -Operation audit
@@ -108,7 +119,11 @@ The engineering workflow is complete; this does not mean the human review is com
 .\scripts\review_retrieval_benchmark.ps1 -Operation freeze
 ```
 
-`prepare` queries dataset version `2` and ingestion run `phase7a_dv2_rebuild_v2_20260718`. Every candidate must be present in both the immutable dataset membership and the completed ingestion citation graph. Assignments contain canonical source text and content hash, but omit the author's identity and expected answer. They never contain retrieval rank or model score.
+`draft` reads only canonical note/media payloads that belong to dataset version `2` and the completed ingestion citation graph. It rejects incomplete smoke-note shapes, uses compound evidence anchors, records `model_assisted`, and refuses to overwrite a prior draft. It does not query lexical, vector, hybrid, rank, score, or evaluation result tables. Its candidate pools remain proposals that human reviewers may reject; the command cannot produce `human_approved` output.
+
+`prepare` queries dataset version `2` and ingestion run `phase7a_dv2_rebuild_v2_20260718`. Every candidate must be present in both the immutable dataset membership and the completed ingestion citation graph. Assignments contain canonical source text and content hash, but omit the author's identity and expected answer. They never contain retrieval rank or model score. Once prepared, the assignments are immutable.
+
+`serve` binds only to loopback. It writes completed per-case labels atomically to `submissions.in_progress.jsonl`, supports restart/resume, validates that all six assigned sources receive a `0-3` grade, and creates immutable `submissions.jsonl` only after all 288 cases are complete. It never exposes the authored expected answer.
 
 `audit` enforces exactly one submission per case from each of two stable, distinct reviewer pseudonyms; neither reviewer may be the author. Every candidate must receive one grade from each reviewer. It reports exact agreement, binary answerability Cohen's kappa, and quadratic weighted relevance kappa overall and by task. Every case then requires a resolved adjudication from a third identity that is neither author nor reviewer.
 
@@ -118,7 +133,7 @@ The private workspace is Git-ignored and physically stored inside the D-drive pr
 
 ## Work Estimate and Order
 
-At 1.5 to 3 minutes per case per reviewer, 288 cases require about 14.4 to 28.8 reviewer-hours before adjudication. The deterministic matrix and review tooling are ready, but authorship, two human reviews, and adjudication have not started. This is an external evidence task and should start in parallel with load/security hardening. Ranker thresholds and a cross-encoder must wait until the development split is frozen; the v4 holdout remains sealed throughout.
+At 1.5 to 3 minutes per case per reviewer, 288 cases require about 14.4 to 28.8 reviewer-hours before adjudication. The model-assisted author draft and blind packages are ready; no human review or adjudication has been recorded. This is an external evidence task and should start in parallel with load/security hardening. Ranker thresholds and a cross-encoder must wait until the development split is frozen; the v4 holdout remains sealed throughout.
 
 ## Promotion Rule
 

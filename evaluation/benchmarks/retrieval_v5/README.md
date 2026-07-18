@@ -1,6 +1,6 @@
 # Retrieval Benchmark v5
 
-This directory is the public scaffold for the independently reviewed Phase 7D benchmark. It intentionally contains no cases or review claims yet.
+This directory is the public scaffold for the independently reviewed Phase 7D benchmark. It intentionally contains no public cases or human-review claims yet. The Git-ignored D-drive workspace now contains model-assisted drafts and blind assignments, but zero human submissions.
 
 Benchmark v4 remains the reproducible pipeline baseline, but it is not sufficient for a production quality claim because all 240 cases are machine-validated and several task families contain equivalent near-duplicate evidence with a single Gold source.
 
@@ -9,10 +9,11 @@ Before adding `manifest.json`, the review process must satisfy [the independent 
 The executable workflow is implemented by `cmd/benchmarkreview` and `scripts/review_retrieval_benchmark.ps1`:
 
 1. `init` creates the deterministic 288-slot private matrix.
-2. Authors fill `evaluation/private/retrieval_v5/authored_cases.jsonl` without seeing system-under-test retrieval output.
+2. `draft` reproducibly writes model-assisted, unapproved cases from frozen canonical payloads without reading system-under-test rankings or evaluation output.
 3. `prepare` resolves every candidate from the frozen Evidence Store and emits separate blind assignments for two reviewers.
-4. `audit` validates independent submissions, computes overall and per-task agreement, and emits the adjudication queue.
-5. `freeze` is rejected until all 288 cases have two reviews, independent third-party adjudication, valid final semantics, and passing agreement gates.
+4. `serve` opens a loopback-only review UI with atomic progress persistence and immutable finalization.
+5. `audit` validates independent submissions, computes overall and per-task agreement, and emits the adjudication queue.
+6. `freeze` is rejected until all 288 cases have two reviews, independent third-party adjudication, valid final semantics, and passing agreement gates.
 
 The schemas are contracts, not review evidence:
 
