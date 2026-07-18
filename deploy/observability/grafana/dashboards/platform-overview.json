@@ -64,6 +64,78 @@
       "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
       "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
       "targets": [{"expr": "histogram_quantile(0.95, sum by (le, event_type) (rate(domain_event_lag_seconds_bucket[5m])))", "legendFormat": "{{event_type}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval request rate",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 24},
+      "targets": [{"expr": "sum by (mode, status) (rate(retrieval_requests_total[5m]))", "legendFormat": "{{mode}} {{status}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval p95 latency",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 24},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, mode) (rate(retrieval_duration_seconds_bucket[5m])))", "legendFormat": "{{mode}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval dependency p95",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 24},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le, dependency, operation) (rate(retrieval_dependency_duration_seconds_bucket[5m])))", "legendFormat": "{{dependency}} {{operation}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Dependency errors and retries",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 32},
+      "targets": [
+        {"expr": "sum by (dependency, operation, result) (rate(retrieval_dependency_requests_total{result!=\"success\"}[5m]))", "legendFormat": "{{dependency}} {{operation}} {{result}}", "refId": "A"},
+        {"expr": "sum by (dependency, operation, reason) (rate(retrieval_dependency_retries_total[5m]))", "legendFormat": "{{dependency}} {{operation}} retry {{reason}}", "refId": "B"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "TEI queue and overload",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 32},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": [{"matcher": {"id": "byFrameRefID", "options": "B"}, "properties": [{"id": "unit", "value": "short"}]}, {"matcher": {"id": "byFrameRefID", "options": "C"}, "properties": [{"id": "unit", "value": "reqps"}]}]},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(te_request_queue_duration_bucket{job=\"noteinsight-tei\"}[5m])))", "legendFormat": "queue p95", "refId": "A"},
+        {"expr": "te_queue_size{job=\"noteinsight-tei\"}", "legendFormat": "queue size", "refId": "B"},
+        {"expr": "rate(te_request_failure{job=\"noteinsight-tei\",err=\"overloaded\"}[5m])", "legendFormat": "overload/s", "refId": "C"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Qdrant query latency and errors",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 32},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": [{"matcher": {"id": "byFrameRefID", "options": "B"}, "properties": [{"id": "unit", "value": "reqps"}]}]},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le) (rate(rest_responses_duration_seconds_bucket{job=\"noteinsight-qdrant\",endpoint=\"/collections/{collection_name}/points/query\"}[5m])))", "legendFormat": "query p95", "refId": "A"},
+        {"expr": "sum(rate(rest_responses_total{job=\"noteinsight-qdrant\",status!~\"2..\"}[5m]))", "legendFormat": "errors/s", "refId": "B"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Vector index build states",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 40},
+      "targets": [{"expr": "retrieval_vector_index_builds", "legendFormat": "{{status}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Vector index checkpoint lag",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 40},
+      "targets": [{"expr": "retrieval_vector_index_max_checkpoint_lag_points", "legendFormat": "{{status}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Vector index checkpoint age",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 40},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": [{"matcher": {"id": "byFrameRefID", "options": "B"}, "properties": [{"id": "unit", "value": "short"}]}]},
+      "targets": [
+        {"expr": "retrieval_vector_index_oldest_update_age_seconds", "legendFormat": "{{status}}", "refId": "A"},
+        {"expr": "retrieval_vector_index_metrics_scrape_success", "legendFormat": "scrape success", "refId": "B"}
+      ]
     }
   ],
   "refresh": "15s",

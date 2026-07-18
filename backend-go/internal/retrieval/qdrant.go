@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"creatorinsight/backend-go/internal/platform/observability"
 )
 
 type VectorPoint struct {
@@ -65,7 +67,9 @@ func (q *QdrantClient) RecreateCollection(ctx context.Context, collection string
 	return nil
 }
 
-func (q *QdrantClient) CollectionExists(ctx context.Context, collection string) (bool, error) {
+func (q *QdrantClient) CollectionExists(ctx context.Context, collection string) (exists bool, err error) {
+	finish := observability.StartRetrievalDependency("qdrant", "collection_get")
+	defer func() { finish(retrievalDependencyResult(ctx, err)) }()
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, q.baseURL+"/collections/"+url.PathEscape(collection), nil)
 	if err != nil {
 		return false, fmt.Errorf("create Qdrant collection check: %w", err)
@@ -207,7 +211,9 @@ func (q *QdrantClient) DeletePoints(ctx context.Context, collection string, poin
 	return nil
 }
 
-func (q *QdrantClient) do(ctx context.Context, method string, path string, body any, output any, allowedStatus ...int) error {
+func (q *QdrantClient) do(ctx context.Context, method string, path string, body any, output any, allowedStatus ...int) (err error) {
+	finish := observability.StartRetrievalDependency("qdrant", qdrantOperation(method, path))
+	defer func() { finish(retrievalDependencyResult(ctx, err)) }()
 	var reader io.Reader
 	if body != nil {
 		encoded, err := json.Marshal(body)
@@ -245,6 +251,29 @@ func (q *QdrantClient) do(ctx context.Context, method string, path string, body 
 		return fmt.Errorf("decode Qdrant response: %w", err)
 	}
 	return nil
+}
+
+func qdrantOperation(method string, path string) string {
+	switch {
+	case strings.HasSuffix(path, "/points/query"):
+		return "query"
+	case strings.HasSuffix(path, "/points/scroll"):
+		return "scroll"
+	case strings.HasSuffix(path, "/points/count"):
+		return "count"
+	case strings.Contains(path, "/points/delete"):
+		return "delete_points"
+	case strings.HasSuffix(path, "/points"):
+		return "upsert"
+	case strings.Contains(path, "/index"):
+		return "payload_index"
+	case method == http.MethodDelete:
+		return "collection_delete"
+	case method == http.MethodPut:
+		return "collection_create"
+	default:
+		return "other"
+	}
 }
 
 func (q *QdrantClient) setHeaders(request *http.Request) {

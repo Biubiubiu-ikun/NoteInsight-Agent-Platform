@@ -3,6 +3,7 @@ package retrieval
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -87,5 +88,57 @@ func TestTEIEmbedderDoesNotRetryClientError(t *testing.T) {
 	}
 	if attempts != 1 {
 		t.Fatalf("attempts = %d, want 1", attempts)
+	}
+}
+
+func TestTEIEmbedderDocumentsUseLongerOverloadBudget(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		attempts++
+		if attempts < 5 {
+			writer.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		_ = json.NewEncoder(writer).Encode([][]float32{{0.1, 0.2, 0.3}})
+	}))
+	defer server.Close()
+	embedder := NewTEIEmbedder(server.URL, "model", "revision", 3, time.Second)
+	embedder.retryBaseDelay = time.Millisecond
+	embedder.retryMaxDelay = time.Millisecond
+	if _, err := embedder.EmbedDocuments(context.Background(), []string{"evidence"}); err != nil {
+		t.Fatal(err)
+	}
+	if attempts != 5 {
+		t.Fatalf("attempts = %d, want 5", attempts)
+	}
+}
+
+func TestTEIEmbedderRetryHonorsCancellation(t *testing.T) {
+	attempts := 0
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		attempts++
+		writer.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+	embedder := NewTEIEmbedder(server.URL, "model", "revision", 3, time.Second)
+	embedder.retryBaseDelay = time.Second
+	embedder.retryMaxDelay = time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	_, err := embedder.EmbedDocuments(ctx, []string{"evidence"})
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error = %v, want deadline exceeded", err)
+	}
+	if attempts != 1 {
+		t.Fatalf("attempts = %d, want 1", attempts)
+	}
+}
+
+func TestRetrievalDependencyResultClassifiesClientDeadline(t *testing.T) {
+	if got := retrievalDependencyResult(context.Background(), context.DeadlineExceeded); got != "timeout" {
+		t.Fatalf("result = %q, want timeout", got)
+	}
+	if got := retrievalDependencyResult(context.Background(), context.Canceled); got != "canceled" {
+		t.Fatalf("result = %q, want canceled", got)
 	}
 }

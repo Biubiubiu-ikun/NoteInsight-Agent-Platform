@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"creatorinsight/backend-go/internal/platform/observability"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -20,6 +22,8 @@ func NewRepository(db *sqlx.DB) *Repository {
 }
 
 func (r *Repository) ResolveScope(ctx context.Context, projectID int64, datasetVersionID int64, ingestionRunID string) (Scope, error) {
+	startedAt := time.Now()
+	defer observability.ObserveDB("retrieval_resolve_scope", startedAt)
 	if r.db == nil {
 		return Scope{}, ErrScopeNotFound
 	}
@@ -189,6 +193,8 @@ RETURNING ingestion_run_id, dataset_version_id, tokenizer_version, index_version
 }
 
 func (r *Repository) ResolveAccess(ctx context.Context, scope Scope, principal Principal) (string, error) {
+	startedAt := time.Now()
+	defer observability.ObserveDB("retrieval_resolve_access", startedAt)
 	var access string
 	err := r.db.QueryRowxContext(ctx, `
 SELECT CASE
@@ -211,6 +217,8 @@ WHERE p.id=$1 AND p.status='active'`, scope.ProjectID, principal.UserID).Scan(&a
 }
 
 func (r *Repository) GetTermStats(ctx context.Context, ingestionRunID string, accessScope string, terms []string) (map[string]TermStat, error) {
+	startedAt := time.Now()
+	defer observability.ObserveDB("retrieval_term_stats", startedAt)
 	stats := make(map[string]TermStat, len(terms))
 	if len(terms) == 0 {
 		return stats, nil
@@ -283,6 +291,8 @@ CROSS JOIN LATERAL ts_stat(format(
 }
 
 func (r *Repository) SearchLexicalCandidates(ctx context.Context, scope Scope, principal Principal, plan QueryPlan, filters Filters, limit int) ([]Candidate, error) {
+	startedAt := time.Now()
+	defer observability.ObserveDB("retrieval_lexical_candidates", startedAt)
 	documentTypes := filters.DocumentTypes
 	if documentTypes == nil {
 		documentTypes = []string{}
@@ -294,6 +304,8 @@ func (r *Repository) SearchLexicalCandidates(ctx context.Context, scope Scope, p
 	rows, err := r.db.QueryxContext(ctx, `
 WITH query AS MATERIALIZED (
     SELECT to_tsquery('simple', $3) AS value
+), hinted_note_ids AS MATERIALIZED (
+    SELECT unnest($10::bigint[]) AS note_id
 ), matched_chunk_ids AS MATERIALIZED (
     SELECT c.id, c.document_id
     FROM evidence_chunks c
@@ -306,7 +318,9 @@ WITH query AS MATERIALIZED (
       ON rd.document_id=matched.document_id AND rd.run_id=$1
     UNION
     SELECT c.id
-    FROM evidence_documents d
+    FROM hinted_note_ids hint
+    JOIN evidence_documents d
+      ON d.source_type='note_media' OR d.source_id=hint.note_id
     JOIN ingestion_run_documents rd ON rd.document_id=d.id AND rd.run_id=$1
     JOIN evidence_chunks c ON c.document_id=d.id
     LEFT JOIN evidence_document_sources primary_source
@@ -318,7 +332,7 @@ WITH query AS MATERIALIZED (
             WHEN d.source_type IN ('note','note_comment_cluster','note_daily_fact') THEN d.source_id
             WHEN d.source_type='note_media' THEN NULLIF(esp.source_payload->>'note_id','')::bigint
             ELSE NULL
-          END = ANY($10::bigint[])
+          END = hint.note_id
       AND (NOT $12 OR NULLIF(esp.source_payload->>'position','')::int=$13)
 ), eligible_chunks AS MATERIALIZED (
     SELECT d.id AS document_id, d.document_key, d.document_type, d.source_type,
@@ -363,10 +377,18 @@ WITH query AS MATERIALIZED (
       )
       AND (NOT $5 OR d.document_type=ANY($6::text[]))
       AND (NOT $7 OR d.source_type=ANY($8::text[]))
+), pre_ranked_chunks AS MATERIALIZED (
+    SELECT eligible.*
+    FROM eligible_chunks eligible
+    CROSS JOIN query
+    ORDER BY (eligible.document_type=$11) DESC,
+             ts_rank(eligible.search_vector, query.value, 32) DESC,
+             eligible.chunk_id
+    LIMIT $14
 ), ranked_chunks AS MATERIALIZED (
     SELECT eligible.*,
            ts_rank_cd(eligible.search_vector, query.value, 32) AS fts_score
-    FROM eligible_chunks eligible
+    FROM pre_ranked_chunks eligible
     CROSS JOIN query
     ORDER BY (eligible.document_type=$11) DESC, fts_score DESC, eligible.chunk_id
     LIMIT $9
@@ -382,7 +404,7 @@ JOIN evidence_chunks c ON c.id=ranked.chunk_id
 ORDER BY ranked.fts_score DESC, trigram_score DESC, ranked.chunk_id`,
 		scope.IngestionRunID, principal.UserID, BuildTSQuery(plan.Terms), plan.Original,
 		len(documentTypes) > 0, documentTypes, len(sourceTypes) > 0, sourceTypes, limit,
-		plan.HintedNoteIDs, plan.PreferredType, plan.PreferredPosition != nil, nullableInt(plan.PreferredPosition),
+		plan.HintedNoteIDs, plan.PreferredType, plan.PreferredPosition != nil, nullableInt(plan.PreferredPosition), limit*2,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("search lexical candidates: %w", err)
@@ -431,6 +453,8 @@ func nullableInt(value *int) any {
 }
 
 func (r *Repository) LoadAuthorizedCandidates(ctx context.Context, scope Scope, principal Principal, chunkIDs []int64, filters Filters) ([]Candidate, error) {
+	startedAt := time.Now()
+	defer observability.ObserveDB("retrieval_authorized_candidates", startedAt)
 	if len(chunkIDs) == 0 {
 		return []Candidate{}, nil
 	}
@@ -527,6 +551,8 @@ ORDER BY array_position($4::bigint[],c.id)`,
 }
 
 func (r *Repository) LoadCitations(ctx context.Context, chunkIDs []int64) (map[int64][]Citation, error) {
+	startedAt := time.Now()
+	defer observability.ObserveDB("retrieval_citations", startedAt)
 	result := make(map[int64][]Citation, len(chunkIDs))
 	if len(chunkIDs) == 0 {
 		return result, nil

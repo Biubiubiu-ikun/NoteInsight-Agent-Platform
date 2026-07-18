@@ -12,3 +12,11 @@ scrape_configs:
   - job_name: noteinsight-worker
     static_configs:
       - targets: [worker:8081]
+  - job_name: noteinsight-qdrant
+    metrics_path: /metrics
+    static_configs:
+      - targets: [qdrant:6333]
+  - job_name: noteinsight-tei
+    metrics_path: /metrics
+    static_configs:
+      - targets: [text-embeddings:80]

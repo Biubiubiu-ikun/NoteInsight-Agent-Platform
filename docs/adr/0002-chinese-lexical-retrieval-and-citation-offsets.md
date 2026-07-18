@@ -14,7 +14,7 @@ PostgreSQL does not provide useful Chinese word segmentation through its default
 3. Chunk ranges are half-open `[start_byte, end_byte)` UTF-8 byte offsets into canonical evidence. Boundaries must decode as valid UTF-8. Derived rune offsets may be stored for UI display; UTF-16 offsets are never authoritative.
 4. Citations carry evidence document/chunk identity, project, dataset version, source type/id/version, content hash, parser version, and byte range. Verification slices the canonical bytes and rechecks the content hash.
 5. The lexical baseline uses a versioned application tokenizer for Chinese and Latin/number tokens, stores pre-tokenized lexemes in a PostgreSQL `tsvector` using the `simple` configuration, and uses `pg_trgm` only as a typo/substring fallback.
-6. Metadata and authorization filters execute before scoring. `ts_rank_cd` is called a PostgreSQL FTS lexical baseline, not BM25. The project will claim BM25 only if an implementation with BM25 semantics is installed and measured.
+6. Metadata and authorization filters execute before scoring. A bounded PostgreSQL `ts_rank` pre-rank limits the rows that reach the more expensive `ts_rank_cd` candidate rank; the application reranker then applies visibility-scoped IDF weighted coverage. This is called a PostgreSQL FTS lexical baseline, not BM25. The project will claim BM25 only if an implementation with BM25 semantics is installed and measured.
 
 ## Consequences
 

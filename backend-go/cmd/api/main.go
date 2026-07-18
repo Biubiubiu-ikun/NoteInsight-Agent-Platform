@@ -15,6 +15,9 @@ import (
 	"creatorinsight/backend-go/internal/platform/cache"
 	"creatorinsight/backend-go/internal/platform/database"
 	"creatorinsight/backend-go/internal/platform/logging"
+	"creatorinsight/backend-go/internal/retrieval"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func main() {
@@ -40,6 +43,9 @@ func main() {
 			logger.Warn("close postgres failed", "error", closeErr)
 		}
 	}()
+	vectorIndexMetrics := retrieval.NewVectorIndexMetricsCollector(pgDB)
+	prometheus.MustRegister(vectorIndexMetrics)
+	defer prometheus.Unregister(vectorIndexMetrics)
 
 	redisClient, err := cache.NewRedisClient(ctx, cfg.Redis)
 	if err != nil {

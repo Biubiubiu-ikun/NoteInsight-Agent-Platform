@@ -23,7 +23,7 @@ Audit date: 2026-07-18
 | Phase 7A | Complete | canonical documents/chunks, exact citations, fact versions, retry/rebuild/deletion audit |
 | Phase 7B | Complete | authorization-filtered PostgreSQL lexical retrieval, exact citations and guarded offline evaluation |
 | Phase 7C | Engineering baseline complete; quality gate failed | pinned Qdrant/TEI/Qwen dense retrieval, RRF hybrid and same-contract formal results |
-| Phase 7D | In progress | vector lease/checkpoint resume, exact reconciliation and local snapshot restore complete; benchmark/security/load gates open |
+| Phase 7D | In progress | vector recovery/snapshot and local dependency/load/fault/30-minute soak evidence complete; human benchmark and deployment gates open |
 
 ## Verified Snapshot
 
@@ -39,6 +39,9 @@ Audit date: 2026-07-18
 - Phase 7A ingested dataset version `2` into 25,448 canonical documents, 56,349 chunks and 153,348 citations. A full rebuild reused every document and reproduced output checksum `3f372c59b8108bd95fb747e5d04aa73fe35ea6657f7219022ce047b07da3ee1a`.
 - The immutable Qdrant index has 56,349 points and checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627`; exact point-id/content-hash audit reports zero missing/orphan/mismatched points.
 - A 310,594,560-byte Qdrant snapshot with SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938` restored all 56,349 points into an isolated collection before teardown.
+- Lexical v3 preserves v2 Recall/MRR/nDCG and citation/rejection metrics while reducing formal P95 from 2,831.99 ms to 1,404.09 ms; local mixed 2 RPS passes, while 3 RPS establishes the current single-instance saturation boundary.
+- Qdrant and TEI restart gates recover under mixed 2 RPS. Concurrent batch-8 indexing plus mixed 1 RPS passes with durable checkpoint progress; 2 RPS remains above the strict shared-resource error budget.
+- A strict 30-minute warm mixed 2 RPS soak completed 3,601 iterations with a 0.6387 percent timeout rate, zero dropped iterations/rate limits/invalid citations, and lexical/vector/hybrid P95 of 3,192.54/616.51/3,098.76 ms.
 - Ingestion audits and a full registry-backed citation byte-slice comparison report zero mismatches or active deleted-source leaks.
 - Auth/API/async/Evidence Source acceptance passes end to end, including private-project isolation and deletion propagation.
 - A 12.8 MB PostgreSQL custom dump was parsed and restored into an isolated database; restored counts matched before teardown.
@@ -61,8 +64,7 @@ Audit date: 2026-07-18
 
 ## Open Production Gates
 
-- The strict 30-minute warm mixed-load SLO has not yet passed on the large data set.
-- Full OpenTelemetry export, `pg_stat_statements`, multi-instance tests and external load generation remain.
+- Full OpenTelemetry export, multi-instance tests and external load generation remain. `pg_stat_statements`, query IDs, I/O timing and slow-query logging are enabled locally.
 - Managed secrets, TLS, service authentication, private networking, image signing/registry policy and PostgreSQL PITR require a deployment environment.
 - Benchmark v5 still needs independent human review, multi-Gold relevance pools, task-stratified splits, authorization cases and OOD/no-answer adjudication before public quality claims.
 - CODEOWNERS, a PR evidence template, security policy, protected `main`, required status checks and review rules are configured. Environment promotion still requires a deployment environment.

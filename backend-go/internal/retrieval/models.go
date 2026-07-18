@@ -11,9 +11,9 @@ const (
 	ModeHybrid             = "hybrid"
 	LexicalIndexVersion    = "postgres_ts_stat_v1"
 	VectorIndexVersion     = "qwen3_dense_cosine_v1"
-	RetrieverVersion       = "postgres_fts_lexical_v2"
+	RetrieverVersion       = "postgres_fts_lexical_v3"
 	VectorRetrieverVersion = "qdrant_qwen3_dense_v1"
-	HybridRetrieverVersion = "rrf_lexical_dense_v2"
+	HybridRetrieverVersion = "rrf_lexical_dense_v3"
 	RerankerVersion        = "weighted_coverage_v2"
 	MetricVersion          = "retrieval_metrics_v2"
 

@@ -29,6 +29,68 @@ groups:
         annotations:
           summary: Retrieval p95 latency exceeds the 4 second online budget
 
+      - alert: NoteInsightRetrievalDependencyHighErrorRate
+        expr: sum by (dependency) (rate(retrieval_dependency_requests_total{result!="success"}[5m])) / clamp_min(sum by (dependency) (rate(retrieval_dependency_requests_total[5m])), 0.001) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Retrieval dependency error rate exceeds 5 percent
+
+      - alert: NoteInsightRetrievalDependencySaturation
+        expr: sum by (dependency) (retrieval_dependency_in_flight) > 32
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Retrieval dependency has more than 32 in-flight calls
+
+      - alert: NoteInsightTEIOverloaded
+        expr: increase(te_request_failure{job="noteinsight-tei",err="overloaded"}[5m]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: TEI rejected at least one request as overloaded
+
+      - alert: NoteInsightTEIQueueHighP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(te_request_queue_duration_bucket{job="noteinsight-tei"}[5m]))) > 1
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: TEI request queue p95 exceeds one second
+
+      - alert: NoteInsightQdrantQueryHighP95
+        expr: histogram_quantile(0.95, sum by (le) (rate(rest_responses_duration_seconds_bucket{job="noteinsight-qdrant",endpoint="/collections/{collection_name}/points/query"}[5m]))) > 0.5
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Qdrant point-query p95 exceeds 500 ms
+
+      - alert: NoteInsightQdrantHighErrorRate
+        expr: sum(rate(rest_responses_total{job="noteinsight-qdrant",status!~"2.."}[5m])) / clamp_min(sum(rate(rest_responses_total{job="noteinsight-qdrant"}[5m])), 0.001) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Qdrant REST error rate exceeds 5 percent
+
+      - alert: NoteInsightVectorIndexMetricsUnavailable
+        expr: retrieval_vector_index_metrics_scrape_success == 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Vector index control metrics cannot be read from PostgreSQL
+
+      - alert: NoteInsightVectorIndexFailed
+        expr: retrieval_vector_index_builds{status="failed"} > 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: At least one vector index build is in failed state
+
+      - alert: NoteInsightVectorIndexBuildStalled
+        expr: retrieval_vector_index_builds{status="building"} > 0 and retrieval_vector_index_oldest_update_age_seconds{status="building"} > 600
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: A vector index checkpoint has not advanced for ten minutes
+
       - alert: NoteInsightOutboxBacklog
         expr: sum(outbox_events{status=~"pending|processing|retry"}) > 1000 or outbox_oldest_unsent_age_seconds > 120
         for: 5m
