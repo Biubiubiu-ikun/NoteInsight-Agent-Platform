@@ -23,11 +23,11 @@ Audit date: 2026-07-18
 | Phase 7A | Complete | canonical documents/chunks, exact citations, fact versions, retry/rebuild/deletion audit |
 | Phase 7B | Complete | authorization-filtered PostgreSQL lexical retrieval, exact citations and guarded offline evaluation |
 | Phase 7C | Engineering baseline complete; quality gate failed | pinned Qdrant/TEI/Qwen dense retrieval, RRF hybrid and same-contract formal results |
-| Phase 7D | In progress | vector recovery/snapshot and local dependency/load/fault/30-minute soak evidence complete; human benchmark and deployment gates open |
+| Phase 7D | In progress | vector recovery/snapshot, local dependency/load/fault/30-minute soak and end-to-end distributed tracing evidence complete; human benchmark and deployment gates open |
 
 ## Verified Snapshot
 
-- Twenty-one checksum-protected migrations apply idempotently.
+- Twenty-three checksum-protected migrations apply idempotently.
 - Main data after final Phase 7A-0 acceptance: 5,511 active notes, 6,813 media, 101,635 active comments and 113,927 active Evidence Sources.
 - Every current note/media/comment has a 64-character source hash and dataset boundary.
 - All 113,927 active sources and every frozen source reference resolve to immutable canonical text/payload; 114,005 current or historical payload rows have valid SHA-256 values.
@@ -58,15 +58,17 @@ Audit date: 2026-07-18
 - Disposable-database integration tests cover refresh replay/concurrency, unique interactions, transaction rollback, Outbox lease recovery, immutable evidence/dataset versions and frozen/retired benchmark rows; live NATS covers DLQ and replay.
 - Frontend coverage floors and committed Playwright desktop/mobile E2E now protect the real product workflow.
 - Phase 6C is preserved by commit `f0dee23` and annotated tag `v0.6.4`; subsequent hardening is a separate change.
-- A private archive preserves the pre-public history and complete benchmark. The sanitized public GitHub remote preserves `main` through `v0.7.2`; Actions exercises the Linux release chain.
+- A private archive preserves the pre-public history and complete benchmark. The sanitized public GitHub remote preserves protected `main` and versioned Phase 7 releases; Actions exercises the Linux release chain.
 - CodeQL uploads Go and JavaScript/TypeScript results to GitHub Code Scanning; local SARIF mode remains available for private mirrors.
 - Product gaps such as unlike/uncollect, viewer state, author projection, deep links, server-side search and ranking N+1 were closed.
+- Optional OTLP export now carries W3C context across HTTP, SQL, Redis, transactional Outbox, NATS and Worker boundaries; TEI/Qdrant client spans are included, and local Collector/Tempo/Grafana provisioning is contract-validated in CI.
 
 ## Open Production Gates
 
-- Full OpenTelemetry export, multi-instance tests and external load generation remain. `pg_stat_statements`, query IDs, I/O timing and slow-query logging are enabled locally.
+- Multi-instance tests and external load generation remain. `pg_stat_statements`, query IDs, I/O timing, slow-query logging and local end-to-end OpenTelemetry export are enabled.
 - Managed secrets, TLS, service authentication, private networking, image signing/registry policy and PostgreSQL PITR require a deployment environment.
+- The local Tempo backend has no authentication; production still requires a private/authenticated TLS endpoint plus sampling, retention, redaction, access-control and cost policies.
 - Benchmark v5 still needs independent human review, multi-Gold relevance pools, task-stratified splits, authorization cases and OOD/no-answer adjudication before public quality claims.
 - CODEOWNERS, a PR evidence template, security policy, protected `main`, required status checks and review rules are configured. Environment promotion still requires a deployment environment.
 
-These items do not block continued Phase 7D engineering, but they block Phase 8 retrieval-quality and production-ready claims.
+Independent benchmark review blocks retrieval and Agent quality claims. The deployment items do not block local Phase 8 engineering, but they do block any production-ready claim.

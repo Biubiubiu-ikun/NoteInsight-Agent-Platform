@@ -10,8 +10,12 @@ import (
 
 	"creatorinsight/backend-go/internal/platform/messaging"
 	"creatorinsight/backend-go/internal/platform/observability"
+	platformtracing "creatorinsight/backend-go/internal/platform/tracing"
 
 	"github.com/nats-io/nats.go/jetstream"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type eventProcessor interface {
@@ -96,11 +100,22 @@ func (c *EventConsumer) Wait() {
 }
 
 func (c *EventConsumer) handleMessage(msg jetstream.Msg) {
+	parentCtx := otel.GetTextMapPropagator().Extract(context.Background(), messaging.NATSHeaderCarrier(msg.Headers()))
+	ctx, span := platformtracing.Tracer().Start(parentCtx, "nats consume",
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			attribute.String("messaging.system", "nats"),
+			attribute.String("messaging.destination.name", msg.Subject()),
+			attribute.String("messaging.operation.type", "process"),
+		),
+	)
+	defer span.End()
 	metadata, metadataErr := msg.Metadata()
 	deliveries := uint64(1)
 	if metadataErr == nil {
 		deliveries = metadata.NumDelivered
 	}
+	span.SetAttributes(attribute.Int64("messaging.message.delivery_count", int64(deliveries)))
 
 	var envelope messaging.EventEnvelope
 	decodeErr := json.Unmarshal(msg.Data(), &envelope)
@@ -108,26 +123,31 @@ func (c *EventConsumer) handleMessage(msg jetstream.Msg) {
 	if eventType == "" {
 		eventType = "unknown"
 	}
+	span.SetAttributes(attribute.String("noteinsight.event.type", eventType))
 	if deliveries > 1 {
 		observability.IncJetStreamRedelivery(eventType)
 	}
 	if decodeErr != nil {
-		c.handleFailure(msg, envelope, eventType, deliveries, fmt.Errorf("decode event envelope: %w", decodeErr))
+		processingErr := fmt.Errorf("decode event envelope: %w", decodeErr)
+		platformtracing.RecordError(span, processingErr)
+		c.handleFailure(ctx, msg, envelope, eventType, deliveries, processingErr)
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), c.operationTimeout)
-	alreadyProcessed, err := c.processor.Process(ctx, envelope)
+	operationCtx, cancel := context.WithTimeout(ctx, c.operationTimeout)
+	alreadyProcessed, err := c.processor.Process(operationCtx, envelope)
 	cancel()
 	if err != nil {
-		c.handleFailure(msg, envelope, eventType, deliveries, err)
+		platformtracing.RecordError(span, err)
+		c.handleFailure(ctx, msg, envelope, eventType, deliveries, err)
 		return
 	}
 
-	ackCtx, ackCancel := context.WithTimeout(context.Background(), c.operationTimeout)
+	ackCtx, ackCancel := context.WithTimeout(ctx, c.operationTimeout)
 	err = msg.DoubleAck(ackCtx)
 	ackCancel()
 	if err != nil {
+		platformtracing.RecordError(span, err)
 		observability.IncJetStreamConsumed(eventType, "ack_error")
 		c.logger.Warn("JetStream double ack failed", "event_id", envelope.EventID, "error", err)
 		return
@@ -139,7 +159,7 @@ func (c *EventConsumer) handleMessage(msg jetstream.Msg) {
 	observability.IncJetStreamConsumed(eventType, result)
 }
 
-func (c *EventConsumer) handleFailure(msg jetstream.Msg, envelope messaging.EventEnvelope, eventType string, deliveries uint64, processingErr error) {
+func (c *EventConsumer) handleFailure(parentCtx context.Context, msg jetstream.Msg, envelope messaging.EventEnvelope, eventType string, deliveries uint64, processingErr error) {
 	observability.IncJetStreamConsumed(eventType, "error")
 	if deliveries < uint64(c.maxDeliver) {
 		if err := msg.NakWithDelay(c.nakDelay); err != nil {
@@ -148,7 +168,7 @@ func (c *EventConsumer) handleFailure(msg jetstream.Msg, envelope messaging.Even
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), c.operationTimeout)
+	ctx, cancel := context.WithTimeout(parentCtx, c.operationTimeout)
 	err := c.deadLetters.PublishDeadLetter(ctx, msg.Subject(), msg.Data(), envelope.EventID, eventType, deliveries, processingErr)
 	cancel()
 	if err != nil {

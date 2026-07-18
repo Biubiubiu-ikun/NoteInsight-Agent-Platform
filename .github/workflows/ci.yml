@@ -134,6 +134,17 @@ jobs:
             prom/prometheus:v2.55.1 \
             check config /etc/prometheus/prometheus.yml
 
+      - name: Validate distributed tracing configuration
+        run: |
+          docker run --rm \
+            -v "$PWD/deploy/observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro" \
+            otel/opentelemetry-collector-contrib:0.156.0 \
+            validate --config=/etc/otelcol-contrib/config.yml
+          docker run --rm \
+            -v "$PWD/deploy/observability/tempo.yml:/etc/tempo.yml:ro" \
+            grafana/tempo:3.0.2 \
+            --config.file=/etc/tempo.yml --config.verify=true
+
       - name: Scan Git history for secrets
         run: |
           docker run --rm \

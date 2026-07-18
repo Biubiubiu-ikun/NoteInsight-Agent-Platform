@@ -4,7 +4,7 @@ Updated: 2026-07-18
 
 ## Authority
 
-`最新项目规划.md` V7.4 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.5 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
@@ -21,7 +21,8 @@ Updated: 2026-07-18
 - Phase 7D vector recovery is complete locally: PostgreSQL lease/checkpoint resume, exact point-id/content-hash reconciliation, stale/orphan repair, immutable completion audit, snapshot retention, and an isolated 56,349-point Qdrant restore drill.
 - Phase 7D local load evidence is complete: lexical v3 preserves v2 quality while halving formal P95; mixed 2 RPS passes without indexing, mixed 1 RPS passes with batch-8 indexing, and Qdrant/TEI restart recovery passes. Mixed 3 RPS and shared-index 2 RPS are retained failed capacity boundaries.
 - The 30-minute warm mixed 2 RPS soak passes with 3,601 iterations, 0.6387 percent timeouts, zero dropped iterations/rate limits/invalid citations, and a successful recovery query.
-- Next planned work is benchmark v5 independent review plus OpenTelemetry, production-like multi-instance capacity and deployment security evidence before any public production-ready claim. Local `pg_stat_statements` and slow-query diagnostics are configured.
+- Phase 7D local distributed tracing is complete: W3C context crosses API, SQL/Redis, transactional Outbox, NATS and Worker, while hybrid retrieval includes TEI/Qdrant client spans. Collector, Tempo and the Grafana data source are provisioned; SQL/Redis content and credentials are not exported.
+- Next planned work is benchmark v5 independent review and freeze, followed by same-contract retrieval comparison. Production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
 
 ## Runtime Ports
 
@@ -36,6 +37,10 @@ Updated: 2026-07-18
 | NATS monitor | `http://127.0.0.1:18222` |
 | Prometheus optional | `http://127.0.0.1:19090` |
 | Grafana optional | `http://127.0.0.1:13000` |
+| Tempo optional | `http://127.0.0.1:13200` |
+| OTLP gRPC optional | `127.0.0.1:14317` |
+| OTLP HTTP optional | `http://127.0.0.1:14318` |
+| OTel Collector health optional | `http://127.0.0.1:13133` |
 | Qdrant retrieval profile | `http://127.0.0.1:16333` |
 | TEI embedding profile | `http://127.0.0.1:18082` |
 
@@ -55,7 +60,10 @@ Optional observability stack:
 
 ```powershell
 docker compose -f docker-compose.yml `
-  -f deploy/observability/docker-compose.observability.yml up -d prometheus grafana
+  -f deploy/observability/docker-compose.observability.yml up -d --build
+
+Invoke-RestMethod http://127.0.0.1:13133
+Invoke-RestMethod http://127.0.0.1:13200/ready
 ```
 
 ## Verification
@@ -73,6 +81,9 @@ $env:POSTGRES_DSN = "postgres://creatorinsight:creatorinsight@127.0.0.1:15432/cr
 $env:NATS_URL = "nats://127.0.0.1:14222"
 cd backend-go
 go test -tags=integration -count=1 ./integration
+
+$env:OTEL_TEST_ENDPOINT = "127.0.0.1:14317"
+go test -run TestOTLPExporterSmoke -count=1 -v ./internal/platform/tracing
 
 cd ..\frontend
 npm test
@@ -121,6 +132,7 @@ Latest verified data:
 - deterministic rebuild `phase7a_dv2_rebuild_v2_20260718`: all 25,448 documents reused, identical output checksum, zero audit violations and about 46 seconds of database run time;
 - full vector index `qwen3_dense_cosine_v1`: 56,349 points in collection `noteinsight_7aa574ea1bb52ae1591b4ad0d5969013`, built in 1h1m37s with checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627`;
 - migration `000021` adds vector build lease/attempt/checkpoint/heartbeat/reconciliation state; real PostgreSQL tests reject concurrent and stale leases while preserving the last durable checkpoint;
+- migration `000023` adds validated W3C `traceparent/tracestate` to Outbox rows; real PostgreSQL integration tests prove the context commits transactionally with the event and no row remains after rollback;
 - completed-index audit compares all 56,349 frozen chunk ids/content hashes with all Qdrant point ids/payload hashes and reproduces checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627` with zero missing/orphan/mismatched points;
 - Qdrant restore drill snapshot: 310,594,560 bytes, SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938`; an isolated temporary collection restored 56,349 points and was deleted after verification;
 - formal lexical baseline: Recall@10 `0.6812`, MRR `0.6585`, citation integrity `1.0`, no-relevant rejection `1.0`;
@@ -134,8 +146,10 @@ Latest verified data:
 - isolated PostgreSQL restore drill passed; Phase 7A-0 archive is `artifacts/backups/noteinsight_20260716_033326.dump` with SHA-256 `3424FEF52C080F432E6F230DB579EAE51379CC90C8F1C90CDCED89745F140E92` and a parseable 316-entry TOC;
 - Phase 7A completion archive is `artifacts/backups/noteinsight_20260718_062530.dump` (97,180,232 bytes), SHA-256 `45F2E285534DE9D3E94BBE1949D11318B8D40CB04DB44F608840A5F36C973CB0`, with a parseable 434-entry TOC;
 - delayed deleted-note view replay passed and DLQ did not grow.
+- distributed trace `903741a95c1ed196dbcd3cbd1f00b86a` contains 37 API/Worker spans across an Outbox/NATS delivery for note `5548`; the persisted W3C parent is `00-903741a95c1ed196dbcd3cbd1f00b86a-74ba37ebb05005af-01` and the Outbox row reached `sent`;
+- hybrid retrieval trace `5316cae36621eca92abd4481b4dfe69a` returned HTTP 200 and contains SQL, `tei POST` and `qdrant query` spans;
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
-- Go statement coverage is 27.72% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
+- Go statement coverage is 29.72% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
 - Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.
 - Public GitHub remote: `https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform`; CodeQL uploads to GitHub Code Scanning, while the private archive uses local-SARIF mode.
 
@@ -146,4 +160,4 @@ docker compose -f docker-compose.yml `
   -f deploy/observability/docker-compose.observability.yml down
 ```
 
-Named PostgreSQL, NATS, Prometheus and Grafana volumes are preserved unless `-v` is supplied.
+Named PostgreSQL, NATS, Prometheus, Grafana and Tempo volumes are preserved unless `-v` is supplied.

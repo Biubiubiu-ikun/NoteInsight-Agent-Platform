@@ -8,7 +8,7 @@ NoteInsight is now a strong senior backend/data/AI-platform project rather than 
 
 The strongest signal is engineering judgment. PostgreSQL lexical retrieval was implemented and measured before a vector stack was selected. Its formal Recall@10 of 0.6812 and MRR of 0.6585 were retained as a failed gate, not hidden. A pinned Qdrant/TEI/Qwen stack was then added behind the same evidence and authorization contracts. On the full same-contract corpus, dense-only reached Recall@10 0.2391/MRR 0.2366 and hybrid reached 0.5652/0.5598; both failures were retained. That is a credible experiment story, not a technology checklist.
 
-The project is not yet a finished Agent product or production cloud service. Benchmark adjudication, vector-index recovery, and production dependency operations remain important boundaries.
+The project is not yet a finished Agent product or production cloud service. Benchmark adjudication, production-like multi-instance capacity and cloud security/operations remain important boundaries.
 
 ## What Is Already Strong
 
@@ -23,6 +23,8 @@ The project is not yet a finished Agent product or production cloud service. Ben
 9. The benchmark has a sealed holdout, nonce commitments, a public development split, and a deterministic distinguishability audit. Known labeling limitations are documented rather than tuned away.
 10. CI covers Go race/coverage/vet/vulnerability checks, real PostgreSQL/NATS integration, frontend unit/E2E, OpenAPI and route drift, Prometheus, secrets, SBOM, image scanning, Compose, and authenticated acceptance.
 11. Vector indexing now has a PostgreSQL lease, per-batch checkpoints, exact point-id/content-hash reconciliation, crash resume, stale/orphan repair, immutable completion audit, and a real isolated Qdrant snapshot restore drill.
+12. Distributed tracing preserves W3C context through a durable Outbox and NATS delay, correlating API, SQL, Redis and Worker spans; retrieval traces also expose TEI and Qdrant client latency without recording content, credentials or SQL statements.
+13. Local load evidence states both passes and saturation boundaries, including a 30-minute soak and concurrent indexing, instead of extrapolating a production capacity claim from a laptop.
 
 ## Phase 8 Entry Review
 
@@ -34,10 +36,10 @@ The project is not yet a finished Agent product or production cloud service. Ben
 
 ### P1: Complete Before Production Claims
 
-1. Add TEI/Qdrant readiness and saturation alerts, API-key/TLS/private-network configuration, managed secrets, and managed backup evidence beyond the completed local snapshot drill.
-2. Run vector/hybrid load tests with realistic concurrent queries and index builds. Record p50/p95/p99, GPU memory, queue saturation, Qdrant latency, PostgreSQL post-filter cost, and failure behavior.
-3. Evaluate a pinned cross-encoder reranker only after v5 is frozen. Compare against lexical and RRF with per-task deltas and latency/cost budgets.
-4. Add real OpenTelemetry export and `pg_stat_statements` evidence, then close the existing 30-minute warm mixed-soak gate.
+1. Deploy TEI/Qdrant/NATS/Redis/PostgreSQL and the trace backend behind private networking, authenticated TLS endpoints and managed secrets; prove PostgreSQL PITR and managed backup restore.
+2. Run the already-defined vector/hybrid workload against multiple API instances, production-like CPU/GPU quotas and an external load generator. Preserve p50/p95/p99, saturation, error-budget and recovery evidence.
+3. Define production trace sampling, retention, redaction, access-control and cost policies. Local 100-percent sampling and unauthenticated Tempo are diagnostic only.
+4. Establish environment promotion, signed-image verification and rollback evidence before a production-ready claim.
 
 ### P2: Product and Team Scale
 
@@ -45,16 +47,18 @@ The project is not yet a finished Agent product or production cloud service. Ben
 2. Add online feedback and retrieval-drift monitoring without using clicks as unreviewed relevance truth.
 3. Define cloud environments, PITR, environment promotion, signed images, model artifact provenance, and cost budgets.
 4. Record benchmark reviewer identity, rubric, disagreement, adjudication, and inter-annotator agreement.
+5. Replace broad Redis ranking-key scans during note invalidation with an explicit bounded index or versioned-key strategy if production cardinality shows measurable scan cost; tracing currently suppresses repetitive `SCAN` spans but does not remove the operation itself.
 
 ## Recommended Sequence
 
 1. Phase 7D-1: execute the documented two-reviewer benchmark v5 protocol and freeze it before any further ranker tuning.
-2. Phase 7D-2: keep the completed resumable/reconciled vector indexing and snapshot drill under regression; add dependency observability plus load and failure tests.
-3. Phase 7D-3: compare lexical, dense, RRF and an optional pinned cross-encoder on v5; promote only a measured winner.
-4. Phase 8A: define Agent run, tool-call, claim, evidence, prompt, model, budget, and trace schemas.
+2. Phase 7D-2: run lexical, dense and RRF unchanged on frozen v5; only then compare an optional pinned cross-encoder and promote a measured winner.
+3. Phase 7D-3: freeze the winning retrieval contract and preserve the completed recovery, load, fault and distributed-tracing evidence as regression gates.
+4. Phase 8A: define Agent run, tool-call, claim, evidence, prompt, model, budget and trace schemas.
 5. Phase 8B: implement one bounded insight workflow: intent -> retrieval plan -> evidence -> analysis -> citation validation -> structured report.
-6. Phase 8C: add Agent evaluation for claim support, citation coverage, abstention, tool errors, latency, and cost. Do not start with multi-agent orchestration.
-7. Phase 9: productize report/evidence UI and prove cloud operations.
+6. Phase 8C: add Agent evaluation for claim support, citation coverage, abstention, tool errors, latency and cost. Do not start with multi-agent orchestration.
+7. In parallel with Phase 8 engineering, prove cloud security, PITR, multi-instance capacity and environment promotion; these gates block production claims, not local Agent implementation.
+8. Phase 9: productize report/evidence UI and complete cloud operations.
 
 ## Hiring Signal
 

@@ -15,6 +15,7 @@ import (
 	"creatorinsight/backend-go/internal/platform/cache"
 	"creatorinsight/backend-go/internal/platform/database"
 	"creatorinsight/backend-go/internal/platform/logging"
+	platformtracing "creatorinsight/backend-go/internal/platform/tracing"
 	"creatorinsight/backend-go/internal/retrieval"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,6 +33,18 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	traceShutdown, err := platformtracing.Initialize(ctx, cfg.Telemetry, cfg.App.Name, cfg.App.Env, logger)
+	if err != nil {
+		logger.Error("initialize tracing failed", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.Telemetry.ExportTimeout)
+		defer cancel()
+		if shutdownErr := traceShutdown(shutdownCtx); shutdownErr != nil {
+			logger.Warn("flush tracing failed", "error", shutdownErr)
+		}
+	}()
 
 	pgDB, err := database.NewPostgresDB(ctx, cfg.Postgres)
 	if err != nil {

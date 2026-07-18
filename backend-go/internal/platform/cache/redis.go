@@ -6,7 +6,9 @@ import (
 
 	"creatorinsight/backend-go/internal/config"
 
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 func NewRedisClient(ctx context.Context, cfg config.RedisConfig) (*redis.Client, error) {
@@ -18,6 +20,19 @@ func NewRedisClient(ctx context.Context, cfg config.RedisConfig) (*redis.Client,
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 	})
+	if cfg.TracingEnabled {
+		if err := redisotel.InstrumentTracing(client,
+			redisotel.WithDBStatement(false),
+			redisotel.WithCallerEnabled(false),
+			redisotel.WithCommandFilter(func(command redis.Cmder) bool {
+				return command.FullName() == "scan"
+			}),
+			redisotel.WithAttributes(attribute.String("server.address", cfg.Addr)),
+		); err != nil {
+			_ = client.Close()
+			return nil, fmt.Errorf("instrument redis tracing: %w", err)
+		}
+	}
 
 	pingCtx, cancel := context.WithTimeout(ctx, cfg.PingTimeout)
 	defer cancel()

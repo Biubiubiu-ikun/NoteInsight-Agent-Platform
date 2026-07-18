@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/textproto"
 	"regexp"
 	"strings"
 	"time"
@@ -13,9 +14,13 @@ import (
 	"creatorinsight/backend-go/internal/config"
 	"creatorinsight/backend-go/internal/outbox"
 	"creatorinsight/backend-go/internal/platform/observability"
+	platformtracing "creatorinsight/backend-go/internal/platform/tracing"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -47,6 +52,29 @@ type DeadLetterEnvelope struct {
 	Failure         string          `json:"failure"`
 	OriginalMessage json.RawMessage `json:"original_message"`
 	FailedAt        time.Time       `json:"failed_at"`
+}
+
+type NATSHeaderCarrier nats.Header
+
+func (c NATSHeaderCarrier) Get(key string) string {
+	for storedKey, values := range c {
+		if strings.EqualFold(storedKey, key) && len(values) > 0 {
+			return values[0]
+		}
+	}
+	return ""
+}
+
+func (c NATSHeaderCarrier) Set(key, value string) {
+	nats.Header(c).Set(textproto.CanonicalMIMEHeaderKey(key), value)
+}
+
+func (c NATSHeaderCarrier) Keys() []string {
+	keys := make([]string, 0, len(c))
+	for key := range c {
+		keys = append(keys, key)
+	}
+	return keys
 }
 
 type Broker struct {
@@ -147,6 +175,18 @@ func NewBroker(ctx context.Context, cfg config.NATSConfig, logger *slog.Logger) 
 }
 
 func (b *Broker) PublishEvent(ctx context.Context, event outbox.Event) error {
+	subject := b.eventSubject(event.EventType)
+	parentCtx := platformtracing.ExtractMap(ctx, event.TraceParent, event.TraceState)
+	spanCtx, span := platformtracing.Tracer().Start(parentCtx, "nats publish",
+		trace.WithSpanKind(trace.SpanKindProducer),
+		trace.WithAttributes(
+			attribute.String("messaging.system", "nats"),
+			attribute.String("messaging.destination.name", subject),
+			attribute.String("messaging.operation.type", "publish"),
+			attribute.String("noteinsight.event.type", event.EventType),
+		),
+	)
+	defer span.End()
 	envelope := EventEnvelope{
 		EventID:       event.EventID,
 		EventType:     event.EventType,
@@ -161,16 +201,19 @@ func (b *Broker) PublishEvent(ctx context.Context, event outbox.Event) error {
 	}
 	payload, err := json.Marshal(envelope)
 	if err != nil {
+		platformtracing.RecordError(span, err)
 		return fmt.Errorf("marshal event envelope: %w", err)
 	}
-	_, err = b.js.Publish(
-		ctx,
-		b.eventSubject(event.EventType),
-		payload,
+	message := &nats.Msg{Subject: subject, Data: payload, Header: nats.Header{}}
+	otel.GetTextMapPropagator().Inject(spanCtx, NATSHeaderCarrier(message.Header))
+	_, err = b.js.PublishMsg(
+		spanCtx,
+		message,
 		jetstream.WithMsgID(event.EventID),
 		jetstream.WithExpectStream(b.cfg.Stream),
 	)
 	if err != nil {
+		platformtracing.RecordError(span, err)
 		return fmt.Errorf("publish event %s: %w", event.EventID, err)
 	}
 	return nil
@@ -180,6 +223,17 @@ func (b *Broker) PublishDeadLetter(ctx context.Context, originalSubject string, 
 	if failure == nil {
 		failure = errors.New("unknown processing failure")
 	}
+	subject := b.deadLetterSubject(eventType)
+	spanCtx, span := platformtracing.Tracer().Start(ctx, "nats publish dead letter",
+		trace.WithSpanKind(trace.SpanKindProducer),
+		trace.WithAttributes(
+			attribute.String("messaging.system", "nats"),
+			attribute.String("messaging.destination.name", subject),
+			attribute.String("messaging.operation.type", "publish"),
+			attribute.String("noteinsight.event.type", eventType),
+		),
+	)
+	defer span.End()
 	deadLetter := DeadLetterEnvelope{
 		OriginalSubject: originalSubject,
 		EventID:         eventID,
@@ -191,20 +245,23 @@ func (b *Broker) PublishDeadLetter(ctx context.Context, originalSubject string, 
 	}
 	payload, err := json.Marshal(deadLetter)
 	if err != nil {
+		platformtracing.RecordError(span, err)
 		return fmt.Errorf("marshal dead-letter event: %w", err)
 	}
 	messageID := "dlq_" + eventID
 	if strings.TrimSpace(eventID) == "" {
 		messageID = fmt.Sprintf("dlq_%d", time.Now().UnixNano())
 	}
-	_, err = b.js.Publish(
-		ctx,
-		b.deadLetterSubject(eventType),
-		payload,
+	message := &nats.Msg{Subject: subject, Data: payload, Header: nats.Header{}}
+	otel.GetTextMapPropagator().Inject(spanCtx, NATSHeaderCarrier(message.Header))
+	_, err = b.js.PublishMsg(
+		spanCtx,
+		message,
 		jetstream.WithMsgID(messageID),
 		jetstream.WithExpectStream(b.cfg.DLQStream),
 	)
 	if err != nil {
+		platformtracing.RecordError(span, err)
 		return fmt.Errorf("publish dead-letter event: %w", err)
 	}
 	return nil

@@ -13,7 +13,12 @@ import (
 	"creatorinsight/backend-go/internal/note"
 	"creatorinsight/backend-go/internal/outbox"
 	"creatorinsight/backend-go/internal/platform/messaging"
+	platformtracing "creatorinsight/backend-go/internal/platform/tracing"
 	"creatorinsight/backend-go/internal/worker"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func TestConcurrentLikeAndDuplicateEventApplicationRemainIdempotent(t *testing.T) {
@@ -201,6 +206,49 @@ VALUES ($1, 'note', $2, 'integration.lease', '{}', 'pending', now(), now(), now(
 	}
 	if recovered != 1 {
 		t.Fatalf("recovered leases = %d, want 1", recovered)
+	}
+}
+
+func TestOutboxPersistsW3CTraceContextWithBusinessTransaction(t *testing.T) {
+	originalProvider := otel.GetTracerProvider()
+	originalPropagator := otel.GetTextMapPropagator()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()))
+	otel.SetTracerProvider(provider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() {
+		_ = provider.Shutdown(context.Background())
+		otel.SetTracerProvider(originalProvider)
+		otel.SetTextMapPropagator(originalPropagator)
+	})
+
+	ctx, span := platformtracing.Tracer().Start(context.Background(), "integration request")
+	defer span.End()
+	tx, err := integrationDB.BeginTxx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	eventType := fmt.Sprintf("integration.trace.%d", time.Now().UnixNano())
+	if err := outbox.EnqueueTx(ctx, tx, outbox.EventInput{
+		AggregateType: "note",
+		AggregateID:   314159,
+		EventType:     eventType,
+		Payload:       map[string]any{"safe": true},
+	}); err != nil {
+		_ = tx.Rollback()
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	var traceID, traceParent string
+	if err := integrationDB.QueryRowContext(ctx, `
+SELECT COALESCE(trace_id, ''), COALESCE(traceparent, '')
+FROM outbox_events WHERE event_type=$1`, eventType).Scan(&traceID, &traceParent); err != nil {
+		t.Fatal(err)
+	}
+	if traceID != platformtracing.TraceID(ctx) || traceParent == "" {
+		t.Fatalf("persisted trace_id=%q traceparent=%q, want trace_id=%q", traceID, traceParent, platformtracing.TraceID(ctx))
 	}
 }
 

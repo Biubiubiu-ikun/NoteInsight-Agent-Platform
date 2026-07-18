@@ -2,6 +2,7 @@ package api
 
 import (
 	"log/slog"
+	"net/http"
 
 	"creatorinsight/backend-go/internal/api/handlers"
 	"creatorinsight/backend-go/internal/auth"
@@ -14,6 +15,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 type RouterDeps struct {
@@ -39,6 +41,16 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	router.Use(gin.Recovery())
 	router.Use(CORS(deps.Config.HTTP.AllowedOrigins))
 	router.Use(DBPoolMetrics(deps.DB))
+	if deps.Config.Telemetry.Enabled {
+		router.Use(otelgin.Middleware(deps.Config.App.Name, otelgin.WithFilter(func(request *http.Request) bool {
+			switch request.URL.Path {
+			case "/health", "/ready", "/metrics", "/api/v1/health", "/api/v1/ready":
+				return false
+			default:
+				return true
+			}
+		})))
+	}
 	router.Use(RequestLogger(deps.Logger))
 
 	authService := auth.NewService(auth.NewRepository(deps.DB), deps.Config.Auth, deps.Config.App.Env)

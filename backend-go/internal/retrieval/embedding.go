@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"creatorinsight/backend-go/internal/platform/observability"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const defaultQueryInstruction = "Given a creator-content platform question, retrieve Chinese evidence passages that answer the query"
@@ -46,7 +48,14 @@ func NewTEIEmbedder(baseURL string, model string, revision string, dimension int
 	return &TEIEmbedder{
 		baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/"), model: model,
 		revision: revision, dimension: dimension, instruction: defaultQueryInstruction,
-		client: &http.Client{Timeout: timeout}, queryAttempts: maxQueryEmbeddingAttempts,
+		client: &http.Client{
+			Timeout: timeout,
+			Transport: otelhttp.NewTransport(http.DefaultTransport,
+				otelhttp.WithSpanNameFormatter(func(_ string, request *http.Request) string {
+					return "tei " + request.Method
+				}),
+			),
+		}, queryAttempts: maxQueryEmbeddingAttempts,
 		documentAttempts: maxDocumentEmbeddingAttempts, retryBaseDelay: embeddingRetryBaseDelay,
 		retryMaxDelay: embeddingRetryMaxDelay,
 	}

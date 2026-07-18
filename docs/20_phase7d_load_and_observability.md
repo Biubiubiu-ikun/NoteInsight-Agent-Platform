@@ -101,5 +101,5 @@ docker compose up -d --no-deps --force-recreate backend
 ## Open Gates
 
 - Production-like CPU/GPU quotas, multiple API instances and an external load generator are still open.
-- OpenTelemetry export, managed secrets, TLS/private networking, Qdrant authentication and PostgreSQL PITR remain deployment work. PostgreSQL statement statistics and slow-query logging are now available locally.
+- Local OpenTelemetry export is complete across API, SQL, Redis, Outbox, NATS, Worker, TEI and Qdrant; see `docs/21_phase7d_distributed_tracing.md`. A managed/authenticated trace backend, production sampling/retention policy, managed secrets, TLS/private networking, Qdrant authentication and PostgreSQL PITR remain deployment work.
 - Benchmark v5 still requires real independent reviewers; no cross-encoder decision should precede that freeze.
