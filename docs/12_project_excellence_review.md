@@ -22,6 +22,7 @@ The project is not yet a finished Agent product or production cloud service. Ben
 8. Citation integrity and Gold-source relevance are reported separately, preventing a misleading single “citation quality” score.
 9. The benchmark has a sealed holdout, nonce commitments, a public development split, and a deterministic distinguishability audit. Known labeling limitations are documented rather than tuned away.
 10. CI covers Go race/coverage/vet/vulnerability checks, real PostgreSQL/NATS integration, frontend unit/E2E, OpenAPI and route drift, Prometheus, secrets, SBOM, image scanning, Compose, and authenticated acceptance.
+11. Vector indexing now has a PostgreSQL lease, per-batch checkpoints, exact point-id/content-hash reconciliation, crash resume, stale/orphan repair, immutable completion audit, and a real isolated Qdrant snapshot restore drill.
 
 ## Phase 8 Entry Review
 
@@ -33,11 +34,10 @@ The project is not yet a finished Agent product or production cloud service. Ben
 
 ### P1: Complete Before Production Claims
 
-1. Add resumable vector indexing with database checkpoints, exact collection/checkpoint reconciliation, crash tests, orphan cleanup, immutable completion, and retention policy.
-2. Add Qdrant snapshots and restore drills, TEI/Qdrant readiness and saturation alerts, API-key/TLS/private-network configuration, and managed secrets.
-3. Run vector/hybrid load tests with realistic concurrent queries and index builds. Record p50/p95/p99, GPU memory, queue saturation, Qdrant latency, PostgreSQL post-filter cost, and failure behavior.
-4. Evaluate a pinned cross-encoder reranker only after v5 is frozen. Compare against lexical and RRF with per-task deltas and latency/cost budgets.
-5. Add real OpenTelemetry export and `pg_stat_statements` evidence, then close the existing 30-minute warm mixed-soak gate.
+1. Add TEI/Qdrant readiness and saturation alerts, API-key/TLS/private-network configuration, managed secrets, and managed backup evidence beyond the completed local snapshot drill.
+2. Run vector/hybrid load tests with realistic concurrent queries and index builds. Record p50/p95/p99, GPU memory, queue saturation, Qdrant latency, PostgreSQL post-filter cost, and failure behavior.
+3. Evaluate a pinned cross-encoder reranker only after v5 is frozen. Compare against lexical and RRF with per-task deltas and latency/cost budgets.
+4. Add real OpenTelemetry export and `pg_stat_statements` evidence, then close the existing 30-minute warm mixed-soak gate.
 
 ### P2: Product and Team Scale
 
@@ -48,8 +48,8 @@ The project is not yet a finished Agent product or production cloud service. Ben
 
 ## Recommended Sequence
 
-1. Phase 7D-1: freeze and independently review benchmark v5 before any further ranker tuning.
-2. Phase 7D-2: add resumable/reconciled vector indexing, dependency observability, load and failure tests.
+1. Phase 7D-1: execute the documented two-reviewer benchmark v5 protocol and freeze it before any further ranker tuning.
+2. Phase 7D-2: keep the completed resumable/reconciled vector indexing and snapshot drill under regression; add dependency observability plus load and failure tests.
 3. Phase 7D-3: compare lexical, dense, RRF and an optional pinned cross-encoder on v5; promote only a measured winner.
 4. Phase 8A: define Agent run, tool-call, claim, evidence, prompt, model, budget, and trace schemas.
 5. Phase 8B: implement one bounded insight workflow: intent -> retrieval plan -> evidence -> analysis -> citation validation -> structured report.

@@ -4,7 +4,7 @@ Updated: 2026-07-18
 
 ## Authority
 
-`最新项目规划.md` V7.1 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.2 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
@@ -18,7 +18,8 @@ Updated: 2026-07-18
 - Phase 7A canonical evidence is complete on frozen dataset version `2`: 25,448 documents, 56,349 chunks and 153,348 exact citations.
 - Phase 7B/7C provides authorization-filtered lexical, vector, and hybrid retrieval with exact citations, immutable index/evaluation lineage, public API, observability, and real PostgreSQL security tests.
 - The full Qdrant index contains 56,349 points. Formal lexical, vector, and hybrid baselines all fail Recall/MRR gates; the sealed v4 holdout has not been used.
-- Next planned work is Phase 7D: independently reviewed benchmark v5, resumable/reconciled vector indexing, dependency recovery/security, and concurrent load evidence before Agent work.
+- Phase 7D vector recovery is complete locally: PostgreSQL lease/checkpoint resume, exact point-id/content-hash reconciliation, stale/orphan repair, immutable completion audit, snapshot retention, and an isolated 56,349-point Qdrant restore drill.
+- Next planned work is Phase 7D benchmark v5 independent review plus dependency security/observability and concurrent query/index load evidence before Agent work.
 
 ## Runtime Ports
 
@@ -94,6 +95,16 @@ cd ..
 
 .\scripts\smoke_phase7_retrieval.ps1 -Modes lexical,vector,hybrid
 
+cd backend-go
+go run ./cmd/vectorindex `
+  --ingestion-run-id phase7a_dv2_rebuild_v2_20260718 `
+  --audit-only
+
+cd ..
+.\scripts\qdrant_snapshot.ps1 `
+  -Operation restore-drill `
+  -Collection noteinsight_7aa574ea1bb52ae1591b4ad0d5969013
+
 docker compose run --rm --no-deps `
   --entrypoint /app/noteinsight-reconcile worker --full
 ```
@@ -107,6 +118,9 @@ Latest verified data:
 - evidence run `phase7a_dv2_v1_20260718`: 1,283 fact inputs, 25,448 documents, 56,349 chunks, 153,348 citations and output checksum `3f372c59b8108bd95fb747e5d04aa73fe35ea6657f7219022ce047b07da3ee1a`;
 - deterministic rebuild `phase7a_dv2_rebuild_v2_20260718`: all 25,448 documents reused, identical output checksum, zero audit violations and about 46 seconds of database run time;
 - full vector index `qwen3_dense_cosine_v1`: 56,349 points in collection `noteinsight_7aa574ea1bb52ae1591b4ad0d5969013`, built in 1h1m37s with checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627`;
+- migration `000021` adds vector build lease/attempt/checkpoint/heartbeat/reconciliation state; real PostgreSQL tests reject concurrent and stale leases while preserving the last durable checkpoint;
+- completed-index audit compares all 56,349 frozen chunk ids/content hashes with all Qdrant point ids/payload hashes and reproduces checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627` with zero missing/orphan/mismatched points;
+- Qdrant restore drill snapshot: 310,594,560 bytes, SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938`; an isolated temporary collection restored 56,349 points and was deleted after verification;
 - formal lexical baseline: Recall@10 `0.6812`, MRR `0.6585`, citation integrity `1.0`, no-relevant rejection `1.0`;
 - formal vector baseline: Recall@10 `0.2391`, MRR `0.2366`, citation integrity `1.0`, no-relevant rejection `0.9091`, P95 `548.66ms`;
 - formal hybrid baseline: Recall@10 `0.5652`, MRR `0.5598`, citation integrity `1.0`, no-relevant rejection `0.9091`, P95 `2262.06ms`;

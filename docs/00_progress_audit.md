@@ -21,11 +21,13 @@ Audit date: 2026-07-18
 | Frontend console | MVP complete | feed, search, ranking, auth, publish, detail, comments, interactions and status |
 | Phase 7A-0 | Complete | immutable source history, dataset snapshots, v3 retirement, sealed v4 benchmark and retrieval ADRs |
 | Phase 7A | Complete | canonical documents/chunks, exact citations, fact versions, retry/rebuild/deletion audit |
-| Phase 7B | Next | authorization-filtered PostgreSQL lexical retrieval and offline evaluation |
+| Phase 7B | Complete | authorization-filtered PostgreSQL lexical retrieval, exact citations and guarded offline evaluation |
+| Phase 7C | Engineering baseline complete; quality gate failed | pinned Qdrant/TEI/Qwen dense retrieval, RRF hybrid and same-contract formal results |
+| Phase 7D | In progress | vector lease/checkpoint resume, exact reconciliation and local snapshot restore complete; benchmark/security/load gates open |
 
 ## Verified Snapshot
 
-- Sixteen checksum-protected migrations apply idempotently.
+- Twenty-one checksum-protected migrations apply idempotently.
 - Main data after final Phase 7A-0 acceptance: 5,511 active notes, 6,813 media, 101,635 active comments and 113,927 active Evidence Sources.
 - Every current note/media/comment has a 64-character source hash and dataset boundary.
 - All 113,927 active sources and every frozen source reference resolve to immutable canonical text/payload; 114,005 current or historical payload rows have valid SHA-256 values.
@@ -35,6 +37,8 @@ Audit date: 2026-07-18
 - `retrieval_v3` is retired after proving that deterministic public inputs reconstruct all 240 commitments.
 - Fact run `phase6c_final_20260715` materialized 812 note facts and 481 user facts.
 - Phase 7A ingested dataset version `2` into 25,448 canonical documents, 56,349 chunks and 153,348 citations. A full rebuild reused every document and reproduced output checksum `3f372c59b8108bd95fb747e5d04aa73fe35ea6657f7219022ce047b07da3ee1a`.
+- The immutable Qdrant index has 56,349 points and checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627`; exact point-id/content-hash audit reports zero missing/orphan/mismatched points.
+- A 310,594,560-byte Qdrant snapshot with SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938` restored all 56,349 points into an isolated collection before teardown.
 - Ingestion audits and a full registry-backed citation byte-slice comparison report zero mismatches or active deleted-source leaks.
 - Auth/API/async/Evidence Source acceptance passes end to end, including private-project isolation and deletion propagation.
 - A 12.8 MB PostgreSQL custom dump was parsed and restored into an isolated database; restored counts matched before teardown.
@@ -51,7 +55,7 @@ Audit date: 2026-07-18
 - Disposable-database integration tests cover refresh replay/concurrency, unique interactions, transaction rollback, Outbox lease recovery, immutable evidence/dataset versions and frozen/retired benchmark rows; live NATS covers DLQ and replay.
 - Frontend coverage floors and committed Playwright desktop/mobile E2E now protect the real product workflow.
 - Phase 6C is preserved by commit `f0dee23` and annotated tag `v0.6.4`; subsequent hardening is a separate change.
-- A private archive preserves the pre-public history and complete benchmark. The sanitized public GitHub remote preserves `main`, `v0.6.4` and `v0.6.5`; Actions exercises the Linux release chain.
+- A private archive preserves the pre-public history and complete benchmark. The sanitized public GitHub remote preserves `main` through `v0.7.2`; Actions exercises the Linux release chain.
 - CodeQL uploads Go and JavaScript/TypeScript results to GitHub Code Scanning; local SARIF mode remains available for private mirrors.
 - Product gaps such as unlike/uncollect, viewer state, author projection, deep links, server-side search and ranking N+1 were closed.
 
@@ -60,7 +64,7 @@ Audit date: 2026-07-18
 - The strict 30-minute warm mixed-load SLO has not yet passed on the large data set.
 - Full OpenTelemetry export, `pg_stat_statements`, multi-instance tests and external load generation remain.
 - Managed secrets, TLS, service authentication, private networking, image signing/registry policy and PostgreSQL PITR require a deployment environment.
-- A stratified independent human review of the holdout set is still needed before public quality claims.
+- Benchmark v5 still needs independent human review, multi-Gold relevance pools, task-stratified splits, authorization cases and OOD/no-answer adjudication before public quality claims.
 - CODEOWNERS, a PR evidence template, security policy, protected `main`, required status checks and review rules are configured. Environment promotion still requires a deployment environment.
 
-These items do not block lexical retrieval/evaluation work, but they do block a production-ready claim.
+These items do not block continued Phase 7D engineering, but they block Phase 8 retrieval-quality and production-ready claims.

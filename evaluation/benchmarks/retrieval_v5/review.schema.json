@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform/evaluation/benchmarks/retrieval_v5/review.schema.json",
+  "title": "Retrieval Benchmark v5 Adjudicated Review",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "author_id",
+    "task_type",
+    "split",
+    "rubric_version",
+    "draft_assistance",
+    "reviews",
+    "adjudication"
+  ],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" },
+    "author_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+    "task_type": {
+      "enum": [
+        "semantic_paraphrase",
+        "typo_robustness",
+        "temporal_conflict",
+        "cross_note_compare",
+        "no_relevant_document",
+        "insufficient_evidence",
+        "ocr_detail",
+        "authorization_boundary",
+        "out_of_domain_noise"
+      ]
+    },
+    "split": { "enum": ["development", "holdout"] },
+    "rubric_version": { "const": "retrieval_relevance_v1" },
+    "draft_assistance": { "enum": ["none", "model_assisted"] },
+    "reviews": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/review" }
+    },
+    "adjudication": { "$ref": "#/$defs/adjudication" }
+  },
+  "$defs": {
+    "judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "source_id", "relevance_grade"],
+      "properties": {
+        "source_type": { "enum": ["note", "note_body", "note_media", "note_comment"] },
+        "source_id": { "type": "integer", "minimum": 1 },
+        "relevance_grade": { "type": "integer", "minimum": 0, "maximum": 3 }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer_id", "answerability", "judgments", "reviewed_at"],
+      "properties": {
+        "reviewer_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+        "answerability": {
+          "enum": ["answerable", "insufficient_evidence", "no_relevant_document", "authorization_denied"]
+        },
+        "judgments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/judgment" }
+        },
+        "reviewed_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "adjudicator_id", "answerability", "judgments", "rationale", "adjudicated_at"],
+      "properties": {
+        "status": { "const": "resolved" },
+        "adjudicator_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+        "answerability": {
+          "enum": ["answerable", "insufficient_evidence", "no_relevant_document", "authorization_denied"]
+        },
+        "judgments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/judgment" }
+        },
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "adjudicated_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

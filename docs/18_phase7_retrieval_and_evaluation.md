@@ -43,6 +43,7 @@ Anonymous callers can search public evidence. A valid JWT expands access only th
 | `000018_phase7b_visibility_scoped_lexemes.sql` | Public/member IDF statistics so private corpus frequency cannot leak into public ranking |
 | `000019_phase7b_dataset_source_memberships.sql` | Many-to-many dataset/source membership used by the independent quality corpus |
 | `000020_phase7c_vector_retrieval.sql` | Immutable model/revision/dimension/collection/point-count/checksum vector index control row |
+| `000021_phase7d_vector_index_recovery.sql` | Fenced build lease, durable checkpoint, heartbeat, attempts, and exact reconciliation state |
 
 Current implementation identities:
 
@@ -156,10 +157,29 @@ The deterministic benchmark audit checksum is `2e702eb90709b965467ffa79275189e95
 - Unit tests cover query planning, ranking, citation/source metric separation, TEI instruction and dimension validation, Qdrant API-key/error behavior, vector filters, model-call accounting, and vector metadata redaction.
 - The API has a four-second request timeout, retrieval-specific rate limiting, structured dependency errors, bounded transient-overload retries, Prometheus request/duration/candidate/result metrics, and retrieval error-rate/P95 alerts.
 
+## Phase 7D Recovery Controls
+
+Migration `000021` adds a PostgreSQL build lease, attempt number, durable chunk/point checkpoint, heartbeat, reconciliation time, and missing/orphan counters. Qdrant upserts use chunk ids, so a crash after Qdrant acknowledgement but before checkpoint persistence is safe to replay. A second worker cannot acquire an unexpired lease, and a stale lease token cannot advance or complete an index.
+
+Resume compares every Qdrant point id and payload `content_hash` with the frozen PostgreSQL manifest. Missing or stale points before the checkpoint rewind work to the earliest gap; expected hash-identical points ahead of the checkpoint are idempotently reused; ids absent from the manifest can be removed with an explicit repair. Completion and completed-index reuse require exact id/hash equality and the original manifest checksum, not only an equal count.
+
+```powershell
+cd backend-go
+go run ./cmd/vectorindex `
+  --ingestion-run-id phase7a_dv2_rebuild_v2_20260718 `
+  --audit-only
+
+cd ..
+.\scripts\qdrant_snapshot.ps1 `
+  -Operation restore-drill `
+  -Collection noteinsight_7aa574ea1bb52ae1591b4ad0d5969013
+```
+
+The 2026-07-18 isolated restore drill used Qdrant `v1.18.2`: the downloaded collection snapshot was 310,594,560 bytes with SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938`; the temporary collection restored all 56,349 points and was then deleted. Snapshot files live under a Git-ignored artifact directory. `prune` retains at least the configured recent snapshot count. See the [official Qdrant snapshot compatibility and recovery rules](https://qdrant.tech/documentation/snapshots/).
+
 ## Remaining Before Phase 8
 
-1. Freeze a stratified, independently reviewed benchmark v5 with multi-Gold relevance labels and public authorization cases.
-2. Add resumable vector indexing, Qdrant orphan/point-count reconciliation, retention, snapshots, and restore drills.
-3. Benchmark a pinned cross-encoder reranker only after benchmark v5 is frozen.
-4. Run vector/hybrid load and failure tests with production-like CPU/GPU quotas; add dependency saturation and index-build dashboards/alerts.
-5. Configure Qdrant API keys, TLS/private networking, secret management, and cloud capacity evidence before production deployment.
+1. Execute and freeze the [benchmark v5 independent review protocol](19_phase7d_benchmark_v5_review.md) with multi-Gold relevance labels and public authorization cases. The public scaffold and schema exist; no human-review claim has been made yet.
+2. Benchmark a pinned cross-encoder reranker only after benchmark v5 is frozen.
+3. Run vector/hybrid load and failure tests with production-like CPU/GPU quotas; add dependency saturation and index-build dashboards/alerts.
+4. Configure Qdrant API keys, TLS/private networking, managed backup/restore, secret management, and cloud capacity evidence before production deployment.
