@@ -10,6 +10,7 @@ import (
 const (
 	RubricVersion           = "retrieval_relevance_v1"
 	MatrixVersion           = "retrieval_v5_matrix_v1"
+	DraftGeneratorVersion   = "retrieval_v5_draft_v1"
 	TargetCasesPerTask      = 32
 	TargetCasesPerTaskSplit = 16
 )
@@ -82,6 +83,26 @@ type AuthoredCase struct {
 	AdversarialTags []string       `json:"adversarial_tags,omitempty"`
 	CommitmentNonce string         `json:"commitment_nonce,omitempty"`
 	Metadata        map[string]any `json:"metadata,omitempty"`
+}
+
+type DraftReport struct {
+	GeneratorVersion      string         `json:"generator_version"`
+	Status                string         `json:"status"`
+	DatasetVersionID      int64          `json:"dataset_version_id"`
+	IngestionRunID        string         `json:"ingestion_run_id"`
+	AuthorID              string         `json:"author_id"`
+	CaseCount             int            `json:"case_count"`
+	SplitCounts           map[string]int `json:"split_counts"`
+	TaskCounts            map[string]int `json:"task_counts"`
+	CandidateRefCount     int            `json:"candidate_ref_count"`
+	UniqueCandidateCount  int            `json:"unique_candidate_count"`
+	CandidateCountMinimum int            `json:"candidate_count_minimum"`
+	CandidateCountMaximum int            `json:"candidate_count_maximum"`
+	AuthoredChecksum      string         `json:"authored_cases_checksum"`
+	MatrixChecksum        string         `json:"matrix_checksum"`
+	SourcePolicy          string         `json:"source_policy"`
+	ReviewRequired        bool           `json:"review_required"`
+	KnownReviewRisks      []string       `json:"known_review_risks"`
 }
 
 type Assignment struct {

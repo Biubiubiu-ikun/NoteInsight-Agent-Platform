@@ -1,8 +1,12 @@
 package evalreview
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -84,6 +88,185 @@ func TestValidateAuthoredMatrixRejectsPunctuationOnlyQueryDuplicate(t *testing.T
 	if err := ValidateAuthoredMatrix(authored); err == nil || !strings.Contains(err.Error(), "normalized query") {
 		t.Fatalf("ValidateAuthoredMatrix() error = %v", err)
 	}
+}
+
+func TestGenerateDraftsBuildsDeterministicUnapprovedMatrix(t *testing.T) {
+	slots, manifest, err := BuildMatrix()
+	if err != nil {
+		t.Fatal(err)
+	}
+	corpus := draftFixtureCorpus()
+	first, firstReport, err := GenerateDrafts(slots, "codex-draft-author", 2, "phase7a_run", corpus)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, secondReport, err := GenerateDrafts(slots, "codex-draft-author", 2, "phase7a_run", corpus)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(first, second) || !reflect.DeepEqual(firstReport, secondReport) {
+		t.Fatal("model-assisted draft output is not deterministic")
+	}
+	if len(first) != 288 || firstReport.Status != "model_draft_awaiting_human_review" || !firstReport.ReviewRequired {
+		t.Fatalf("draft report = %+v", firstReport)
+	}
+	if firstReport.MatrixChecksum != manifest.MatrixChecksum || firstReport.CandidateCountMinimum < 5 || firstReport.CandidateCountMaximum > 6 {
+		t.Fatalf("draft candidate report = %+v", firstReport)
+	}
+	seenAuthorizationTargets := map[string]struct{}{}
+	for _, current := range first {
+		if current.DraftAssistance != "model_assisted" || current.Metadata["draft_status"] != "awaiting_independent_human_review" {
+			t.Fatalf("case %s overstates review status", current.CaseID)
+		}
+		if current.TaskType == "authorization_boundary" {
+			seenAuthorizationTargets[refKey(current.CandidateRefs[0])] = struct{}{}
+		}
+	}
+	if len(seenAuthorizationTargets) < 8 {
+		t.Fatalf("authorization candidate pools have too little source variety: %d", len(seenAuthorizationTargets))
+	}
+}
+
+func TestVerifyDraftArtifactsRejectsAuthoredCaseTampering(t *testing.T) {
+	root := t.TempDir()
+	slots, _, err := BuildMatrix()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases, report, err := GenerateDrafts(slots, "codex-draft-author", 2, "phase7a_run", draftFixtureCorpus())
+	if err != nil {
+		t.Fatal(err)
+	}
+	authoredPath := filepath.Join(root, "authored_cases.jsonl")
+	if err := WriteJSONLines(authoredPath, cases); err != nil {
+		t.Fatal(err)
+	}
+	report.AuthoredChecksum, err = FileChecksum(authoredPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := WriteJSON(filepath.Join(root, "draft_report.json"), report); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := VerifyDraftArtifacts(root, 2, "phase7a_run"); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(authoredPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(authoredPath, append(raw, '\n'), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := VerifyDraftArtifacts(root, 2, "phase7a_run"); err == nil || !strings.Contains(err.Error(), "checksum") {
+		t.Fatalf("VerifyDraftArtifacts() error = %v", err)
+	}
+}
+
+func TestReviewServerPersistsProgressAndFinalizesImmutably(t *testing.T) {
+	workspace := t.TempDir()
+	directory := filepath.Join(workspace, "reviewer_a")
+	assignments := []Assignment{
+		reviewServerAssignment("review-case-1", "reviewer-a", 1),
+		reviewServerAssignment("review-case-2", "reviewer-a", 2),
+	}
+	if err := WriteJSONLines(filepath.Join(directory, "assignments.jsonl"), assignments); err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewReviewServer(workspace, "reviewer_a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler := server.Handler()
+
+	state := httptest.NewRecorder()
+	handler.ServeHTTP(state, httptest.NewRequest(http.MethodGet, "/api/review-state", nil))
+	if state.Code != http.StatusOK || bytes.Contains(state.Body.Bytes(), []byte("expected_answer")) {
+		t.Fatalf("blind state status/body = %d/%s", state.Code, state.Body.String())
+	}
+
+	for index, assignment := range assignments {
+		submission := ReviewSubmission{
+			CaseID: assignment.CaseID, ReviewerID: assignment.ReviewerID, Answerability: "answerable",
+			Judgments: []Judgment{{SourceType: "note", SourceID: int64(index + 1), SourceVersion: 1, RelevanceGrade: 3}},
+		}
+		raw, _ := json.Marshal(submission)
+		request := httptest.NewRequest(http.MethodPut, "/api/reviews/"+assignment.CaseID, bytes.NewReader(raw))
+		request.Header.Set("Content-Type", "application/json")
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusOK {
+			t.Fatalf("save case %s status/body = %d/%s", assignment.CaseID, response.Code, response.Body.String())
+		}
+		if index == 0 {
+			finalize := httptest.NewRecorder()
+			handler.ServeHTTP(finalize, httptest.NewRequest(http.MethodPost, "/api/finalize", nil))
+			if finalize.Code != http.StatusConflict {
+				t.Fatalf("incomplete finalize status = %d", finalize.Code)
+			}
+		}
+	}
+	if _, err := os.Stat(filepath.Join(directory, "submissions.in_progress.jsonl")); err != nil {
+		t.Fatal(err)
+	}
+	finalize := httptest.NewRecorder()
+	handler.ServeHTTP(finalize, httptest.NewRequest(http.MethodPost, "/api/finalize", nil))
+	if finalize.Code != http.StatusOK {
+		t.Fatalf("finalize status/body = %d/%s", finalize.Code, finalize.Body.String())
+	}
+	final, err := ReadJSONLines[ReviewSubmission](filepath.Join(directory, "submissions.jsonl"))
+	if err != nil || len(final) != 2 {
+		t.Fatalf("final submissions = %d, error = %v", len(final), err)
+	}
+	raw, _ := json.Marshal(final[0])
+	edit := httptest.NewRecorder()
+	handler.ServeHTTP(edit, httptest.NewRequest(http.MethodPut, "/api/reviews/review-case-1", bytes.NewReader(raw)))
+	if edit.Code != http.StatusConflict {
+		t.Fatalf("post-final edit status = %d", edit.Code)
+	}
+}
+
+func reviewServerAssignment(caseID string, reviewerID string, sourceID int64) Assignment {
+	return Assignment{
+		CaseID: caseID, ReviewerID: reviewerID, TaskType: "semantic_paraphrase", Split: "development",
+		RubricVersion: RubricVersion, Query: "独立盲审问题 " + caseID, ReviewBlind: true,
+		CandidatePool: []CandidateSource{{
+			SourceType: "note", SourceID: sourceID, SourceVersion: 1, NoteID: sourceID,
+			Visibility: "public", ContentHash: strings.Repeat("a", 64), CanonicalText: "候选证据 " + caseID,
+			DatasetVersionID: 2, IngestionRunID: "phase7a_run",
+		}},
+	}
+}
+
+func draftFixtureCorpus() DraftCorpus {
+	result := DraftCorpus{Sources: make([]DraftSource, 0, 1240)}
+	for index := 1; index <= 600; index++ {
+		noteID := int64(index)
+		subject := fmt.Sprintf("测试主题%02d", index%20)
+		title := fmt.Sprintf("测试记录｜样本记录 %d", index)
+		body := fmt.Sprintf("我在固定条件下，围绕测试主题做了%d天记录。\n\n【先说结论】\n结论%d值得保留，但必须保留限制%d。\n\n【具体过程】\n固定变量。\n\n【记录到的变化】\n观察周期%d天，共完成%d次记录，相关预算约%d元。\n\n【争议和限制】\n限制%d。", index%30+1, index, index, index%30+1, index%9+1, index%500+1, index)
+		createdAt := time.Date(2026, 1, index%8+1, 8, index%60, 0, 0, time.UTC)
+		result.Sources = append(result.Sources, DraftSource{
+			CandidateRef: CandidateRef{SourceType: "note", SourceID: noteID, SourceVersion: 1},
+			ProjectID:    1, Visibility: "public", Canonical: title + "\n" + body,
+			Title: title, Body: body, Category: "test", Tags: []string{"test", subject},
+			Topics: []string{"fixed-variable"}, NoteID: noteID, CreatedAt: createdAt,
+		})
+		result.Sources = append(result.Sources, DraftSource{
+			CandidateRef: CandidateRef{SourceType: "note_media", SourceID: 100000 + noteID, SourceVersion: 1},
+			ProjectID:    1, Visibility: "public", Canonical: fmt.Sprintf("图注%d\nOCR细节%d", index, index),
+			Caption: fmt.Sprintf("图注%d", index), OCRText: fmt.Sprintf("OCR细节%d", index),
+			NoteID: noteID, Position: 1, CreatedAt: createdAt,
+		})
+	}
+	for index := 1; index <= 40; index++ {
+		result.Sources = append(result.Sources, DraftSource{
+			CandidateRef: CandidateRef{SourceType: "note", SourceID: int64(200000 + index), SourceVersion: 1},
+			ProjectID:    1, Visibility: "project", Canonical: fmt.Sprintf("ACL-EVAL-R7-%016x\n项目内评测备忘 R7-%016x。", index, index),
+			Title: fmt.Sprintf("ACL-EVAL-R7-%016x", index), Body: "项目内评测备忘。", NoteID: int64(200000 + index),
+		})
+	}
+	return result
 }
 
 func TestAuditAndFreezeRequireCompleteIndependentHumanEvidence(t *testing.T) {

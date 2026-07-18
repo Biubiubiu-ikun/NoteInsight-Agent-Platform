@@ -1,8 +1,12 @@
 param(
-    [ValidateSet("init", "prepare", "audit", "freeze", "status")]
+    [ValidateSet("init", "draft", "prepare", "serve", "audit", "freeze", "status")]
     [string]$Operation = "status",
     [string]$ReviewerA = "",
     [string]$ReviewerB = "",
+    [string]$AuthorId = "codex-draft-author",
+    [ValidateSet("reviewer_a", "reviewer_b")]
+    [string]$ReviewerSlot = "reviewer_a",
+    [string]$Listen = "127.0.0.1:18083",
     [long]$DatasetVersionId = 2,
     [string]$IngestionRunId = "phase7a_dv2_rebuild_v2_20260718"
 )
@@ -28,7 +32,10 @@ try {
         "-workspace", $Workspace,
         "-public-root", $PublicRoot,
         "-dataset-version-id", $DatasetVersionId,
-        "-ingestion-run-id", $IngestionRunId
+        "-ingestion-run-id", $IngestionRunId,
+        "-author-id", $AuthorId,
+        "-reviewer-slot", $ReviewerSlot,
+        "-listen", $Listen
     )
     if ($ReviewerA) { $arguments += @("-reviewer-a", $ReviewerA) }
     if ($ReviewerB) { $arguments += @("-reviewer-b", $ReviewerB) }

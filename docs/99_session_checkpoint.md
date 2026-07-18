@@ -4,7 +4,7 @@ Updated: 2026-07-19
 
 ## Authority
 
-`最新项目规划.md` V7.6 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.7 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
@@ -22,10 +22,11 @@ Updated: 2026-07-19
 - Phase 7D local load evidence is complete: lexical v3 preserves v2 quality while halving formal P95; mixed 2 RPS passes without indexing, mixed 1 RPS passes with batch-8 indexing, and Qdrant/TEI restart recovery passes. Mixed 3 RPS and shared-index 2 RPS are retained failed capacity boundaries.
 - The 30-minute warm mixed 2 RPS soak passes with 3,601 iterations, 0.6387 percent timeouts, zero dropped iterations/rate limits/invalid citations, and a successful recovery query.
 - Phase 7D local distributed tracing is complete: W3C context crosses API, SQL/Redis, transactional Outbox, NATS and Worker, while hybrid retrieval includes TEI/Qdrant client spans. Collector, Tempo and the Grafana data source are provisioned; SQL/Redis content and credentials are not exported.
-- Phase 7D benchmark v5 review engineering is complete: deterministic matrix initialization, frozen Evidence Source resolution, blind reviewer assignments, identity conflict checks, overall/per-task agreement, adjudication queue, checksummed ledger, and fail-closed freeze output are implemented in `internal/evalreview` and `cmd/benchmarkreview`.
+- Phase 7D benchmark v5 review engineering is complete: deterministic matrix/drafting, frozen Evidence Source resolution, blind reviewer assignments, loopback review UI with resumable D-drive persistence, identity conflict checks, overall/per-task agreement, adjudication queue, checksummed ledger, and fail-closed freeze output are implemented in `internal/evalreview` and `cmd/benchmarkreview`.
 - Retrieval evaluation counts `out_of_domain_noise` together with `no_relevant_document` for rejection accuracy and false-positive classification while retaining a separate OOD task slice.
-- The private v5 workspace contains only `review_plan.json`, `authoring_matrix.jsonl`, and an unfilled `authored_cases.template.jsonl`: 288 slots, 144 development + 144 holdout, 32 per task, checksum `7086266255375de7137d0f9502543769c22a53d20f2d280a928469c9183f3a61`. No authored questions, human reviews, adjudications, approved cases, or public review summary exist yet; v5 is not frozen.
-- Next planned work is model-assisted-but-unapproved case drafting and candidate-pool authoring, followed by two real independent reviewers and a third adjudicator. Same-contract retrieval comparison starts only after freeze. Production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
+- The private v5 workspace now contains 288 model-assisted, unapproved authored cases, 1,728 candidate references resolving to 1,229 unique frozen sources, and separate reviewer A/B blind packages. The authored checksum is `da13ddd29c0f3cfbe2f8e7c4e133e431e09a218aff044cad78aa482c1051eedd`; every task has 32 cases and each split has 144.
+- Human review count remains zero. No `submissions.jsonl`, adjudication, approved cases, or public review summary exists; v5 is not frozen and makes no retrieval quality claim.
+- Next work is reviewer A in the loopback review UI, then a genuinely independent reviewer B, third-party adjudication, audit/freeze, and only then same-contract lexical/vector/hybrid comparison. Production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
 
 ## Runtime Ports
 
@@ -46,6 +47,7 @@ Updated: 2026-07-19
 | OTel Collector health optional | `http://127.0.0.1:13133` |
 | Qdrant retrieval profile | `http://127.0.0.1:16333` |
 | TEI embedding profile | `http://127.0.0.1:18082` |
+| Benchmark v5 review UI | `http://127.0.0.1:18083/` while `serve` is running |
 
 ## Local Storage
 
@@ -72,7 +74,15 @@ Benchmark v5 review workspace status:
 .\scripts\review_retrieval_benchmark.ps1 -Operation status
 ```
 
-The next executable review step is authoring `evaluation/private/retrieval_v5/authored_cases.jsonl`. Do not run `prepare` until all 288 slots have independently drafted queries and candidate references; do not create reviewer or adjudicator output with automation and call it human evidence.
+The next executable review step is reviewer A's real blind review:
+
+```powershell
+.\scripts\review_retrieval_benchmark.ps1 -Operation serve `
+  -ReviewerSlot reviewer_a `
+  -Listen 127.0.0.1:18083
+```
+
+Open `http://127.0.0.1:18083/`. Per-case progress is atomically saved to `evaluation/private/retrieval_v5/reviewer_a/submissions.in_progress.jsonl`; only the final confirmation creates immutable `submissions.jsonl`. Do not automate labels or call model output human evidence. Reviewer B must be a different real person, and the adjudicator must be a third identity.
 
 Optional observability stack:
 
@@ -168,7 +178,8 @@ Latest verified data:
 - delayed deleted-note view replay passed and DLQ did not grow.
 - distributed trace `903741a95c1ed196dbcd3cbd1f00b86a` contains 37 API/Worker spans across an Outbox/NATS delivery for note `5548`; the persisted W3C parent is `00-903741a95c1ed196dbcd3cbd1f00b86a-74ba37ebb05005af-01` and the Outbox row reached `sent`;
 - hybrid retrieval trace `5316cae36621eca92abd4481b4dfe69a` returned HTTP 200 and contains SQL, `tei POST` and `qdrant query` spans;
-- benchmark v5 private matrix `retrieval_v5_matrix_v1` contains 288 deterministic authoring slots, 32 for each of nine task families and 144 per split; checksum `7086266255375de7137d0f9502543769c22a53d20f2d280a928469c9183f3a61`; status remains `authoring` with zero human-reviewed cases;
+- benchmark v5 private matrix `retrieval_v5_matrix_v1` contains 288 deterministic slots, 32 for each of nine task families and 144 per split; checksum `7086266255375de7137d0f9502543769c22a53d20f2d280a928469c9183f3a61`;
+- benchmark v5 model-assisted draft checksum is `da13ddd29c0f3cfbe2f8e7c4e133e431e09a218aff044cad78aa482c1051eedd`; 1,728 candidate references resolve through the frozen ingestion graph to 1,229 unique sources, with zero human-reviewed cases and no freeze claim;
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
 - Go statement coverage is 29.72% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
 - Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.
