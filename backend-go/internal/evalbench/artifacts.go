@@ -87,6 +87,65 @@ func VerifyArtifacts(root string) (Manifest, error) {
 	return verifyPublicArtifacts(root, manifest)
 }
 
+// ReadVerifiedCases validates immutable case checksums and optional nonce commitments.
+// Holdout callers must separately prove membership with VerifySealedCases.
+func ReadVerifiedCases(path string, requiredSplit string) ([]Case, error) {
+	return readVerifiedCases(path, requiredSplit)
+}
+
+// VerifySealedCases proves that private holdout cases match the public nonce commitments
+// without making the case contents part of the public artifact set.
+func VerifySealedCases(publicRoot string, cases []Case) (Manifest, error) {
+	manifest, err := VerifyArtifacts(publicRoot)
+	if err != nil {
+		return Manifest{}, err
+	}
+	if normalizedCommitmentScheme(manifest.CommitmentScheme) != NonceCommitmentScheme {
+		return Manifest{}, fmt.Errorf("sealed case verification requires nonce commitments")
+	}
+	file, err := os.Open(filepath.Join(publicRoot, manifest.CommitmentsFile))
+	if err != nil {
+		return Manifest{}, fmt.Errorf("open benchmark commitments: %w", err)
+	}
+	defer file.Close()
+	sealed := make(map[string]struct{}, manifest.SplitCounts["holdout"])
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 64*1024), 4*1024*1024)
+	for scanner.Scan() {
+		var commitment CaseCommitment
+		if err := json.Unmarshal(scanner.Bytes(), &commitment); err != nil {
+			return Manifest{}, fmt.Errorf("decode benchmark commitment: %w", err)
+		}
+		if commitment.Split == "holdout" {
+			sealed[commitment.CommitmentHash] = struct{}{}
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return Manifest{}, fmt.Errorf("scan benchmark commitments: %w", err)
+	}
+	if len(cases) != manifest.SplitCounts["holdout"] {
+		return Manifest{}, fmt.Errorf("holdout case count %d does not match sealed count %d", len(cases), manifest.SplitCounts["holdout"])
+	}
+	seen := make(map[string]struct{}, len(cases))
+	for index, evalCase := range cases {
+		if evalCase.Split != "holdout" || evalCase.CommitmentNonce == "" {
+			return Manifest{}, fmt.Errorf("private case %d is not a nonce-committed holdout case", index+1)
+		}
+		expected := commitmentHash(evalCase.CommitmentNonce, evalCase.CaseChecksum)
+		if expected != evalCase.CommitmentHash {
+			return Manifest{}, fmt.Errorf("private case %d commitment is invalid", index+1)
+		}
+		if _, exists := sealed[expected]; !exists {
+			return Manifest{}, fmt.Errorf("private case %d is not in the public sealed commitments", index+1)
+		}
+		if _, duplicate := seen[expected]; duplicate {
+			return Manifest{}, fmt.Errorf("duplicate private holdout commitment at case %d", index+1)
+		}
+		seen[expected] = struct{}{}
+	}
+	return manifest, nil
+}
+
 func verifyFullArtifacts(root string, manifest Manifest) (Manifest, error) {
 	if !validLocalFilename(manifest.CasesFile) {
 		return Manifest{}, fmt.Errorf("cases_file must be a local filename")

@@ -262,6 +262,41 @@ var (
 		},
 		[]string{"event_type", "result"},
 	)
+
+	RetrievalRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "retrieval_requests_total",
+			Help: "Total retrieval requests by mode and decision status.",
+		},
+		[]string{"mode", "status"},
+	)
+
+	RetrievalDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "retrieval_duration_seconds",
+			Help:    "Retrieval request duration by mode.",
+			Buckets: []float64{0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 15},
+		},
+		[]string{"mode"},
+	)
+
+	RetrievalCandidateCount = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "retrieval_candidate_count",
+			Help:    "Candidate count produced by retrieval mode.",
+			Buckets: []float64{0, 1, 5, 10, 25, 50, 100, 240},
+		},
+		[]string{"mode"},
+	)
+
+	RetrievalResultCount = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "retrieval_result_count",
+			Help:    "Result count returned by retrieval mode.",
+			Buckets: []float64{0, 1, 2, 3, 5, 10, 20, 50},
+		},
+		[]string{"mode"},
+	)
 )
 
 func init() {
@@ -299,6 +334,10 @@ func init() {
 		NATSConnected,
 		DomainEventLagSeconds,
 		DerivedRefreshTotal,
+		RetrievalRequestsTotal,
+		RetrievalDuration,
+		RetrievalCandidateCount,
+		RetrievalResultCount,
 	)
 }
 
@@ -440,4 +479,11 @@ func ObserveDomainEventLag(eventType string, occurredAt time.Time) {
 
 func IncDerivedRefresh(eventType string, result string) {
 	DerivedRefreshTotal.WithLabelValues(eventType, result).Inc()
+}
+
+func ObserveRetrieval(mode string, status string, startedAt time.Time, candidateCount int, resultCount int) {
+	RetrievalRequestsTotal.WithLabelValues(mode, status).Inc()
+	RetrievalDuration.WithLabelValues(mode).Observe(time.Since(startedAt).Seconds())
+	RetrievalCandidateCount.WithLabelValues(mode).Observe(float64(candidateCount))
+	RetrievalResultCount.WithLabelValues(mode).Observe(float64(resultCount))
 }

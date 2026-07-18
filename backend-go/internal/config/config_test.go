@@ -44,6 +44,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Worker.HTTPPort != 8081 || cfg.Worker.OutboxMaxRetries != 20 {
 		t.Fatalf("unexpected worker defaults: %+v", cfg.Worker)
 	}
+	if cfg.Retrieval.QueryTimeout != 4*time.Second || cfg.Retrieval.EmbeddingDimension != 1024 || cfg.Retrieval.EmbeddingBatchSize != 32 || cfg.RateLimit.RetrievalRead.Limit != 120 {
+		t.Fatalf("unexpected retrieval defaults: retrieval=%+v rate=%+v", cfg.Retrieval, cfg.RateLimit.RetrievalRead)
+	}
 }
 
 func TestGetEnvInt32RejectsOverflow(t *testing.T) {

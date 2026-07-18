@@ -21,6 +21,7 @@ type Config struct {
 	Redis     RedisConfig
 	NATS      NATSConfig
 	RateLimit RateLimitConfig
+	Retrieval RetrievalConfig
 	Worker    WorkerConfig
 	Reconcile ReconcileConfig
 }
@@ -103,11 +104,24 @@ type RateLimitConfig struct {
 	ContentWrite     RateLimitPolicyConfig
 	CommentWrite     RateLimitPolicyConfig
 	InteractionWrite RateLimitPolicyConfig
+	RetrievalRead    RateLimitPolicyConfig
 }
 
 type RateLimitPolicyConfig struct {
 	Limit  int64
 	Window time.Duration
+}
+
+type RetrievalConfig struct {
+	QueryTimeout       time.Duration
+	QdrantURL          string
+	QdrantAPIKey       string
+	EmbeddingURL       string
+	EmbeddingModel     string
+	EmbeddingRevision  string
+	EmbeddingDimension int
+	EmbeddingBatchSize int
+	DependencyTimeout  time.Duration
 }
 
 type WorkerConfig struct {
@@ -211,6 +225,21 @@ func Load() (Config, error) {
 				Limit:  int64(getEnvInt("RATE_LIMIT_INTERACTION_WRITE_LIMIT", 120)),
 				Window: getEnvDuration("RATE_LIMIT_INTERACTION_WRITE_WINDOW", time.Minute),
 			},
+			RetrievalRead: RateLimitPolicyConfig{
+				Limit:  int64(getEnvInt("RATE_LIMIT_RETRIEVAL_READ_LIMIT", 120)),
+				Window: getEnvDuration("RATE_LIMIT_RETRIEVAL_READ_WINDOW", time.Minute),
+			},
+		},
+		Retrieval: RetrievalConfig{
+			QueryTimeout:       getEnvDuration("RETRIEVAL_QUERY_TIMEOUT", 4*time.Second),
+			QdrantURL:          getEnv("QDRANT_URL", "http://localhost:16333"),
+			QdrantAPIKey:       getEnv("QDRANT_API_KEY", ""),
+			EmbeddingURL:       getEnv("EMBEDDING_URL", "http://localhost:18082"),
+			EmbeddingModel:     getEnv("EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B"),
+			EmbeddingRevision:  getEnv("EMBEDDING_REVISION", "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"),
+			EmbeddingDimension: getEnvInt("EMBEDDING_DIMENSION", 1024),
+			EmbeddingBatchSize: getEnvInt("EMBEDDING_BATCH_SIZE", 32),
+			DependencyTimeout:  getEnvDuration("RETRIEVAL_DEPENDENCY_TIMEOUT", 30*time.Second),
 		},
 		Worker: WorkerConfig{
 			HTTPHost:                getEnv("WORKER_HTTP_HOST", "0.0.0.0"),
@@ -307,12 +336,22 @@ func (c Config) Validate() error {
 			"content write":     c.RateLimit.ContentWrite,
 			"comment write":     c.RateLimit.CommentWrite,
 			"interaction write": c.RateLimit.InteractionWrite,
+			"retrieval read":    c.RateLimit.RetrievalRead,
 		}
 		for name, policy := range policies {
 			if policy.Limit <= 0 || policy.Window <= 0 {
 				return fmt.Errorf("%s rate limit and window must be greater than 0", name)
 			}
 		}
+	}
+	if c.Retrieval.QueryTimeout <= 0 || c.Retrieval.QueryTimeout > 30*time.Second {
+		return errors.New("RETRIEVAL_QUERY_TIMEOUT must be greater than 0 and at most 30s")
+	}
+	if c.Retrieval.QdrantURL == "" || c.Retrieval.EmbeddingURL == "" || c.Retrieval.EmbeddingModel == "" || c.Retrieval.EmbeddingRevision == "" {
+		return errors.New("Qdrant and embedding endpoint, model, and revision are required")
+	}
+	if c.Retrieval.EmbeddingDimension <= 0 || c.Retrieval.EmbeddingDimension > 4096 || c.Retrieval.EmbeddingBatchSize <= 0 || c.Retrieval.EmbeddingBatchSize > 256 || c.Retrieval.DependencyTimeout <= 0 {
+		return errors.New("embedding dimension, batch size, and retrieval dependency timeout are outside their valid ranges")
 	}
 	if c.Worker.HTTPPort <= 0 || c.Worker.HTTPPort > 65535 {
 		return fmt.Errorf("WORKER_HTTP_PORT must be between 1 and 65535, got %d", c.Worker.HTTPPort)

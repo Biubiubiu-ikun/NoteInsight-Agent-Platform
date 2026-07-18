@@ -15,6 +15,20 @@ groups:
         annotations:
           summary: NoteInsight p95 latency exceeds 750 ms
 
+      - alert: NoteInsightRetrievalHighErrorRate
+        expr: sum(rate(retrieval_requests_total{status=~".*_error"}[5m])) / clamp_min(sum(rate(retrieval_requests_total[5m])), 0.001) > 0.05
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Retrieval error rate exceeds 5 percent
+
+      - alert: NoteInsightRetrievalHighP95Latency
+        expr: histogram_quantile(0.95, sum by (le, mode) (rate(retrieval_duration_seconds_bucket[5m]))) > 4
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Retrieval p95 latency exceeds the 4 second online budget
+
       - alert: NoteInsightOutboxBacklog
         expr: sum(outbox_events{status=~"pending|processing|retry"}) > 1000 or outbox_oldest_unsent_age_seconds > 120
         for: 5m

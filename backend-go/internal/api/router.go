@@ -8,6 +8,7 @@ import (
 	"creatorinsight/backend-go/internal/config"
 	"creatorinsight/backend-go/internal/note"
 	"creatorinsight/backend-go/internal/platform/ratelimit"
+	"creatorinsight/backend-go/internal/retrieval"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -42,6 +43,20 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 
 	authService := auth.NewService(auth.NewRepository(deps.DB), deps.Config.Auth, deps.Config.App.Env)
 	noteService := note.NewService(note.NewRepository(deps.DB), deps.Redis)
+	retrievalService := retrieval.NewService(retrieval.NewRepository(deps.DB))
+	if err := retrievalService.EnableVector(
+		retrieval.NewTEIEmbedder(
+			deps.Config.Retrieval.EmbeddingURL, deps.Config.Retrieval.EmbeddingModel,
+			deps.Config.Retrieval.EmbeddingRevision, deps.Config.Retrieval.EmbeddingDimension,
+			deps.Config.Retrieval.DependencyTimeout,
+		),
+		retrieval.NewQdrantClient(
+			deps.Config.Retrieval.QdrantURL, deps.Config.Retrieval.QdrantAPIKey,
+			deps.Config.Retrieval.DependencyTimeout,
+		),
+	); err != nil {
+		panic(err)
+	}
 	writeLimiter := ratelimit.New(deps.Redis)
 	authPolicy := ratelimit.Policy{
 		Name:   "auth",
@@ -63,6 +78,11 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 		Limit:  deps.Config.RateLimit.InteractionWrite.Limit,
 		Window: deps.Config.RateLimit.InteractionWrite.Window,
 	}
+	retrievalReadPolicy := ratelimit.Policy{
+		Name:   "retrieval_read",
+		Limit:  deps.Config.RateLimit.RetrievalRead.Limit,
+		Window: deps.Config.RateLimit.RetrievalRead.Window,
+	}
 	rateLimitEnabled := deps.Config.RateLimit.Enabled
 
 	router.Use(AuthMiddleware(authService))
@@ -77,6 +97,7 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 		int(deps.Config.Auth.RefreshTokenTTL.Seconds()),
 	)
 	noteHandler := handlers.NewNoteHandler(noteService)
+	retrievalHandler := handlers.NewRetrievalHandler(retrievalService, deps.Config.Retrieval.QueryTimeout)
 
 	router.GET("/health", healthHandler.Health)
 	router.GET("/ready", healthHandler.Ready)
@@ -97,6 +118,7 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	v1.GET("/notes/:note_id", noteHandler.GetNote)
 	v1.GET("/notes/:note_id/comments", noteHandler.ListComments)
 	v1.GET("/rankings/notes/daily", noteHandler.ListHotNotes)
+	v1.POST("/retrieval/search", IPRateLimit(writeLimiter, rateLimitEnabled, retrievalReadPolicy), retrievalHandler.Search)
 	v1.POST("/notes", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), noteHandler.CreateNote)
 	v1.PATCH("/notes/:note_id", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), RequireOwnerOrAdmin(func(ctx *gin.Context, currentUser auth.CurrentUser) (bool, error) {
 		return noteService.CanModifyNote(ctx.Request.Context(), ctx.Param("note_id"), currentUser)

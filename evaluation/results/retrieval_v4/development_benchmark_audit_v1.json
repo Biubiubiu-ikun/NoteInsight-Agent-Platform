@@ -1,0 +1,1233 @@
+{
+  "audit_version": "benchmark_distinguishability_v1",
+  "benchmark_id": "retrieval_v4_20260716",
+  "benchmark_version": "retrieval_v4",
+  "manifest_checksum": "851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74",
+  "dataset_version_id": 2,
+  "source_run_id": "phase6c_quality_v2_20260715",
+  "split": "development",
+  "summary": {
+    "case_count": 80,
+    "pass_count": 58,
+    "review_count": 11,
+    "invalid_count": 0,
+    "not_applicable_count": 11,
+    "topic_collision_count": 69
+  },
+  "cases": [
+    {
+      "case_checksum": "261935523a9c853f594d032f67027f45042f63293661f5cf8f8ea91d8825bc04",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5254
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "020870f43af18fdb991692d7c3e34ac5dd29d7fc91abb6d4219bdf8fca0835ec",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5255
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "ef8caa834ddf2c3757167bc7be19e38e60cccfcfd1ea9b1d4b7d8f00a2b40443",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5256
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "7cc17131751cec382ccd0d0cf6fe2bd5a28c2885dabb0a41b8fe2c92aba71ea3",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5257
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "63774972e096dd36fedffb75c8ebba84df64987b8d5fa4819587dcb6821c12c2",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5258
+      ],
+      "max_topic_cohort": 10,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "1cb000246d29be75decf56c1634604613109850efebb6b4cc91710968c88c51e",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5259
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e7ea72dd679dc3d05729a1bdcc06a8799b647cfba8337e049a79349768c4ebd7",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5260
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e6fb52a40898b4c1bb83cdaf46de7d6585e7f0e25b28bf88973eb71b7f30a774",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5261
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "f3eb1169d764b240bb770fe67cfc37eb79eb5f8dcf5b22812e9640f6076a2c33",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5262
+      ],
+      "max_topic_cohort": 13,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "6cc82be56517c398b88986391b49aaec0dbd7b2eff73530b389a2f3e2bee7e6a",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5263
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "4c17e7659458547fcc4e6e5ceaca7d3610102202a945ca463b3de49de0c48e1c",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5264
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e3ca79642d66cb52e6e5d77f7fa532d977ecffdce234e3c1f9d9c794bd257a0f",
+      "task_type": "semantic_paraphrase",
+      "gold_note_ids": [
+        5265
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 3,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "a81e8fdf98cfbd164b7e50614a25143c7fb35d7fae0d82e9c730f0fb4d8d6bef",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5284
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "62e64c7d0471da8a606e9b03b838d6607528fda981231a9747e96884d2fb51a4",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5285
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "b1d7b7117d65bffe044dd6690a7eae36e1b7046633f10491426919483b283b1c",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5286
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "05db894147f976fa7c4dd7cd1fbfabb86ff4314757f33daad6c8a05ef8786a7a",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5287
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "a313f088f68b7f7317601f59373ccd87c23a07add3612af0cfa33ddb5dd8615d",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5288
+      ],
+      "max_topic_cohort": 10,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "983e233cd5eb64108fe815a9830542a545ffff4ae2ef66e95b8e33f9d83a18d2",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5289
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "dbe65c53e49219d42765bedacb7afcbf233de66861b0244e15a0674f77ca103a",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5290
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "c09cbecec268db9ab8dee7190f048751a1082fc3e1cb28304cbc79008e09eeb7",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5291
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "937a20d9d885fc933e97dc51eeb511c36ab1e46001317181583151f605669f6f",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5292
+      ],
+      "max_topic_cohort": 7,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "2cca288c3159ea052d495c582ca51e2ca71496bd8ef337d852b2050e5f70f796",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5293
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "2f5a98ed65cc8c7f665fd7da18601a6648f2d4db3b07cebdd6c7b15fe78e4176",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5294
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "17f473b1fc2805932370721e2ae07ad2fbc699d9170a41f955a1e1a23d5394c8",
+      "task_type": "typo_robustness",
+      "gold_note_ids": [
+        5295
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 1,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "c1ac8ffb70b8a4807f57e4fa27d26b029f55397f4ac47ddb2add49e195d9e350",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5263,
+        5283
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "86fb07f212fc8f85e7ae44105cf66ef696f629df8f1f57f4f8046785f29c5173",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5283,
+        5303
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "1cbcb8f29c17f724bc5270b9d10026828d47e897ef3ca5720f6104761fdb4a33",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5303,
+        5323
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "710e8b1d92ae160e99f8d95570f8bbaf5d6d50039c4113174632127f6f91dc3d",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5323,
+        5333
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "c46cc6e7b878c3e71cae6ebe7193eec9f8898284ac81efedd4243000bc13925f",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5333,
+        5373
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "9735dceb073e81c0474414769106ef3e555a31b0af4ef50ab48eefb243ad98ba",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5373,
+        5393
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "67577df2307b0cab243d8951c818aa50bb8b615aaa3640600d84f0d678a62fc7",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5393,
+        5403
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "f9d25a7af691e786cb661f2c4638ab99bcc890375f007a81c17f87c55ea18b7f",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5403,
+        5423
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "9d327259676417ef7ecba4ce024d752fac4c886f828b4faf4c391a2964b67544",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5423,
+        5443
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e9b0e6fd29e2c83ff66079c012ad45cdb3dad8da525114f355496569498a80d5",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5443,
+        5453
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e840ac670b63ba7cadc6cb6cc5e294e60ea6739092928e2d065f030185e9b4ac",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5267,
+        5287
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "73664ccefde0c14cf296532770668122b1e175cc31d57285dc1633d13686736a",
+      "task_type": "temporal_conflict",
+      "gold_note_ids": [
+        5287,
+        5307
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "9eb0db353a52569bc97ee63cd67fb57b19aed80fdbc7d5c06ede2924f1c49845",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5254,
+        5257
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "af5c0e3fc9545e0693a43a501954fb7c29e3b751e781d148672ecd85072f1afb",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5259,
+        5262
+      ],
+      "max_topic_cohort": 13,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "80d9cf9a2500749887067bc116a2c61137546a88f6b77494d64015a7d4100193",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5264,
+        5267
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "a326958c3d965e267e7f68e20f128ab2a73d2c552f94103b985007caf0de6d41",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5269,
+        5272
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "918d90ee0b97df41794708becffe93b4b93047ce2ffd07f60218bfa1fcd15cf3",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5274,
+        5277
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "1f65df7240cdfb645424adbf2f729d554247015c2e3c7a9dd88fbd9abdfb9868",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5279,
+        5282
+      ],
+      "max_topic_cohort": 13,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e93b5dcc5f34e9703a3697cdbcc35913965e387478231404e37552e72924310f",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5284,
+        5287
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "fdd00a6f1101d6dbd7d3dd186fa51c4fed40a51b8e1e40021022225bec9c5584",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5289,
+        5292
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "28c096738853dbfa8c0116c2a3beb0cce4a8222159c8640860987616c2df11b2",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5294,
+        5297
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "119ee658c72c5f8d196a718d2659ee8e2ae99cf24b78001e87cc29af8c428621",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5299,
+        5302
+      ],
+      "max_topic_cohort": 13,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e4fa7f276674c68076e2c0e50a928d505ddd2fcbaae2801afe2e9aa9a3f11d7c",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5304,
+        5307
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "faa39b4242fb31b6303e72069ba401ce53b1d138f8903f63f69590466ddeebca",
+      "task_type": "cross_note_compare",
+      "gold_note_ids": [
+        5309,
+        5312
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "7d42be151fc078939b0e1306fe9c52633f162aacf3f04850e10f4eb51aa79e67",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "46cd0cfb895be1f2c12d42bac8548539de7c3cb9da90ef99a900d682a879d3a9",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "f90a45aa3117ff7da90efec1a0c5ec6dcb63bbf0a1ae8cc7efcdfd6dbb0062ee",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "fb15cece6bc1a00d0954fcd85f48c4a05f8ca8102db943282ec28af6664abf13",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "a9bac2b22fbc82d79367af0d26fc22f12000fe1326e8b3cf0e7f14166b12d07d",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "1e4878049a86e3fac0a9a24f39578dfd44149811290a11c107cf8c71c88f010e",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "8c8796916c5b83af24256b08ee6aa3e7c5ffe0343486cef2d8b9a77ca81d5b83",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "c36bbbaa81cb87e3342a5c6858bc27a7f4164b65244859d1589fba0bdad8f16b",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "6bdbaa7dfa3f373a5d5710bb4395f73d475de1ba1cb5abdec16292355ed83348",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "43ce7b10e7e6cc29987baf3b23a06306baf64facf5ddec67650719eff891c417",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "af8e1e46954d65a1e79d467691f38184c1eac488f84ff0c68ddb9da17bd56095",
+      "task_type": "no_relevant_document",
+      "gold_note_ids": null,
+      "max_topic_cohort": 0,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "not_applicable",
+      "reasons": [
+        "case_has_no_gold_source"
+      ]
+    },
+    {
+      "case_checksum": "050cd0ea8a7cf4234ef2bcc10bba6259f0063c7750cb5eed4cb3f86d1315550c",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5409
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "d1d1b5ebc05f679d566145191cfe5e3f89534307aca71d0b7a8c89d13b5794f7",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5416
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "77ae81ba5c92a5fbb1a0afb1330d95f033039907dfe577574543f685f6513fe3",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5423
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "1e842303449d20009e07d981acdacb30cb68912bb4753f9e692eed6626805f22",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5430
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "5f2690f340c21a0cedf66b3e2fb4e1e645a16f47e68d060cd0840b079af3b4da",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5437
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "5c91ee732a86bf759e7f821721d6f9f362debbdf3a0445b3431d81c4d8337564",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5444
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "fb1329e1b946cd8ae79fc90d8a3874bcab4c6b414439e6c73d0051133f806890",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5451
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "4a312f2fdbfeef82e5a65273825f22a68a624fe4f3f143991f2fb33594dbb405",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5258
+      ],
+      "max_topic_cohort": 10,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "1818124881bb65a35fb5b0610e3d46fe01515292a943f5b9957eebd5da570c5c",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5265
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "7d27ef718431cbd76c33b9763229d332811ccac9bcfaa1002065d4f7a729ed66",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5272
+      ],
+      "max_topic_cohort": 7,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "c565c01483142c4b03df358ced52652f65e6fcf81b1b666bed10094613dfa3ff",
+      "task_type": "insufficient_evidence",
+      "gold_note_ids": [
+        5279
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": false,
+      "matched_scenario_anchors": 1,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "review",
+      "reasons": [
+        "no_unique_exact_scenario_anchor",
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "6759cd139f405c5e557d7d0cabb92adfe8c5d4d1b0964f102e2a81963443887f",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5440
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "41b241c58b1f6a937d6b279813abcbe1d9c98416f22ace253380114d18ce3d14",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5447
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "96ca32c2a9d6bdd5fd71183f6430b2bed3efd958bc1ac024e995ce942b2170e7",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5254
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "f4c81ea34c9d1e2c5a95bd1c4e13517da0901d5d2842e82df7194f0787081be0",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5261
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "da1dac4022611ecdb5c4a83af486dbe3b8fa1d2ccf2eb8eaadb133f1cbe8552f",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5268
+      ],
+      "max_topic_cohort": 10,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "e7575f20b897716bd959ca1c722e3d188c931f9c86291ccd2db38093bed8b301",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5275
+      ],
+      "max_topic_cohort": 8,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "d6fb206606e96410a8f38e8dc43bdfde8644666ec27bdfb0ead703ea7e8e368f",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5282
+      ],
+      "max_topic_cohort": 13,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "aa1edf78910ff8509ca743a5e32ac2c92d6c61ec1677dddda2f2ec770c7c26ff",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5289
+      ],
+      "max_topic_cohort": 9,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "a9e703ebf57e93f0792e2133f474722a3e5e01006111b8050b1aefb1083ee8f8",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5296
+      ],
+      "max_topic_cohort": 12,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    },
+    {
+      "case_checksum": "39ee878afa583374879a9fb7fb1398bdb433bc94764eb10ce109eb73af66bb22",
+      "task_type": "ocr_detail",
+      "gold_note_ids": [
+        5303
+      ],
+      "max_topic_cohort": 11,
+      "query_mentions_gold_note_id": true,
+      "matched_scenario_anchors": 0,
+      "unique_matched_anchors": 0,
+      "distinguishability_status": "pass",
+      "reasons": [
+        "gold_topic_has_multiple_notes"
+      ]
+    }
+  ],
+  "report_checksum": "2e702eb90709b965467ffa79275189e95da6349ed4d4df425194fee40b616850"
+}

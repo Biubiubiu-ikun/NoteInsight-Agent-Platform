@@ -107,7 +107,9 @@ INSERT INTO dataset_version_sources (
 SELECT $1, es.id, es.project_id, es.source_type, es.source_id, es.source_version, es.content_hash, es.visibility
 FROM evidence_sources es
 JOIN evidence_source_payloads esp ON esp.evidence_source_id = es.id
-WHERE es.dataset_id = $2
+JOIN dataset_source_memberships membership
+  ON membership.evidence_source_id=es.id AND membership.dataset_id=$2
+WHERE 1=1
   AND es.index_status <> 'deleted'
   AND es.deleted_at IS NULL`, snapshot.ID, datasetID)
 	if err != nil {
@@ -150,7 +152,9 @@ func loadActiveSources(ctx context.Context, tx *sqlx.Tx, datasetID int64) ([]Sou
 SELECT es.id, es.project_id, es.source_type, es.source_id, es.source_version, es.content_hash, es.visibility
 FROM evidence_sources es
 JOIN evidence_source_payloads esp ON esp.evidence_source_id = es.id
-WHERE es.dataset_id = $1
+JOIN dataset_source_memberships membership
+  ON membership.evidence_source_id=es.id AND membership.dataset_id=$1
+WHERE 1=1
   AND es.index_status <> 'deleted'
   AND es.deleted_at IS NULL
 ORDER BY es.source_type, es.source_id, es.source_version, es.id`, datasetID)
