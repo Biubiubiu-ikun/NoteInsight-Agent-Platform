@@ -20,10 +20,16 @@ import (
 func main() {
 	ingestionRunID := flag.String("ingestion-run-id", "", "completed evidence ingestion run to embed")
 	timeout := flag.Duration("timeout", 6*time.Hour, "maximum vector index build duration")
+	auditOnly := flag.Bool("audit-only", false, "audit PostgreSQL manifest against exact Qdrant point ids without embedding")
+	repairOrphans := flag.Bool("repair-orphans", false, "delete Qdrant point ids that are absent from the frozen PostgreSQL manifest (requires --audit-only)")
 	flag.Parse()
 	*ingestionRunID = strings.TrimSpace(*ingestionRunID)
 	if *ingestionRunID == "" {
 		slog.Error("ingestion-run-id is required")
+		os.Exit(2)
+	}
+	if *repairOrphans && !*auditOnly {
+		slog.Error("repair-orphans requires audit-only")
 		os.Exit(2)
 	}
 	appConfig, err := config.Load()
@@ -59,13 +65,32 @@ func main() {
 			Logger: logger,
 		},
 	)
+	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetIndent("", "  ")
+	if *auditOnly {
+		audit, auditErr := indexer.Audit(ctx, *ingestionRunID, *repairOrphans)
+		if auditErr != nil {
+			logger.Error("audit vector index failed", "ingestion_run_id", *ingestionRunID, "error", auditErr)
+			os.Exit(1)
+		}
+		if err := encoder.Encode(audit); err != nil {
+			logger.Error("encode vector index audit failed", "error", err)
+			os.Exit(1)
+		}
+		if !audit.Exact {
+			logger.Error("vector index audit found drift", "ingestion_run_id", *ingestionRunID,
+				"missing_points", audit.MissingPointCount,
+				"orphan_points", audit.OrphanPointCount-audit.OrphansDeleted,
+				"mismatched_points", audit.MismatchedPointCount)
+			os.Exit(1)
+		}
+		return
+	}
 	index, err := indexer.Build(ctx, *ingestionRunID)
 	if err != nil {
 		logger.Error("build vector index failed", "ingestion_run_id", *ingestionRunID, "error", err)
 		os.Exit(1)
 	}
-	encoder := json.NewEncoder(os.Stdout)
-	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(index); err != nil {
 		logger.Error("encode vector index result failed", "error", err)
 		os.Exit(1)

@@ -160,6 +160,7 @@ UPDATE notes SET status='deleted', deleted_at=clock_timestamp() WHERE id=$1`, no
 type fakeVectorBackend struct {
 	points     []retrieval.VectorPoint
 	queryCalls int
+	exists     bool
 }
 
 func (f *fakeVectorBackend) EmbedDocuments(_ context.Context, inputs []string) ([][]float32, error) {
@@ -176,7 +177,12 @@ func (f *fakeVectorBackend) EmbedQuery(_ context.Context, _ string) ([]float32, 
 
 func (f *fakeVectorBackend) RecreateCollection(_ context.Context, _ string, _ int, _ map[string]any) error {
 	f.points = nil
+	f.exists = true
 	return nil
+}
+
+func (f *fakeVectorBackend) CollectionExists(_ context.Context, _ string) (bool, error) {
+	return f.exists, nil
 }
 
 func (f *fakeVectorBackend) CreatePayloadIndex(_ context.Context, _ string, _ string, _ string) error {
@@ -184,7 +190,18 @@ func (f *fakeVectorBackend) CreatePayloadIndex(_ context.Context, _ string, _ st
 }
 
 func (f *fakeVectorBackend) Upsert(_ context.Context, _ string, points []retrieval.VectorPoint) error {
-	f.points = append(f.points, points...)
+	positions := make(map[int64]int, len(f.points))
+	for index, point := range f.points {
+		positions[point.ID] = index
+	}
+	for _, point := range points {
+		if position, ok := positions[point.ID]; ok {
+			f.points[position] = point
+			continue
+		}
+		positions[point.ID] = len(f.points)
+		f.points = append(f.points, point)
+	}
 	return nil
 }
 
@@ -202,6 +219,30 @@ func (f *fakeVectorBackend) Query(_ context.Context, _ string, _ []float32, _ ma
 
 func (f *fakeVectorBackend) Count(_ context.Context, _ string) (int64, error) {
 	return int64(len(f.points)), nil
+}
+
+func (f *fakeVectorBackend) ListPointManifest(_ context.Context, _ string) ([]retrieval.VectorManifestEntry, error) {
+	result := make([]retrieval.VectorManifestEntry, 0, len(f.points))
+	for _, point := range f.points {
+		contentHash, _ := point.Payload["content_hash"].(string)
+		result = append(result, retrieval.VectorManifestEntry{ChunkID: point.ID, ContentHash: contentHash})
+	}
+	return result, nil
+}
+
+func (f *fakeVectorBackend) DeletePoints(_ context.Context, _ string, pointIDs []int64) error {
+	deleted := make(map[int64]struct{}, len(pointIDs))
+	for _, pointID := range pointIDs {
+		deleted[pointID] = struct{}{}
+	}
+	kept := f.points[:0]
+	for _, point := range f.points {
+		if _, ok := deleted[point.ID]; !ok {
+			kept = append(kept, point)
+		}
+	}
+	f.points = kept
+	return nil
 }
 
 func assertRetrievedNoteWithVerifiedCitation(t *testing.T, response retrieval.SearchResponse, noteID int64) {

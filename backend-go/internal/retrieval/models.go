@@ -34,6 +34,9 @@ var (
 	ErrIndexNotReady         = errors.New("retrieval index is not ready")
 	ErrUnsupportedMode       = errors.New("retrieval mode is not implemented")
 	ErrIndexVersionMismatch  = errors.New("retrieval index version mismatch")
+	ErrIndexBuildLeased      = errors.New("retrieval index build lease is held")
+	ErrIndexLeaseLost        = errors.New("retrieval index build lease was lost")
+	ErrVectorIndexCorrupt    = errors.New("retrieval vector index is inconsistent")
 	ErrDependencyUnavailable = errors.New("retrieval dependency unavailable")
 )
 
@@ -202,18 +205,53 @@ type LexicalIndex struct {
 }
 
 type VectorIndex struct {
-	IngestionRunID    string    `json:"ingestion_run_id"`
-	IndexVersion      string    `json:"index_version"`
-	EmbeddingModel    string    `json:"embedding_model"`
-	EmbeddingRevision string    `json:"embedding_revision"`
-	VectorDimension   int       `json:"vector_dimension"`
-	DistanceMetric    string    `json:"distance_metric"`
-	CollectionName    string    `json:"collection_name"`
-	Status            string    `json:"status"`
-	PointCount        int64     `json:"point_count"`
-	IndexChecksum     string    `json:"index_checksum"`
-	StartedAt         time.Time `json:"started_at"`
-	CompletedAt       time.Time `json:"completed_at,omitempty"`
+	IngestionRunID    string     `json:"ingestion_run_id"`
+	IndexVersion      string     `json:"index_version"`
+	EmbeddingModel    string     `json:"embedding_model"`
+	EmbeddingRevision string     `json:"embedding_revision"`
+	VectorDimension   int        `json:"vector_dimension"`
+	DistanceMetric    string     `json:"distance_metric"`
+	CollectionName    string     `json:"collection_name"`
+	Status            string     `json:"status"`
+	PointCount        int64      `json:"point_count"`
+	CheckpointChunkID int64      `json:"checkpoint_chunk_id"`
+	CheckpointPoints  int64      `json:"checkpoint_point_count"`
+	BuildAttempt      int        `json:"build_attempt"`
+	LeaseOwner        string     `json:"lease_owner,omitempty"`
+	LeaseExpiresAt    *time.Time `json:"lease_expires_at,omitempty"`
+	HeartbeatAt       *time.Time `json:"heartbeat_at,omitempty"`
+	LastReconciledAt  *time.Time `json:"last_reconciled_at,omitempty"`
+	OrphanPointCount  int64      `json:"orphan_point_count"`
+	MissingPointCount int64      `json:"missing_point_count"`
+	IndexChecksum     string     `json:"index_checksum"`
+	StartedAt         time.Time  `json:"started_at"`
+	CompletedAt       time.Time  `json:"completed_at,omitempty"`
+}
+
+type VectorManifestEntry struct {
+	ChunkID     int64  `json:"chunk_id"`
+	ContentHash string `json:"content_hash"`
+}
+
+type VectorIndexAudit struct {
+	IngestionRunID        string  `json:"ingestion_run_id"`
+	IndexVersion          string  `json:"index_version"`
+	CollectionName        string  `json:"collection_name"`
+	IndexStatus           string  `json:"index_status"`
+	CollectionExists      bool    `json:"collection_exists"`
+	ExpectedPointCount    int64   `json:"expected_point_count"`
+	ActualPointCount      int64   `json:"actual_point_count"`
+	DatabasePointCount    int64   `json:"database_point_count"`
+	MissingPointCount     int64   `json:"missing_point_count"`
+	OrphanPointCount      int64   `json:"orphan_point_count"`
+	MismatchedPointCount  int64   `json:"mismatched_point_count"`
+	MissingPointSample    []int64 `json:"missing_point_sample,omitempty"`
+	OrphanPointSample     []int64 `json:"orphan_point_sample,omitempty"`
+	MismatchedPointSample []int64 `json:"mismatched_point_sample,omitempty"`
+	OrphansDeleted        int64   `json:"orphans_deleted"`
+	ManifestChecksum      string  `json:"manifest_checksum"`
+	StoredIndexChecksum   string  `json:"stored_index_checksum"`
+	Exact                 bool    `json:"exact"`
 }
 
 type VectorChunk struct {

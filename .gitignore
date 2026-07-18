@@ -17,5 +17,6 @@ frontend/test-results/
 frontend/*.log
 frontend/*.tsbuildinfo
 artifacts/backups/
+artifacts/qdrant-snapshots/
 artifacts/*.spdx.json
 evaluation/private/
