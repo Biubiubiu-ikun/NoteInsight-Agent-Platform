@@ -44,17 +44,24 @@ Updated: 2026-07-18
 | Qdrant retrieval profile | `http://127.0.0.1:16333` |
 | TEI embedding profile | `http://127.0.0.1:18082` |
 
+## Local Storage
+
+- Project runtime and tool caches live under the Git-ignored `D:\面向内容平台的创作者洞察 Agent 应用平台\.tools` tree.
+- Docker Desktop's WSL disk is physically stored at `.tools\runtime\docker-desktop\wsl`; `C:\Users\23016\AppData\Local\Docker\wsl` is a directory junction to that location.
+- Go build/module/temp, npm, and Hugging Face caches are physically stored under `.tools\cache` or `.tools\gopath`. Their former C-drive locations are compatibility junctions, and the corresponding user environment variables point to D.
+- The D drive is external USB storage. The ignored local `.env` uses `RETRIEVAL_QUERY_TIMEOUT=25s` and `HTTP_WRITE_TIMEOUT=40s` so cold reads can finish; production/default values remain `4s` and `10s`.
+- Use `scripts/start_local_stack.ps1` after a restart. It waits for the full stack and warms lexical, vector, and hybrid retrieval before reporting readiness.
+- After a Docker Desktop update, verify the WSL junction with `Get-Item C:\Users\23016\AppData\Local\Docker\wsl`; its `Target` must remain the project `.tools\runtime` path.
+
 ## Resume
 
 ```powershell
-.\scripts\build_backend_linux.ps1
-docker compose up -d --build --wait
-docker compose --profile retrieval up -d qdrant text-embeddings
-.\scripts\migrate.ps1
-.\scripts\start_frontend.ps1
+.\scripts\start_local_stack.ps1 -Build -StartFrontend
 Invoke-RestMethod http://127.0.0.1:18080/ready
 Invoke-RestMethod http://127.0.0.1:18081/ready
 ```
+
+The local runtime lives under the Git-ignored `.tools` tree. The startup script waits for dependencies and warms all three retrieval modes before reporting readiness; this is required when the Docker VHDX is hosted on slower external storage.
 
 Optional observability stack:
 
