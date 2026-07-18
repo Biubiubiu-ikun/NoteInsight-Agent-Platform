@@ -11,6 +11,7 @@ import (
 
 	"creatorinsight/backend-go/internal/platform/observability"
 	"creatorinsight/backend-go/internal/platform/requestmeta"
+	platformtracing "creatorinsight/backend-go/internal/platform/tracing"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -47,13 +48,19 @@ func EnqueueTx(ctx context.Context, tx *sqlx.Tx, input EventInput) error {
 		input.Producer = "noteinsight-api"
 	}
 	metadata := requestmeta.From(ctx)
+	traceParent, traceState := platformtracing.InjectMap(ctx)
+	traceID := metadata.TraceID
+	if currentTraceID := platformtracing.TraceID(ctx); currentTraceID != "" {
+		traceID = currentTraceID
+	}
 	_, err = tx.ExecContext(ctx, `
 INSERT INTO outbox_events (
     event_id, aggregate_type, aggregate_id, event_type, payload,
-    schema_version, producer, correlation_id, trace_id,
+    schema_version, producer, correlation_id, trace_id, traceparent, tracestate,
     status, next_retry_at, created_at, updated_at
 )
-VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NULLIF($8, ''), NULLIF($9, ''), 'pending', now(), now(), now())`,
+VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NULLIF($8, ''), NULLIF($9, ''),
+        NULLIF($10, ''), NULLIF($11, ''), 'pending', now(), now(), now())`,
 		NewEventID(input.EventType),
 		input.AggregateType,
 		input.AggregateID,
@@ -62,7 +69,9 @@ VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7, NULLIF($8, ''), NULLIF($9, ''), 'pend
 		input.SchemaVersion,
 		input.Producer,
 		metadata.RequestID,
-		metadata.TraceID,
+		traceID,
+		traceParent,
+		traceState,
 	)
 	return err
 }
@@ -93,6 +102,8 @@ RETURNING e.id, e.event_id, e.aggregate_type, e.aggregate_id, e.event_type,
           e.payload, e.schema_version, e.producer,
           COALESCE(e.correlation_id, '') AS correlation_id,
           COALESCE(e.trace_id, '') AS trace_id,
+          COALESCE(e.traceparent, '') AS traceparent,
+          COALESCE(e.tracestate, '') AS tracestate,
           e.status, e.retry_count, e.next_retry_at, e.created_at, e.updated_at`,
 		limit,
 	)

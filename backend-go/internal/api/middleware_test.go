@@ -91,6 +91,9 @@ func TestRequestLoggerAddsCorrelationHeader(t *testing.T) {
 	if recorder.Header().Get("X-Request-ID") == "" {
 		t.Fatal("X-Request-ID header is missing")
 	}
+	if recorder.Header().Get("X-Trace-ID") == "" {
+		t.Fatal("X-Trace-ID header is missing")
+	}
 }
 
 func TestUserRateLimitFailsClosedWhenRedisFails(t *testing.T) {

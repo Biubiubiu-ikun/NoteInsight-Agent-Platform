@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"creatorinsight/backend-go/internal/platform/observability"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 type VectorPoint struct {
@@ -47,7 +49,14 @@ type QdrantClient struct {
 func NewQdrantClient(baseURL string, apiKey string, timeout time.Duration) *QdrantClient {
 	return &QdrantClient{
 		baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/"), apiKey: strings.TrimSpace(apiKey),
-		client: &http.Client{Timeout: timeout},
+		client: &http.Client{
+			Timeout: timeout,
+			Transport: otelhttp.NewTransport(http.DefaultTransport,
+				otelhttp.WithSpanNameFormatter(func(_ string, request *http.Request) string {
+					return "qdrant " + qdrantOperation(request.Method, request.URL.Path)
+				}),
+			),
+		},
 	}
 }
 

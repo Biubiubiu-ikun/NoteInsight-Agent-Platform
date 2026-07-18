@@ -25,6 +25,8 @@ type Event struct {
 	Producer      string          `db:"producer"`
 	CorrelationID string          `db:"correlation_id"`
 	TraceID       string          `db:"trace_id"`
+	TraceParent   string          `db:"traceparent"`
+	TraceState    string          `db:"tracestate"`
 	Status        string          `db:"status"`
 	RetryCount    int             `db:"retry_count"`
 	NextRetryAt   time.Time       `db:"next_retry_at"`

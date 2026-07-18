@@ -17,6 +17,7 @@ type Config struct {
 	HTTP      HTTPConfig
 	Auth      AuthConfig
 	Log       LogConfig
+	Telemetry TelemetryConfig
 	Postgres  PostgresConfig
 	Redis     RedisConfig
 	NATS      NATSConfig
@@ -57,6 +58,15 @@ type LogConfig struct {
 	Level string
 }
 
+type TelemetryConfig struct {
+	Enabled        bool
+	Endpoint       string
+	Insecure       bool
+	SampleRatio    float64
+	ServiceVersion string
+	ExportTimeout  time.Duration
+}
+
 type PostgresConfig struct {
 	DSN             string
 	MaxConns        int32
@@ -66,16 +76,18 @@ type PostgresConfig struct {
 	ConnMaxLifetime time.Duration
 	ConnectTimeout  time.Duration
 	PingTimeout     time.Duration
+	TracingEnabled  bool
 }
 
 type RedisConfig struct {
-	Addr         string
-	Password     string
-	DB           int
-	DialTimeout  time.Duration
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	PingTimeout  time.Duration
+	Addr           string
+	Password       string
+	DB             int
+	DialTimeout    time.Duration
+	ReadTimeout    time.Duration
+	WriteTimeout   time.Duration
+	PingTimeout    time.Duration
+	TracingEnabled bool
 }
 
 type NATSConfig struct {
@@ -145,6 +157,7 @@ type ReconcileConfig struct {
 }
 
 func Load() (Config, error) {
+	telemetryEnabled := getEnvBool("OTEL_ENABLED", false)
 	cfg := Config{
 		App: AppConfig{
 			Name: getEnv("APP_NAME", "creatorinsight-api"),
@@ -169,6 +182,14 @@ func Load() (Config, error) {
 		Log: LogConfig{
 			Level: getEnv("LOG_LEVEL", "info"),
 		},
+		Telemetry: TelemetryConfig{
+			Enabled:        telemetryEnabled,
+			Endpoint:       getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317"),
+			Insecure:       getEnvBool("OTEL_EXPORTER_OTLP_INSECURE", true),
+			SampleRatio:    getEnvFloat64("OTEL_TRACES_SAMPLER_ARG", 0.1),
+			ServiceVersion: getEnv("APP_VERSION", "dev"),
+			ExportTimeout:  getEnvDuration("OTEL_EXPORT_TIMEOUT", 5*time.Second),
+		},
 		Postgres: PostgresConfig{
 			DSN:             getEnv("POSTGRES_DSN", "postgres://creatorinsight:creatorinsight@localhost:5432/creatorinsight?sslmode=disable"),
 			MaxConns:        getEnvInt32("POSTGRES_MAX_CONNS", 10),
@@ -178,15 +199,17 @@ func Load() (Config, error) {
 			ConnMaxLifetime: getEnvDuration("POSTGRES_CONN_MAX_LIFETIME", 30*time.Minute),
 			ConnectTimeout:  getEnvDuration("POSTGRES_CONNECT_TIMEOUT", 5*time.Second),
 			PingTimeout:     getEnvDuration("POSTGRES_PING_TIMEOUT", 3*time.Second),
+			TracingEnabled:  telemetryEnabled,
 		},
 		Redis: RedisConfig{
-			Addr:         getEnv("REDIS_ADDR", "localhost:6379"),
-			Password:     getEnv("REDIS_PASSWORD", ""),
-			DB:           getEnvInt("REDIS_DB", 0),
-			DialTimeout:  getEnvDuration("REDIS_DIAL_TIMEOUT", 5*time.Second),
-			ReadTimeout:  getEnvDuration("REDIS_READ_TIMEOUT", 3*time.Second),
-			WriteTimeout: getEnvDuration("REDIS_WRITE_TIMEOUT", 3*time.Second),
-			PingTimeout:  getEnvDuration("REDIS_PING_TIMEOUT", 3*time.Second),
+			Addr:           getEnv("REDIS_ADDR", "localhost:6379"),
+			Password:       getEnv("REDIS_PASSWORD", ""),
+			DB:             getEnvInt("REDIS_DB", 0),
+			DialTimeout:    getEnvDuration("REDIS_DIAL_TIMEOUT", 5*time.Second),
+			ReadTimeout:    getEnvDuration("REDIS_READ_TIMEOUT", 3*time.Second),
+			WriteTimeout:   getEnvDuration("REDIS_WRITE_TIMEOUT", 3*time.Second),
+			PingTimeout:    getEnvDuration("REDIS_PING_TIMEOUT", 3*time.Second),
+			TracingEnabled: telemetryEnabled,
 		},
 		NATS: NATSConfig{
 			URL:              getEnv("NATS_URL", "nats://localhost:4222"),
@@ -280,6 +303,17 @@ func (c Config) Validate() error {
 	}
 	if c.Postgres.DSN == "" {
 		return errors.New("POSTGRES_DSN is required")
+	}
+	if c.Telemetry.Enabled {
+		if strings.TrimSpace(c.Telemetry.Endpoint) == "" {
+			return errors.New("OTEL_EXPORTER_OTLP_ENDPOINT is required when tracing is enabled")
+		}
+		if c.Telemetry.SampleRatio < 0 || c.Telemetry.SampleRatio > 1 {
+			return errors.New("OTEL_TRACES_SAMPLER_ARG must be between 0 and 1")
+		}
+		if c.Telemetry.ExportTimeout <= 0 {
+			return errors.New("OTEL_EXPORT_TIMEOUT must be greater than 0")
+		}
 	}
 	if c.Redis.Addr == "" {
 		return errors.New("REDIS_ADDR is required")
@@ -403,6 +437,18 @@ func getEnvInt32(key string, fallback int32) int32 {
 		return fallback
 	}
 	return int32(parsed)
+}
+
+func getEnvFloat64(key string, fallback float64) float64 {
+	value, ok := os.LookupEnv(key)
+	if !ok || value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func getEnvDuration(key string, fallback time.Duration) time.Duration {

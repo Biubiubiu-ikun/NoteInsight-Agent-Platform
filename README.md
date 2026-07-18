@@ -18,10 +18,10 @@ Public repository: [Biubiubiu-ikun/NoteInsight-Agent-Platform](https://github.co
 - Deterministic behavior simulator, daily fact materialization and run lineage.
 - Meaningful Chinese note/OCR/comment corpus plus a dataset-bound frozen eight-task adversarial retrieval benchmark.
 - React console for feed, search, ranking, auth, publishing, detail, comments and interactions.
-- Prometheus metrics/alerts, provisioned Grafana dashboard, maintenance and recovery tools.
+- Prometheus metrics/alerts, provisioned Grafana/Tempo, end-to-end OpenTelemetry tracing, maintenance and recovery tools.
 - OpenAPI/Gin drift checks, domain-event JSON Schema, Go/React/integration/E2E tests, Compose acceptance, CodeQL SARIF, SBOM and vulnerability gates.
 
-Phase 7A is complete: source versions/payloads, immutable dataset snapshots, canonical documents/chunks, exact citations, deterministic rebuilds and a sealed v4 benchmark are in place. Phase 7B PostgreSQL lexical retrieval and offline evaluation is next. The large-data 30-minute warm mixed-load gate remains open and is documented rather than hidden.
+Phase 7A-7C engineering is complete: immutable evidence, exact citations, lexical/vector/hybrid retrieval and same-contract evaluation are in place. Phase 7D has added vector recovery, a real snapshot restore drill, local load/fault/30-minute soak evidence and distributed tracing. Retrieval quality remains a failed baseline until benchmark v5 receives independent review and is frozen.
 
 ## Layout
 
@@ -61,14 +61,16 @@ The Vite server proxies API, worker, and NATS requests. Browser refresh tokens u
 ```powershell
 docker compose -f docker-compose.yml `
   -f deploy/observability/docker-compose.observability.yml `
-  up -d prometheus grafana
+  up -d --build
 ```
 
 - Prometheus: `http://127.0.0.1:19090/`
 - Grafana: `http://127.0.0.1:13000/`
+- Tempo readiness: `http://127.0.0.1:13200/ready`
+- OpenTelemetry Collector health: `http://127.0.0.1:13133/`
 - Local Grafana login: `admin` / `noteinsight-local` unless overridden by environment variables.
 
-Local credentials are development-only.
+Local credentials and the unauthenticated Tempo endpoint are development-only. See `docs/21_phase7d_distributed_tracing.md` for the W3C propagation contract and verified traces.
 
 ## Quality Corpus
 
@@ -177,6 +179,7 @@ The isolated capacity environment and 4.21-million-row evidence are documented i
 - `最新项目规划.md`: current roadmap and gates.
 - `docs/00_progress_audit.md`: current progress snapshot.
 - `docs/12_project_excellence_review.md`: interviewer-style assessment.
+- `docs/21_phase7d_distributed_tracing.md`: OpenTelemetry propagation, privacy controls and local trace evidence.
 - `docs/openapi.yaml`: HTTP contract.
 - `docs/contracts/domain-event-v1.schema.json`: event envelope contract.
 - `docs/13_recovery_runbook.md`: backup/recovery procedure.

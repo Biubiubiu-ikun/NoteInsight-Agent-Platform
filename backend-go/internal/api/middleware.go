@@ -16,6 +16,7 @@ import (
 	"creatorinsight/backend-go/internal/platform/observability"
 	"creatorinsight/backend-go/internal/platform/ratelimit"
 	"creatorinsight/backend-go/internal/platform/requestmeta"
+	platformtracing "creatorinsight/backend-go/internal/platform/tracing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -94,14 +95,20 @@ func RequestLogger(logger *slog.Logger) gin.HandlerFunc {
 		if requestID == "" {
 			requestID = requestmeta.NewID("req")
 		}
-		traceID := strings.TrimSpace(ctx.GetHeader("X-Trace-ID"))
+		traceID := platformtracing.TraceID(ctx.Request.Context())
 		if traceID == "" {
-			traceID = requestID
+			traceID = strings.TrimSpace(ctx.GetHeader("X-Trace-ID"))
+			if traceID == "" {
+				traceID = requestID
+			}
 		}
+		spanID := platformtracing.SpanID(ctx.Request.Context())
 		ctx.Header("X-Request-ID", requestID)
+		ctx.Header("X-Trace-ID", traceID)
 		ctx.Request = ctx.Request.WithContext(requestmeta.With(ctx.Request.Context(), requestmeta.Metadata{
 			RequestID: requestID,
 			TraceID:   traceID,
+			SpanID:    spanID,
 		}))
 		ctx.Next()
 
@@ -114,6 +121,7 @@ func RequestLogger(logger *slog.Logger) gin.HandlerFunc {
 			"client_ip", ctx.ClientIP(),
 			"request_id", requestID,
 			"trace_id", traceID,
+			"span_id", spanID,
 		}
 		if currentUser, ok := ctxauth.CurrentUser(ctx); ok {
 			fields = append(fields, "user_id", currentUser.ID)

@@ -1,4 +1,51 @@
 services:
+  backend:
+    environment:
+      APP_VERSION: "${IMAGE_TAG:-local}"
+      OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_TRACES_SAMPLER_ARG: "${OTEL_TRACES_SAMPLER_ARG:-1.0}"
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  worker:
+    environment:
+      APP_VERSION: "${IMAGE_TAG:-local}"
+      OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: otel-collector:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      OTEL_TRACES_SAMPLER_ARG: "${OTEL_TRACES_SAMPLER_ARG:-1.0}"
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  tempo:
+    image: grafana/tempo:3.0.2
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-tempo"
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./deploy/observability/tempo.yml:/etc/tempo.yml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "${TEMPO_PORT:-13200}:3200"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.156.0
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-otel-collector"
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    volumes:
+      - ./deploy/observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-14317}:4317"
+      - "${OTEL_HTTP_PORT:-14318}:4318"
+      - "${OTEL_HEALTH_PORT:-13133}:13133"
+    depends_on:
+      - tempo
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v2.55.1
     container_name: "${CONTAINER_PREFIX:-creatorinsight}-prometheus"
@@ -32,8 +79,10 @@ services:
       - "${GRAFANA_PORT:-13000}:3000"
     depends_on:
       - prometheus
+      - tempo
     restart: unless-stopped
 
 volumes:
   prometheus_data:
   grafana_data:
+  tempo_data:

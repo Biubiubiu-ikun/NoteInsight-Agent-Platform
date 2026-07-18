@@ -14,11 +14,13 @@ type metadataKey struct{}
 type Metadata struct {
 	RequestID string
 	TraceID   string
+	SpanID    string
 }
 
 func With(ctx context.Context, metadata Metadata) context.Context {
 	metadata.RequestID = strings.TrimSpace(metadata.RequestID)
 	metadata.TraceID = strings.TrimSpace(metadata.TraceID)
+	metadata.SpanID = strings.TrimSpace(metadata.SpanID)
 	return context.WithValue(ctx, metadataKey{}, metadata)
 }
 

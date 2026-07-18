@@ -47,12 +47,39 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Retrieval.QueryTimeout != 4*time.Second || cfg.Retrieval.EmbeddingDimension != 1024 || cfg.Retrieval.EmbeddingBatchSize != 32 || cfg.RateLimit.RetrievalRead.Limit != 120 {
 		t.Fatalf("unexpected retrieval defaults: retrieval=%+v rate=%+v", cfg.Retrieval, cfg.RateLimit.RetrievalRead)
 	}
+	if cfg.Telemetry.Enabled || cfg.Postgres.TracingEnabled || cfg.Redis.TracingEnabled || cfg.Telemetry.SampleRatio != 0.1 {
+		t.Fatalf("tracing must be opt-in with a 10%% default sample ratio: %+v", cfg.Telemetry)
+	}
 }
 
 func TestGetEnvInt32RejectsOverflow(t *testing.T) {
 	t.Setenv("POSTGRES_MAX_CONNS", "2147483648")
 	if got := getEnvInt32("POSTGRES_MAX_CONNS", 10); got != 10 {
 		t.Fatalf("getEnvInt32() = %d, want fallback 10", got)
+	}
+}
+
+func TestLoadEnablesTracingAcrossDependencies(t *testing.T) {
+	t.Setenv("OTEL_ENABLED", "true")
+	t.Setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "collector:4317")
+	t.Setenv("OTEL_TRACES_SAMPLER_ARG", "0.25")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if !cfg.Telemetry.Enabled || !cfg.Postgres.TracingEnabled || !cfg.Redis.TracingEnabled {
+		t.Fatalf("dependency tracing flags were not enabled: %+v", cfg)
+	}
+	if cfg.Telemetry.Endpoint != "collector:4317" || cfg.Telemetry.SampleRatio != 0.25 {
+		t.Fatalf("unexpected telemetry config: %+v", cfg.Telemetry)
+	}
+}
+
+func TestLoadRejectsInvalidTraceSampleRatio(t *testing.T) {
+	t.Setenv("OTEL_ENABLED", "true")
+	t.Setenv("OTEL_TRACES_SAMPLER_ARG", "1.1")
+	if _, err := Load(); err == nil {
+		t.Fatal("Load() expected trace sample ratio error")
 	}
 }
 
