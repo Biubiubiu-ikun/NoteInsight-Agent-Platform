@@ -1,0 +1,5179 @@
+{
+  "run_id": "phase7c_dev_hybrid_v1_20260718",
+  "benchmark_id": "retrieval_v4_20260716",
+  "benchmark_version": "retrieval_v4",
+  "benchmark_manifest_checksum": "851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74",
+  "split": "development",
+  "scope": {
+    "project_id": 1,
+    "project_visibility": "public",
+    "dataset_id": 2,
+    "dataset_version_id": 2,
+    "dataset_version": 2,
+    "dataset_manifest_checksum": "b91df11ca9136e000c759fd2c6de5b448816bb57d903849c478f99db8533eab5",
+    "ingestion_run_id": "phase7a_dv2_rebuild_v2_20260718",
+    "ingestion_output_checksum": "3f372c59b8108bd95fb747e5d04aa73fe35ea6657f7219022ce047b07da3ee1a",
+    "parser_version": "evidence_parser_v1",
+    "chunker_version": "utf8_paragraph_1200_160_v1",
+    "tokenizer_version": "zh_unigram_bigram_latin_v1",
+    "lexical_index_version": "postgres_ts_stat_v1",
+    "lexical_index_checksum": "db6f73726de321483150800ee9215dd28244d276365dc8f164094059f5d4587e",
+    "vector_index_version": "qwen3_dense_cosine_v1",
+    "vector_index_checksum": "432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627",
+    "vector_collection": "noteinsight_7aa574ea1bb52ae1591b4ad0d5969013",
+    "embedding_model": "Qwen/Qwen3-Embedding-0.6B",
+    "embedding_revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"
+  },
+  "retriever_version": "rrf_lexical_dense_v2",
+  "reranker_version": "weighted_coverage_v2",
+  "metric_version": "retrieval_metrics_v2",
+  "config_checksum": "620e4e9b2c7c5cc10fdd9d906952bca0cf15e309e012bb7c81bf142b2e8e3ad6",
+  "metrics": {
+    "case_count": 80,
+    "gold_case_count": 69,
+    "recall_at_k": 0.5652,
+    "mrr_at_k": 0.5598,
+    "ndcg_at_k": 0.5384,
+    "citation_precision": 1,
+    "source_precision_at_k": 0.1922,
+    "no_relevant_case_count": 11,
+    "no_relevant_rejection_accuracy": 0.9091,
+    "insufficient_evidence_case_count": 11,
+    "insufficient_evidence_source_recall": 0,
+    "authorization_case_count": 0,
+    "authorization_non_leakage_accuracy": 0,
+    "latency_p50_ms": 1067.1,
+    "latency_p95_ms": 2262.06,
+    "latency_p99_ms": 3170.46,
+    "external_model_calls": 80,
+    "estimated_external_cost_usd": 0,
+    "embedding_calls": 80
+  },
+  "task_metrics": {
+    "cross_note_compare": {
+      "case_count": 12,
+      "gold_case_count": 12,
+      "recall_at_k": 0.25,
+      "mrr_at_k": 0.5,
+      "ndcg_at_k": 0.3066,
+      "citation_precision": 1,
+      "source_precision_at_k": 1,
+      "no_relevant_case_count": 0,
+      "no_relevant_rejection_accuracy": 0,
+      "insufficient_evidence_case_count": 0,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 2055.15,
+      "latency_p95_ms": 2787.14,
+      "latency_p99_ms": 2787.14,
+      "external_model_calls": 12,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 12
+    },
+    "insufficient_evidence": {
+      "case_count": 11,
+      "gold_case_count": 11,
+      "recall_at_k": 0,
+      "mrr_at_k": 0,
+      "ndcg_at_k": 0,
+      "citation_precision": 1,
+      "source_precision_at_k": 0,
+      "no_relevant_case_count": 0,
+      "no_relevant_rejection_accuracy": 0,
+      "insufficient_evidence_case_count": 11,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 1090.46,
+      "latency_p95_ms": 1285.91,
+      "latency_p99_ms": 1285.91,
+      "external_model_calls": 11,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 11
+    },
+    "no_relevant_document": {
+      "case_count": 11,
+      "gold_case_count": 0,
+      "recall_at_k": 0,
+      "mrr_at_k": 0,
+      "ndcg_at_k": 0,
+      "citation_precision": 1,
+      "source_precision_at_k": 0,
+      "no_relevant_case_count": 11,
+      "no_relevant_rejection_accuracy": 0.9091,
+      "insufficient_evidence_case_count": 0,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 353.12,
+      "latency_p95_ms": 3170.46,
+      "latency_p99_ms": 3170.46,
+      "external_model_calls": 11,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 11
+    },
+    "ocr_detail": {
+      "case_count": 10,
+      "gold_case_count": 10,
+      "recall_at_k": 1,
+      "mrr_at_k": 1,
+      "ndcg_at_k": 1,
+      "citation_precision": 1,
+      "source_precision_at_k": 1,
+      "no_relevant_case_count": 0,
+      "no_relevant_rejection_accuracy": 0,
+      "insufficient_evidence_case_count": 0,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 166.02,
+      "latency_p95_ms": 213.69,
+      "latency_p99_ms": 213.69,
+      "external_model_calls": 10,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 10
+    },
+    "semantic_paraphrase": {
+      "case_count": 12,
+      "gold_case_count": 12,
+      "recall_at_k": 0.75,
+      "mrr_at_k": 0.5417,
+      "ndcg_at_k": 0.5962,
+      "citation_precision": 1,
+      "source_precision_at_k": 0.45,
+      "no_relevant_case_count": 0,
+      "no_relevant_rejection_accuracy": 0,
+      "insufficient_evidence_case_count": 0,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 1142.52,
+      "latency_p95_ms": 1904.89,
+      "latency_p99_ms": 1904.89,
+      "external_model_calls": 12,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 12
+    },
+    "temporal_conflict": {
+      "case_count": 12,
+      "gold_case_count": 12,
+      "recall_at_k": 1,
+      "mrr_at_k": 1,
+      "ndcg_at_k": 1,
+      "citation_precision": 1,
+      "source_precision_at_k": 1,
+      "no_relevant_case_count": 0,
+      "no_relevant_rejection_accuracy": 0,
+      "insufficient_evidence_case_count": 0,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 934.51,
+      "latency_p95_ms": 1140.55,
+      "latency_p99_ms": 1140.55,
+      "external_model_calls": 12,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 12
+    },
+    "typo_robustness": {
+      "case_count": 12,
+      "gold_case_count": 12,
+      "recall_at_k": 0.4167,
+      "mrr_at_k": 0.3438,
+      "ndcg_at_k": 0.3596,
+      "citation_precision": 1,
+      "source_precision_at_k": 0.0417,
+      "no_relevant_case_count": 0,
+      "no_relevant_rejection_accuracy": 0,
+      "insufficient_evidence_case_count": 0,
+      "insufficient_evidence_source_recall": 0,
+      "authorization_case_count": 0,
+      "authorization_non_leakage_accuracy": 0,
+      "latency_p50_ms": 1067.1,
+      "latency_p95_ms": 1921.57,
+      "latency_p99_ms": 1921.57,
+      "external_model_calls": 12,
+      "estimated_external_cost_usd": 0,
+      "embedding_calls": 12
+    }
+  },
+  "failure_counts": {
+    "citation_contamination": 4,
+    "false_positive_no_relevant": 1,
+    "missed_all_gold": 27,
+    "partial_gold_recall": 6,
+    "ranking_error": 6
+  },
+  "cases": [
+    {
+      "case_checksum": "261935523a9c853f594d032f67027f45042f63293661f5cf8f8ea91d8825bc04",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5254,
+          "topic": "敏感肌通勤防晒实测"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.568896368816328
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1733.09,
+      "result_count": 0,
+      "candidate_count": 480,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "020870f43af18fdb991692d7c3e34ac5dd29d7fc91abb6d4219bdf8fca0835ec",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5255,
+          "topic": "梨形身材秋冬叠穿记录"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6218956767960165,
+          "source_type": "note",
+          "source_id": 5255,
+          "source_version": 1,
+          "note_id": 5255,
+          "citation_key": "a4b2923dbdd78ef526c2f507ac898566f30373818ea33ce5e7ad33a74e9ad762"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6218956767960165
+      },
+      "latency_ms": 1904.89,
+      "result_count": 1,
+      "candidate_count": 479,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "ef8caa834ddf2c3757167bc7be19e38e60cccfcfd1ea9b1d4b7d8f00a2b40443",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5256,
+          "topic": "空气炸锅工作日晚餐"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.637799483439677,
+          "source_type": "note",
+          "source_id": 5193,
+          "source_version": 1,
+          "note_id": 5193,
+          "citation_key": "a2d4e0e8e6af8fb1448858aeea745f10dc6127dc24aacb333016b68d976a3d7c"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6338256019353812,
+          "source_type": "note",
+          "source_id": 5256,
+          "source_version": 1,
+          "note_id": 5256,
+          "citation_key": "d51874ca45744846956a6de3547a6bad45ef65a242b26d2eab84b980b18533a8"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 0.5,
+        "ndcg_at_k": 0.6309297535714574,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.5,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.637799483439677
+      },
+      "failure_category": "ranking_error",
+      "latency_ms": 1540.52,
+      "result_count": 2,
+      "candidate_count": 478,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "7cc17131751cec382ccd0d0cf6fe2bd5a28c2885dabb0a41b8fe2c92aba71ea3",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5257,
+          "topic": "杭州三天两夜慢游路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6418571705284932,
+          "source_type": "note",
+          "source_id": 5257,
+          "source_version": 1,
+          "note_id": 5257,
+          "citation_key": "953617ef795a55f1a9c62639d1794a6676d8e8f1a9bfcf8fa491fdcf0ac42a57"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6418571705284932
+      },
+      "latency_ms": 1089.47,
+      "result_count": 1,
+      "candidate_count": 479,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "63774972e096dd36fedffb75c8ebba84df64987b8d5fa4819587dcb6821c12c2",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5258,
+          "topic": "出租屋低成本照明调整"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6189735208193848,
+          "source_type": "note",
+          "source_id": 4996,
+          "source_version": 1,
+          "note_id": 4996,
+          "citation_key": "bb04615282c1120ea96539e03b819f74a9d2186b24be11c90f02fcd174f3cdf3"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6153198100613204,
+          "source_type": "note",
+          "source_id": 1489,
+          "source_version": 1,
+          "note_id": 1489,
+          "citation_key": "233a89e50498a9d9e701e53e121d5a13e1a6be347feefd4037154025b6957c55"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6117701696765276,
+          "source_type": "note",
+          "source_id": 1148,
+          "source_version": 1,
+          "note_id": 1148,
+          "citation_key": "d31e05ed9199462894a5a46125223eae7afb218c0078274110fdb54715a37488"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6080823893193849,
+          "source_type": "note",
+          "source_id": 817,
+          "source_version": 1,
+          "note_id": 817,
+          "citation_key": "73fd74b4b9e36712c0232837c66d43e5a8c1779af6e864b32e417f4d5073f5bb"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6062074948695634,
+          "source_type": "note",
+          "source_id": 134,
+          "source_version": 1,
+          "note_id": 134,
+          "citation_key": "a6b9e5058580c6efef8e2a5bf7acf8c9894de78c5283993c48e92b91fab486e2"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6011422322739303,
+          "source_type": "note",
+          "source_id": 4839,
+          "source_version": 1,
+          "note_id": 4839,
+          "citation_key": "29b16c3bb5342b80e74bdacce45b608d928ed074cd15b65a4ee0f991d19d9a19"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6189735208193848
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1032.22,
+      "result_count": 6,
+      "candidate_count": 480,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "1cb000246d29be75decf56c1634604613109850efebb6b4cc91710968c88c51e",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5259,
+          "topic": "新手八周力量训练"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.630404128941845,
+          "source_type": "note",
+          "source_id": 5259,
+          "source_version": 1,
+          "note_id": 5259,
+          "citation_key": "1a8ac0b5cfb9975a264f5fb381af831883f8e8081e5599aa6ef19ff35eb140d1"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.630404128941845
+      },
+      "latency_ms": 1142.52,
+      "result_count": 1,
+      "candidate_count": 479,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e7ea72dd679dc3d05729a1bdcc06a8799b647cfba8337e049a79349768c4ebd7",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5260,
+          "topic": "零基础转数据分析路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6498034813877831,
+          "source_type": "note",
+          "source_id": 5197,
+          "source_version": 1,
+          "note_id": 5197,
+          "citation_key": "bec2597eb1297770a9a1bf3a6c52c3dd175ee208b33800ce18cbbca69d8ee103"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6482995197919591,
+          "source_type": "note",
+          "source_id": 5260,
+          "source_version": 1,
+          "note_id": 5260,
+          "citation_key": "8e100c3ba9dc0515c20fa73a88d67074f60ad90de796c7e89b8c2cb1da75bbed"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 0.5,
+        "ndcg_at_k": 0.6309297535714574,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.5,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6498034813877831
+      },
+      "failure_category": "ranking_error",
+      "latency_ms": 1058.6,
+      "result_count": 2,
+      "candidate_count": 478,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e6fb52a40898b4c1bb83cdaf46de7d6585e7f0e25b28bf88973eb71b7f30a774",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5261,
+          "topic": "平板无纸化学习流程"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6734562383977636,
+          "source_type": "note",
+          "source_id": 5261,
+          "source_version": 1,
+          "note_id": 5261,
+          "citation_key": "2a3059beb92f079a701b11d00ddc857bbb5d77fd787de600dbe9074a23bb28f7"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6734562383977636
+      },
+      "latency_ms": 1076.97,
+      "result_count": 1,
+      "candidate_count": 479,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "f3eb1169d764b240bb770fe67cfc37eb79eb5f8dcf5b22812e9640f6076a2c33",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5262,
+          "topic": "考研英语阅读复盘法"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6537444569620461,
+          "source_type": "note",
+          "source_id": 5199,
+          "source_version": 1,
+          "note_id": 5199,
+          "citation_key": "7f40efa41b170258e1b9906f3061c7ddcba68d061c0ed0f92095d06c3b809c3d"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6503306985605598,
+          "source_type": "note",
+          "source_id": 5262,
+          "source_version": 1,
+          "note_id": 5262,
+          "citation_key": "89bb4b27931b3441f2b34b0ff8e6d722ec37f6858087af3e5d2660c9a6666b04"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 0.5,
+        "ndcg_at_k": 0.6309297535714574,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.5,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6537444569620461
+      },
+      "failure_category": "ranking_error",
+      "latency_ms": 1109.99,
+      "result_count": 2,
+      "candidate_count": 478,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "6cc82be56517c398b88986391b49aaec0dbd7b2eff73530b389a2f3e2bee7e6a",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5263,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6444461423841716,
+          "source_type": "note",
+          "source_id": 1028,
+          "source_version": 1,
+          "note_id": 1028,
+          "citation_key": "b925207e583b8797969d73763b8c7f926f5af14e96aefee9868412f21e3a6312"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6339254645732736,
+          "source_type": "note",
+          "source_id": 5263,
+          "source_version": 1,
+          "note_id": 5263,
+          "citation_key": "ca89b484ff4e9b3d3ca659fd8f77d77ed8c200349fa9677c89a95b896b4dd0b1"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 0.5,
+        "ndcg_at_k": 0.6309297535714574,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.5,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6444461423841716
+      },
+      "failure_category": "ranking_error",
+      "latency_ms": 1300.21,
+      "result_count": 2,
+      "candidate_count": 478,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "4c17e7659458547fcc4e6e5ceaca7d3610102202a945ca463b3de49de0c48e1c",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5264,
+          "topic": "油痘肌晚间清洁复盘"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6663438404243893,
+          "source_type": "note",
+          "source_id": 5201,
+          "source_version": 1,
+          "note_id": 5201,
+          "citation_key": "0a32363ce8de8f0906ff8569ca4a53910ac5e3bc3f5dda9aaaba38204f3933ca"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.663059657412556,
+          "source_type": "note",
+          "source_id": 5264,
+          "source_version": 1,
+          "note_id": 5264,
+          "citation_key": "738967eca54fc68ceb62b034d8eee75097f304f5a44eb17c603a0417c696f9fc"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 0.5,
+        "ndcg_at_k": 0.6309297535714574,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.5,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6663438404243893
+      },
+      "failure_category": "ranking_error",
+      "latency_ms": 1345.02,
+      "result_count": 2,
+      "candidate_count": 478,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e3ca79642d66cb52e6e5d77f7fa532d977ecffdce234e3c1f9d9c794bd257a0f",
+      "task_type": "semantic_paraphrase",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5265,
+          "topic": "梨形身材秋冬叠穿记录"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.56117889721522
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1188.31,
+      "result_count": 0,
+      "candidate_count": 480,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "a81e8fdf98cfbd164b7e50614a25143c7fb35d7fae0d82e9c730f0fb4d8d6bef",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5284,
+          "topic": "敏感肌通勤防晒实测"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8334915961090296,
+          "source_type": "note",
+          "source_id": 3282,
+          "source_version": 1,
+          "note_id": 3282,
+          "citation_key": "4ca701e699fc73d4bf6ea975d0884b8dc175381b5292f4fbef9d730379771640"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8272865826175034,
+          "source_type": "note",
+          "source_id": 3151,
+          "source_version": 1,
+          "note_id": 3151,
+          "citation_key": "30786d288d94c858281f91bbbc0da9095c5cbce8a9a9e757224f92e2841fe447"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.819822863615588,
+          "source_type": "note",
+          "source_id": 4471,
+          "source_version": 1,
+          "note_id": 4471,
+          "citation_key": "829e8f236d8ea43b8bb6b24c03a77cd58bf55e4cd6b30a573851e5984890eef6"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.8098027962584794,
+          "source_type": "note",
+          "source_id": 1255,
+          "source_version": 1,
+          "note_id": 1255,
+          "citation_key": "5490008f3a9f934dca1307df28e742d52221c0289f3f6135ef8cf03363e583b3"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.8083519775011794,
+          "source_type": "note",
+          "source_id": 3333,
+          "source_version": 1,
+          "note_id": 3333,
+          "citation_key": "2282908a05b142b80e28d4b1d251817dffb16fc5f610dcdd056fd070b6b4b4b0"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.8048540554931183,
+          "source_type": "note",
+          "source_id": 4608,
+          "source_version": 1,
+          "note_id": 4608,
+          "citation_key": "9c76e27b40ebe9a1ff14c9d7ab45d6a96e16bdaf434a0bc8490f5f88fbabaf3d"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7735627862193799,
+          "source_type": "note",
+          "source_id": 3832,
+          "source_version": 1,
+          "note_id": 3832,
+          "citation_key": "5434bffc8b75f318f628ccbc655bed005feffd5123dadd2986c12b3d3f0d5376"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.74949363807356,
+          "source_type": "note",
+          "source_id": 1378,
+          "source_version": 1,
+          "note_id": 1378,
+          "citation_key": "bf66e13ba97af8ecaa71e40eaa7f697cdc75ee6497cc4bed6730cc493e0b1796"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.7190422471334046,
+          "source_type": "note",
+          "source_id": 840,
+          "source_version": 1,
+          "note_id": 840,
+          "citation_key": "9f0e0e9c2be5af17b033bb78a28d3519b4362cbc2515fe13150b09485941c693"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.711628228689499,
+          "source_type": "note",
+          "source_id": 1981,
+          "source_version": 1,
+          "note_id": 1981,
+          "citation_key": "73b48bbd97c0e20a3b9c6719748d62f06839e91e6122af0b0e5df128cda4ca51"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8334915961090296
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1031.03,
+      "result_count": 10,
+      "candidate_count": 269,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "62e64c7d0471da8a606e9b03b838d6607528fda981231a9747e96884d2fb51a4",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5285,
+          "topic": "小个子通勤胶囊衣橱"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7703844496003559,
+          "source_type": "note",
+          "source_id": 3372,
+          "source_version": 1,
+          "note_id": 3372,
+          "citation_key": "3f863cf79453de3e2c972384852b56e8ce8d0d1c57409d5a51095c0bc447bbee"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.763442935619501,
+          "source_type": "note",
+          "source_id": 3309,
+          "source_version": 1,
+          "note_id": 3309,
+          "citation_key": "6b0df3ca78ef2e2467b2dd3b8bfe4e6e118bbb827137afda87f3096a1c81a532"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7535305123204212,
+          "source_type": "note",
+          "source_id": 1700,
+          "source_version": 1,
+          "note_id": 1700,
+          "citation_key": "5447708f93e1268ddb8b270bf26b8dc370474cb1b3841269a67923c4ce31192f"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7521023153161649,
+          "source_type": "note",
+          "source_id": 3233,
+          "source_version": 1,
+          "note_id": 3233,
+          "citation_key": "d9f20a39a6eb8ddd0bafc611a5b32b7a2d5b5a8fd052045aa944c59e2eb0194e"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7409699949211426,
+          "source_type": "note",
+          "source_id": 810,
+          "source_version": 1,
+          "note_id": 810,
+          "citation_key": "bb78dd63bf2412d062a7664dda6a601d2159395bb093415adac9450ddffac202"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7230819039538622,
+          "source_type": "note",
+          "source_id": 4299,
+          "source_version": 1,
+          "note_id": 4299,
+          "citation_key": "5055f4b26b0dea899218d557d9e7129f87e76238cfb88d6cb82896d133af011a"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7136501935859036,
+          "source_type": "note",
+          "source_id": 4459,
+          "source_version": 1,
+          "note_id": 4459,
+          "citation_key": "b9ef27edeff3eeec65eb6b9660a23862131e83914d9578d8387817e54d177ea1"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.7114064753189019,
+          "source_type": "note",
+          "source_id": 5375,
+          "source_version": 1,
+          "note_id": 5375,
+          "citation_key": "4bbafcfd920ac01dec559b91591d1ca0f35df1476f5591d342cf537b315ec541"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6956570144512131,
+          "source_type": "note",
+          "source_id": 1917,
+          "source_version": 1,
+          "note_id": 1917,
+          "citation_key": "8056fa648292588924a671b876df08ed35e3ddc2272c3490b99653c2e39ba35b"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6921301100163336,
+          "source_type": "note",
+          "source_id": 1486,
+          "source_version": 1,
+          "note_id": 1486,
+          "citation_key": "93400c34635bec6b393c59ff6161733b6476d345d23ea87c10c0cb271d9ab722"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7703844496003559
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 958.96,
+      "result_count": 10,
+      "candidate_count": 285,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "b1d7b7117d65bffe044dd6690a7eae36e1b7046633f10491426919483b283b1c",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5286,
+          "topic": "空气炸锅工作日晚餐"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7749286298888198,
+          "source_type": "note",
+          "source_id": 502,
+          "source_version": 1,
+          "note_id": 502,
+          "citation_key": "f9ede2e5122367b57610a5bca1925e0945c8575508e3e3cc22af7413a7815963"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7671527250131476,
+          "source_type": "note",
+          "source_id": 590,
+          "source_version": 1,
+          "note_id": 590,
+          "citation_key": "f45d94c8833b74753d7e51f57c22f5536dcd79abc0924a500a4cb76b835c072f"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7602588454737704,
+          "source_type": "note",
+          "source_id": 2598,
+          "source_version": 1,
+          "note_id": 2598,
+          "citation_key": "ecb7947d1c94d04f1e3562bf80248abb65619113261f54961a2a8b9598577186"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7585264239911003,
+          "source_type": "note",
+          "source_id": 3940,
+          "source_version": 1,
+          "note_id": 3940,
+          "citation_key": "1ce3293938d15a0b1c120cf5e9c269b432a671bd4acf3df67d198e1013fb6216"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7566156566472371,
+          "source_type": "note",
+          "source_id": 2911,
+          "source_version": 1,
+          "note_id": 2911,
+          "citation_key": "0095208de45a2c6c9dddd1a8c3f059010ebf4730a3625164d6d6a3f7a80c599c"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7365584638248759,
+          "source_type": "note",
+          "source_id": 3477,
+          "source_version": 1,
+          "note_id": 3477,
+          "citation_key": "c2ef17eda7ab6ca01664eb96166c8c6416c8beb3a9e94851124b1f250c7bf976"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7250173639090232,
+          "source_type": "note",
+          "source_id": 270,
+          "source_version": 1,
+          "note_id": 270,
+          "citation_key": "c274a696e99654629a025531cd077dc9efdd5d76c2d803a45f0768be3558505a"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.7219802724345522,
+          "source_type": "note",
+          "source_id": 3850,
+          "source_version": 1,
+          "note_id": 3850,
+          "citation_key": "4ac789dcb6df2a9ce56ccb5a07de656c515343740f51ff1f3684ae464b54449e"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.7153041821548332,
+          "source_type": "note",
+          "source_id": 373,
+          "source_version": 1,
+          "note_id": 373,
+          "citation_key": "507df36b927fffe916807e2bc551c993417115676e9407a1c333db192f043855"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.706092228533978,
+          "source_type": "note",
+          "source_id": 2006,
+          "source_version": 1,
+          "note_id": 2006,
+          "citation_key": "7aed07d7fb33d09b01acb38eae08207d79ea31f0e6f05725c9b848811adcb006"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7749286298888198
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 956.9,
+      "result_count": 10,
+      "candidate_count": 284,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "05db894147f976fa7c4dd7cd1fbfabb86ff4314757f33daad6c8a05ef8786a7a",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5287,
+          "topic": "云南雨季轻装清单"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7725714642258571,
+          "source_type": "note",
+          "source_id": 4455,
+          "source_version": 1,
+          "note_id": 4455,
+          "citation_key": "669ca2035ad8cdde7d0cdef01ea34882956d3c7493a62255366a44510a6435ab"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.767592193927594,
+          "source_type": "note",
+          "source_id": 1417,
+          "source_version": 1,
+          "note_id": 1417,
+          "citation_key": "d68527b74f252ceeb007021e84f1b939f02d8901af3f41a0142890e30779cb96"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.755138171685434,
+          "source_type": "note",
+          "source_id": 1809,
+          "source_version": 1,
+          "note_id": 1809,
+          "citation_key": "ebd5a3fc0c236bdc38c18ae7a039d79443786a406012584a031073bc9b614aca"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7509048648823704,
+          "source_type": "note",
+          "source_id": 1988,
+          "source_version": 1,
+          "note_id": 1988,
+          "citation_key": "fc78ab98894e6034c18188bc8a341c4b3cd84494d63d61d21fb33ce4683557be"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7474303148312806,
+          "source_type": "note",
+          "source_id": 2000,
+          "source_version": 1,
+          "note_id": 2000,
+          "citation_key": "e256ca3c4810e7a8994cc0455c12367ec55a3e9edb21984102c89a9f8129b829"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7437311331801642,
+          "source_type": "note",
+          "source_id": 861,
+          "source_version": 1,
+          "note_id": 861,
+          "citation_key": "948410c92ad8fc28aef5de3eda405e84b4536a5b400923505a604f97295b3a54"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7387797071820451,
+          "source_type": "note",
+          "source_id": 3615,
+          "source_version": 1,
+          "note_id": 3615,
+          "citation_key": "97dd176a74180ff16ca71584089b573238f0698fb53f587d516ed8b894702d44"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.7386153684335359,
+          "source_type": "note",
+          "source_id": 1312,
+          "source_version": 1,
+          "note_id": 1312,
+          "citation_key": "dc665736c141c3a5dc6ed549815e4d9a3172463ce626a02a3125cc6048c14cf2"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.732195244834048,
+          "source_type": "note",
+          "source_id": 3673,
+          "source_version": 1,
+          "note_id": 3673,
+          "citation_key": "33da2705ac8929e1652aa7e2a11cbf038056a9110b682352d1fd652c5d093dd5"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.7321924209888233,
+          "source_type": "note",
+          "source_id": 1925,
+          "source_version": 1,
+          "note_id": 1925,
+          "citation_key": "7072a4bca6c968039e4f33e92e285fc48f96e5d8bb259653f55a74714ecc82d8"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7725714642258571
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1921.57,
+      "result_count": 10,
+      "candidate_count": 284,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "a313f088f68b7f7317601f59373ccd87c23a07add3612af0cfa33ddb5dd8615d",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5288,
+          "topic": "小户型玄关收纳改造"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8380876688258796,
+          "source_type": "note",
+          "source_id": 5288,
+          "source_version": 1,
+          "note_id": 5288,
+          "citation_key": "9767f749b696999bb919767ab1f7bcc0ce3dc713b2e5f2ee56a0c749db4c63e2"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8206315146435896,
+          "source_type": "note",
+          "source_id": 635,
+          "source_version": 1,
+          "note_id": 635,
+          "citation_key": "dfb500d73b8360ea41744eb8c7e3c505798221f5a91432fbd9fc353dd52409fe"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.8093282745832094,
+          "source_type": "note",
+          "source_id": 537,
+          "source_version": 1,
+          "note_id": 537,
+          "citation_key": "504373be5ca2ecdc2391a05bddb50e7fa509a9a3af376f5d5f4b5107d92a0748"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7128350719039481,
+          "source_type": "note",
+          "source_id": 836,
+          "source_version": 1,
+          "note_id": 836,
+          "citation_key": "36261ed40acc0706d3b289086f792d39b83625d967363f17a9a85b03990750b7"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7113001899283141,
+          "source_type": "note",
+          "source_id": 3189,
+          "source_version": 1,
+          "note_id": 3189,
+          "citation_key": "0c35c90a0ae84d68658972cf123f2be01ea6ade9163c923fe2e7c5b60872b0de"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7110793945562973,
+          "source_type": "note",
+          "source_id": 1971,
+          "source_version": 1,
+          "note_id": 1971,
+          "citation_key": "29a865dd73a53a362a2649606e33e70cf49d9b3c3874a3ddcfda491e2179f62f"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7003705171154949,
+          "source_type": "note",
+          "source_id": 1937,
+          "source_version": 1,
+          "note_id": 1937,
+          "citation_key": "a3aa1cf05551bfd1c4a91829275b0503467c2ae0d930b3ab3d8d30130af1e817"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6932225509927199,
+          "source_type": "note",
+          "source_id": 1469,
+          "source_version": 1,
+          "note_id": 1469,
+          "citation_key": "2300780a12fb7b38d0f27192e01194c9cbaf78ab399c2b31f293178ce50aaf52"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6909621635616666,
+          "source_type": "note",
+          "source_id": 4493,
+          "source_version": 1,
+          "note_id": 4493,
+          "citation_key": "c38a3dbf10a695d51649d1c15d0de5801e9eec76e845151d85a6c449a2ef6237"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6860948766578041,
+          "source_type": "note",
+          "source_id": 1921,
+          "source_version": 1,
+          "note_id": 1921,
+          "citation_key": "3c6325a1ca69d244c8a3d979b0db72ea79bffc4e40c96845634a64493249a6b3"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8380876688258796
+      },
+      "failure_category": "citation_contamination",
+      "latency_ms": 853.75,
+      "result_count": 10,
+      "candidate_count": 256,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "983e233cd5eb64108fe815a9830542a545ffff4ae2ef66e95b8e33f9d83a18d2",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5289,
+          "topic": "新手八周力量训练"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6952845903037852,
+          "source_type": "note",
+          "source_id": 1951,
+          "source_version": 1,
+          "note_id": 1951,
+          "citation_key": "195c2d5ffb30e6d26811f1f2abbb17a5f19f68d16ecc07b663d9e05cc53b7cce"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6750781393219596,
+          "source_type": "note",
+          "source_id": 4540,
+          "source_version": 1,
+          "note_id": 4540,
+          "citation_key": "45297efcb95169dd6912f379cd133c88a808531a3e97d46fbd2fd8026272a0a7"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6729445514061156,
+          "source_type": "note",
+          "source_id": 1112,
+          "source_version": 1,
+          "note_id": 1112,
+          "citation_key": "c86160e0eeb68b06705962694d07e00a401091c73d81bf9244024342ecaee3d2"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6713126200939777,
+          "source_type": "note",
+          "source_id": 1422,
+          "source_version": 1,
+          "note_id": 1422,
+          "citation_key": "1b96b7feae219c873b7d5e2bb330b3cffcd8ce76de6abe3561bd6328b492ec40"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6700107025996654,
+          "source_type": "note",
+          "source_id": 4136,
+          "source_version": 1,
+          "note_id": 4136,
+          "citation_key": "963675d3855dbbddc282d1d9e07e43baeba977859a1849f4dca4c3443bbc0f57"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6679047993120069,
+          "source_type": "note",
+          "source_id": 132,
+          "source_version": 1,
+          "note_id": 132,
+          "citation_key": "a2974811b3f9f17a4746032a630ebf2a67a4d93fd956256575a2a67421eafe5b"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.660429444263768,
+          "source_type": "note",
+          "source_id": 3339,
+          "source_version": 1,
+          "note_id": 3339,
+          "citation_key": "fc8b1c78164e3c1af08eeee2a402b9bc3f7967c0fa10674f1c786e6de110c51c"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6577737919965616,
+          "source_type": "note",
+          "source_id": 1487,
+          "source_version": 1,
+          "note_id": 1487,
+          "citation_key": "9afbfa86bd1d2427169da6ec271c411bfb633aa0d49dea68409710866a1b5962"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6555127839966857,
+          "source_type": "note",
+          "source_id": 3124,
+          "source_version": 1,
+          "note_id": 3124,
+          "citation_key": "bbc98b67aa06370a7169c6829e09101ce28ce9d359e5594ac01f3bc71849a325"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6504908583983808,
+          "source_type": "note",
+          "source_id": 1946,
+          "source_version": 1,
+          "note_id": 1946,
+          "citation_key": "d3d59a365e889fb7b1c3a3dbee23060eb9f521dea443f0a7059f0a0b4592414e"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6952845903037852
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1541.41,
+      "result_count": 10,
+      "candidate_count": 264,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "dbe65c53e49219d42765bedacb7afcbf233de66861b0244e15a0674f77ca103a",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5290,
+          "topic": "零基础转数据分析路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8188650365775566,
+          "source_type": "note",
+          "source_id": 5290,
+          "source_version": 1,
+          "note_id": 5290,
+          "citation_key": "e8c4ea3ae3f1f2c8bc5b5620fcddd75b0e4b33c1e28e1c24be1b22bc9cd46493"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.771236777116307,
+          "source_type": "note",
+          "source_id": 2278,
+          "source_version": 1,
+          "note_id": 2278,
+          "citation_key": "f569cc18f32c64d9caa071e5af9c7303c1a2eb0495f88881242a1ecd7a68b3fe"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7591005029969156,
+          "source_type": "note",
+          "source_id": 4808,
+          "source_version": 1,
+          "note_id": 4808,
+          "citation_key": "5a5c755b3b0490075abb1f81fcddea77cbbccb80ad54a2d908903b851e426bac"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7476914086523767,
+          "source_type": "note",
+          "source_id": 3622,
+          "source_version": 1,
+          "note_id": 3622,
+          "citation_key": "0229365672ece8c8bd0996a9236d795973edf193a78d5a04742f2abaa7afbc1d"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.698647211047406,
+          "source_type": "note",
+          "source_id": 1413,
+          "source_version": 1,
+          "note_id": 1413,
+          "citation_key": "9de4eb131304f4569e1aea5018e249232fd5ffa10233a54f1b215d62cae509c2"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6910237278858533,
+          "source_type": "note",
+          "source_id": 3456,
+          "source_version": 1,
+          "note_id": 3456,
+          "citation_key": "100f9d039fa4e58941dc95d41a45286c01a4f58ad6df1996ca061b84e68eb5af"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6878999269788324,
+          "source_type": "note",
+          "source_id": 3571,
+          "source_version": 1,
+          "note_id": 3571,
+          "citation_key": "9c25f830f51e3f67e5ee9825e19440cfa2e294a5f935b9f32bfa1556820f4ea4"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6788116806654544,
+          "source_type": "note",
+          "source_id": 628,
+          "source_version": 1,
+          "note_id": 628,
+          "citation_key": "2037cb7c2f3911cca8ee96c00980dc07d7422c2b0d53d26088fad97ffeed4f9b"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6778498738589663,
+          "source_type": "note",
+          "source_id": 182,
+          "source_version": 1,
+          "note_id": 182,
+          "citation_key": "3e53d077f931493b59b5f1facf0a3890c4c8122bf0d26e4540d2b53bea02eec8"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6722257803370633,
+          "source_type": "note",
+          "source_id": 3693,
+          "source_version": 1,
+          "note_id": 3693,
+          "citation_key": "5e6fe9e519d3c1abc1bcc693f7c4a844c08227e07ab37378722257d01afd000e"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8188650365775566
+      },
+      "failure_category": "citation_contamination",
+      "latency_ms": 1022.82,
+      "result_count": 10,
+      "candidate_count": 252,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "c09cbecec268db9ab8dee7190f048751a1082fc3e1cb28304cbc79008e09eeb7",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5291,
+          "topic": "平板无纸化学习流程"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8315635574522572,
+          "source_type": "note",
+          "source_id": 3840,
+          "source_version": 1,
+          "note_id": 3840,
+          "citation_key": "9fa100ca71c00e0857cbe08e8f9ab6d214a52a58a8996805c365c7fb87e8ecfd"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7828564901979772,
+          "source_type": "note",
+          "source_id": 1271,
+          "source_version": 1,
+          "note_id": 1271,
+          "citation_key": "72f70bc8441d36e8d49d1db12e5b1d1def73b2a5d7e0920b2c5bd9339e5cdccd"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7819419003286366,
+          "source_type": "note",
+          "source_id": 389,
+          "source_version": 1,
+          "note_id": 389,
+          "citation_key": "f60ccb2d56ea5e31efa5ba10f63ca9deefbcfeb01470633d3341932fcf4e8b44"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7634163711665456,
+          "source_type": "note",
+          "source_id": 3595,
+          "source_version": 1,
+          "note_id": 3595,
+          "citation_key": "bda8c07cc79aa6c83b2017834afe68c843dc458c236eafc3dcb78038edfbdd01"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7630946639288775,
+          "source_type": "note",
+          "source_id": 4446,
+          "source_version": 1,
+          "note_id": 4446,
+          "citation_key": "c7c3c59c28983f4e9c880d153f9b0c9cb0fc9d03b6f1c0de850488f735f91416"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7461796279760589,
+          "source_type": "note",
+          "source_id": 1539,
+          "source_version": 1,
+          "note_id": 1539,
+          "citation_key": "92e4c9e22bdfb4815fdebba688672b2c5dce0238fdd914b4baea8390c7342ad1"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.743536201435689,
+          "source_type": "note",
+          "source_id": 4002,
+          "source_version": 1,
+          "note_id": 4002,
+          "citation_key": "c7fc632f865f75d45f04ecf6125298cbadbf4f359f10168f3e3ec4703a90f838"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.7250998344827031,
+          "source_type": "note",
+          "source_id": 1140,
+          "source_version": 1,
+          "note_id": 1140,
+          "citation_key": "3f3f416373e9498ecf745e31830a2d09602df36f2dc5a4f309e74f1ff38497dc"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.7197764930895988,
+          "source_type": "note",
+          "source_id": 3721,
+          "source_version": 1,
+          "note_id": 3721,
+          "citation_key": "63e743da4053c426dd7aa5d9c57023eba6cf544af589ab6233bb89d9f30271ae"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.7165759908370555,
+          "source_type": "note",
+          "source_id": 1531,
+          "source_version": 1,
+          "note_id": 1531,
+          "citation_key": "4cda729eca5dfb525089961d036215cbbd8cec788c27e0076a3aa26e014150fb"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8315635574522572
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1170,
+      "result_count": 10,
+      "candidate_count": 287,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "937a20d9d885fc933e97dc51eeb511c36ab1e46001317181583151f605669f6f",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5292,
+          "topic": "在职备考周计划"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.848063840141138,
+          "source_type": "note",
+          "source_id": 5292,
+          "source_version": 1,
+          "note_id": 5292,
+          "citation_key": "caf5ebe99470e9c8b84d0e6d8f38df6c4d00582e00f9c28952450e2ff760b59a"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8119504999215583,
+          "source_type": "note",
+          "source_id": 5019,
+          "source_version": 1,
+          "note_id": 5019,
+          "citation_key": "d09dde1839881b4bda3333aefccbbed4d448a79a7ac42a6787ed8f7f966502c2"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.8067023370430303,
+          "source_type": "note",
+          "source_id": 3618,
+          "source_version": 1,
+          "note_id": 3618,
+          "citation_key": "463d7143820ea4d99df14e421eadde48e0df0c85a34c7494f292d5ac91b47dfb"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7886381771209146,
+          "source_type": "note",
+          "source_id": 4910,
+          "source_version": 1,
+          "note_id": 4910,
+          "citation_key": "15a506d0ece5cc870848df38dec322927bdd706e5216c06f4f3c59d19361009d"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.760016896794388,
+          "source_type": "note",
+          "source_id": 1356,
+          "source_version": 1,
+          "note_id": 1356,
+          "citation_key": "c55bf7c21adcd33fca794742f99112199025dbf996d8e2e5d64451636f5abf2a"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7531898770360539,
+          "source_type": "note",
+          "source_id": 4930,
+          "source_version": 1,
+          "note_id": 4930,
+          "citation_key": "721ec7cd8d78ab578e363fa43a5909b053579f6916851ec02d56eda953ce2d5f"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7457675952562788,
+          "source_type": "note",
+          "source_id": 1811,
+          "source_version": 1,
+          "note_id": 1811,
+          "citation_key": "76d7a7b3b384c2c04af807a5699458753eac47757e631e57005c7af29d2bb970"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.739466616886713,
+          "source_type": "note",
+          "source_id": 2074,
+          "source_version": 1,
+          "note_id": 2074,
+          "citation_key": "4a746a1379fb505deee83bb4f37e07451cd7382c66d746f1f4c3182ec9e57a6c"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.7255661693422829,
+          "source_type": "note",
+          "source_id": 3225,
+          "source_version": 1,
+          "note_id": 3225,
+          "citation_key": "ff6968b94b2c30743f4615c283e7c174dc1352690db7ecbc4e59b4d294474ae3"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.7182265456552727,
+          "source_type": "note",
+          "source_id": 3814,
+          "source_version": 1,
+          "note_id": 3814,
+          "citation_key": "929f6a38379507fccf72a201c4d41bc8d246fdc643b6fce102f09682f4ff0fe9"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.848063840141138
+      },
+      "failure_category": "citation_contamination",
+      "latency_ms": 1610.39,
+      "result_count": 10,
+      "candidate_count": 303,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "2cca288c3159ea052d495c582ca51e2ca71496bd8ef337d852b2050e5f70f796",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5293,
+          "topic": "成都租房通勤踩点"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7005644728845385,
+          "source_type": "note",
+          "source_id": 921,
+          "source_version": 1,
+          "note_id": 921,
+          "citation_key": "b1d1a9ba2b9a75916031bcb91f279f0bbb2fad8e34188f34a18076b6e074519f"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6632664372454049,
+          "source_type": "note",
+          "source_id": 1624,
+          "source_version": 1,
+          "note_id": 1624,
+          "citation_key": "c4add6365418c7dba393943f5997de5a616a3346aba8758847f8df93b9c6aea5"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6578144489329509,
+          "source_type": "note",
+          "source_id": 238,
+          "source_version": 1,
+          "note_id": 238,
+          "citation_key": "1b4733b6ba9ff8fdd1c571b14371203d419f6a1c736c4be395a70fb442b5b907"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6494533539185916,
+          "source_type": "note",
+          "source_id": 479,
+          "source_version": 1,
+          "note_id": 479,
+          "citation_key": "1deb1dec5708c8434888b5cf6b8a32adf73bf5ea8bac213c0150d1775566ec8d"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6451371513637668,
+          "source_type": "note",
+          "source_id": 4395,
+          "source_version": 1,
+          "note_id": 4395,
+          "citation_key": "f96913cc5ef8b5909be2ded442523cf60a456147dafab411343e8151b94f8626"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6376734635418362,
+          "source_type": "note",
+          "source_id": 1639,
+          "source_version": 1,
+          "note_id": 1639,
+          "citation_key": "dd3e4fc500414b958f12e6513d8cb288ef246b30bedc5b28de39cc5f769f8124"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6290914315048136,
+          "source_type": "note",
+          "source_id": 224,
+          "source_version": 1,
+          "note_id": 224,
+          "citation_key": "ddfa8e84764ac3a4e236126e778d2268466d5cc0b5baa120200cca8d14713f3c"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6274684440462396,
+          "source_type": "note",
+          "source_id": 139,
+          "source_version": 1,
+          "note_id": 139,
+          "citation_key": "f5d43e3fe5af9b2a8bf9e7690a815856ccdcd2302148e100098d080e1cbae9e1"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6272895048513295,
+          "source_type": "note",
+          "source_id": 385,
+          "source_version": 1,
+          "note_id": 385,
+          "citation_key": "9eba2b2cd985b09ffeb0f0d139085a16553a807aa500395dbab249c5845a0140"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6270457987110927,
+          "source_type": "note",
+          "source_id": 1715,
+          "source_version": 1,
+          "note_id": 1715,
+          "citation_key": "ef29d11fd509aee584ba3bb91c8f42fa74050139a19057a17c66ba78c72b55fa"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7005644728845385
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1432.31,
+      "result_count": 10,
+      "candidate_count": 286,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "2f5a98ed65cc8c7f665fd7da18601a6648f2d4db3b07cebdd6c7b15fe78e4176",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5294,
+          "topic": "敏感肌通勤防晒实测"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7951181627583539,
+          "source_type": "note",
+          "source_id": 5294,
+          "source_version": 1,
+          "note_id": 5294,
+          "citation_key": "1cca4d1409413dfd610b8a14444341040afb75927de186fa82a25e73e2a8d025"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7655519705675903,
+          "source_type": "note",
+          "source_id": 1378,
+          "source_version": 1,
+          "note_id": 1378,
+          "citation_key": "bf66e13ba97af8ecaa71e40eaa7f697cdc75ee6497cc4bed6730cc493e0b1796"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.760719320746935,
+          "source_type": "note",
+          "source_id": 1493,
+          "source_version": 1,
+          "note_id": 1493,
+          "citation_key": "d6daab0146a57e9043820fd3e81c5284d1c7c775888112ed4c8ab863601de67e"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7506880908400232,
+          "source_type": "note",
+          "source_id": 5250,
+          "source_version": 1,
+          "note_id": 5250,
+          "citation_key": "a681eb9d3aa0f28bc367af1fa06921b3f4d1b036cdc69f66c92eb8827a4d7c11"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7414332275502231,
+          "source_type": "note",
+          "source_id": 3282,
+          "source_version": 1,
+          "note_id": 3282,
+          "citation_key": "4ca701e699fc73d4bf6ea975d0884b8dc175381b5292f4fbef9d730379771640"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7338602731729759,
+          "source_type": "note",
+          "source_id": 840,
+          "source_version": 1,
+          "note_id": 840,
+          "citation_key": "9f0e0e9c2be5af17b033bb78a28d3519b4362cbc2515fe13150b09485941c693"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.7230387776540699,
+          "source_type": "note",
+          "source_id": 1981,
+          "source_version": 1,
+          "note_id": 1981,
+          "citation_key": "73b48bbd97c0e20a3b9c6719748d62f06839e91e6122af0b0e5df128cda4ca51"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6998043497969271,
+          "source_type": "note",
+          "source_id": 2893,
+          "source_version": 1,
+          "note_id": 2893,
+          "citation_key": "3d56957634cfcd6d4ca4ddeaf808634a45aaeddf01450820087ef220f733bc32"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6972688976147328,
+          "source_type": "note",
+          "source_id": 2328,
+          "source_version": 1,
+          "note_id": 2328,
+          "citation_key": "ab77245aa5967ce090bf6e12a103a2c8701e730158b27f929f948ff56239e82b"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6971883538806761,
+          "source_type": "note",
+          "source_id": 438,
+          "source_version": 1,
+          "note_id": 438,
+          "citation_key": "bebbf157595c9ff22dc14c57c3cb16f07e9b3a11da44e2ed601553a7d65269cc"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7951181627583539
+      },
+      "failure_category": "citation_contamination",
+      "latency_ms": 1079.23,
+      "result_count": 10,
+      "candidate_count": 269,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "17f473b1fc2805932370721e2ae07ad2fbc699d9170a41f955a1e1a23d5394c8",
+      "task_type": "typo_robustness",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5295,
+          "topic": "梨形身材秋冬叠穿记录"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8255937490429284,
+          "source_type": "note",
+          "source_id": 2578,
+          "source_version": 1,
+          "note_id": 2578,
+          "citation_key": "57f46a2003cd2562dcaeb59d2b0193988f8a7914cfb4f4604d3e3088ffc9d69c"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.806069618253507,
+          "source_type": "note",
+          "source_id": 69,
+          "source_version": 1,
+          "note_id": 69,
+          "citation_key": "a1a38ff10592ab0493cce0225a47ee199eb9e0518d0d1f4a9b8ca4d9c520862e"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.8018978548094581,
+          "source_type": "note",
+          "source_id": 825,
+          "source_version": 1,
+          "note_id": 825,
+          "citation_key": "49014d0f9d50472fc177756793b2a1bf7720e2fb76193f94b1ab8d2422f028a7"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7973951582245072,
+          "source_type": "note",
+          "source_id": 2622,
+          "source_version": 1,
+          "note_id": 2622,
+          "citation_key": "a819b2f4c7e5a012ce5629e818322d39498a1ea013d69f98d29873ecec8bfc63"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.7863070145386167,
+          "source_type": "note",
+          "source_id": 2844,
+          "source_version": 1,
+          "note_id": 2844,
+          "citation_key": "74638a4f02716c03d95162ced0a8ad40a789ba88a0cc592851ba4fae22d41911"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7761567294184791,
+          "source_type": "note",
+          "source_id": 91,
+          "source_version": 1,
+          "note_id": 91,
+          "citation_key": "d86897d917713513f203da87c431dfd1d8cee0242df977b8b12a4d4bdeb56e71"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.737478751080149,
+          "source_type": "note",
+          "source_id": 5072,
+          "source_version": 1,
+          "note_id": 5072,
+          "citation_key": "4a293cd7563a955f808bc725f578525d3c764364eb413070b2ec5bca1788ecaa"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.729396595897793,
+          "source_type": "note",
+          "source_id": 5295,
+          "source_version": 1,
+          "note_id": 5295,
+          "citation_key": "ca6a0162e6f27346177a6378ca7fecdbb0b2e445e6fdc05be5662b7d13fe173c"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.7250595303807639,
+          "source_type": "note",
+          "source_id": 3492,
+          "source_version": 1,
+          "note_id": 3492,
+          "citation_key": "2d54019c744bf663427a181ff4643876082abeda4b81de5881d834b7e1cbe9af"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.7223939654645091,
+          "source_type": "note",
+          "source_id": 884,
+          "source_version": 1,
+          "note_id": 884,
+          "citation_key": "480439f60c1eabcbb224e8c03de04cb1f5574ad8071820ac70110e3f0bac6888"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 0.125,
+        "ndcg_at_k": 0.3154648767857287,
+        "citation_precision": 1,
+        "source_precision_at_k": 0.1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8255937490429284
+      },
+      "failure_category": "ranking_error",
+      "latency_ms": 1067.1,
+      "result_count": 10,
+      "candidate_count": 281,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "c1ac8ffb70b8a4807f57e4fa27d26b029f55397f4ac47ddb2add49e195d9e350",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5263,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5283,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8312376564248256,
+          "source_type": "note",
+          "source_id": 5263,
+          "source_version": 1,
+          "note_id": 5263,
+          "citation_key": "01c2d40c282217359af36b96fe58f65acf026df92dca46384b15f8336fec1579"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8201493533300658,
+          "source_type": "note",
+          "source_id": 5283,
+          "source_version": 1,
+          "note_id": 5283,
+          "citation_key": "732d49ddb6ad5713d64ce25a98abf4f4adf02b59cb547345d49ba07f5b190db2"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8312376564248256
+      },
+      "latency_ms": 967.02,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "86fb07f212fc8f85e7ae44105cf66ef696f629df8f1f57f4f8046785f29c5173",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5283,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5303,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8305815987250088,
+          "source_type": "note",
+          "source_id": 5303,
+          "source_version": 1,
+          "note_id": 5303,
+          "citation_key": "45ff0369610260ba878bf3f50830ae135b2da5f85e1f6f44fce4d86fdb038a90"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8181486262987063,
+          "source_type": "note",
+          "source_id": 5283,
+          "source_version": 1,
+          "note_id": 5283,
+          "citation_key": "732d49ddb6ad5713d64ce25a98abf4f4adf02b59cb547345d49ba07f5b190db2"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8305815987250088
+      },
+      "latency_ms": 1015.93,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "1cbcb8f29c17f724bc5270b9d10026828d47e897ef3ca5720f6104761fdb4a33",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5303,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5323,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8320916415940022,
+          "source_type": "note",
+          "source_id": 5303,
+          "source_version": 1,
+          "note_id": 5303,
+          "citation_key": "45ff0369610260ba878bf3f50830ae135b2da5f85e1f6f44fce4d86fdb038a90"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8236369232542241,
+          "source_type": "note",
+          "source_id": 5323,
+          "source_version": 1,
+          "note_id": 5323,
+          "citation_key": "638b6e043350f3363a4d4062bf447777daa97225b65468438b327101f0fba03c"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8320916415940022
+      },
+      "latency_ms": 977.6,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "710e8b1d92ae160e99f8d95570f8bbaf5d6d50039c4113174632127f6f91dc3d",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5323,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5333,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8226630235199832,
+          "source_type": "note",
+          "source_id": 5323,
+          "source_version": 1,
+          "note_id": 5323,
+          "citation_key": "638b6e043350f3363a4d4062bf447777daa97225b65468438b327101f0fba03c"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.805578951241142,
+          "source_type": "note",
+          "source_id": 5333,
+          "source_version": 1,
+          "note_id": 5333,
+          "citation_key": "50f74af523011886e9abccd0eec166c871d3ae8f5ffd2d81e40ef4a7526fe79e"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8226630235199832
+      },
+      "latency_ms": 1097.88,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "c46cc6e7b878c3e71cae6ebe7193eec9f8898284ac81efedd4243000bc13925f",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5333,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5373,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8251549535199832,
+          "source_type": "note",
+          "source_id": 5373,
+          "source_version": 1,
+          "note_id": 5373,
+          "citation_key": "e0764e9c516092c0dcd7fd6babb38f92e527ed03ab8e9b72804baa7b46e40110"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8061977897411419,
+          "source_type": "note",
+          "source_id": 5333,
+          "source_version": 1,
+          "note_id": 5333,
+          "citation_key": "50f74af523011886e9abccd0eec166c871d3ae8f5ffd2d81e40ef4a7526fe79e"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8251549535199832
+      },
+      "latency_ms": 1042.83,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "9735dceb073e81c0474414769106ef3e555a31b0af4ef50ab48eefb243ad98ba",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5373,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5393,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8318862869248256,
+          "source_type": "note",
+          "source_id": 5373,
+          "source_version": 1,
+          "note_id": 5373,
+          "citation_key": "e0764e9c516092c0dcd7fd6babb38f92e527ed03ab8e9b72804baa7b46e40110"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8184998838300658,
+          "source_type": "note",
+          "source_id": 5393,
+          "source_version": 1,
+          "note_id": 5393,
+          "citation_key": "648e24bcc5956951622e9e95ba70eaacd7dd754b5f86f759557b4e60c0a531e3"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8318862869248256
+      },
+      "latency_ms": 1140.55,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "67577df2307b0cab243d8951c818aa50bb8b615aaa3640600d84f0d678a62fc7",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5393,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5403,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8231873702323713,
+          "source_type": "note",
+          "source_id": 5393,
+          "source_version": 1,
+          "note_id": 5393,
+          "citation_key": "648e24bcc5956951622e9e95ba70eaacd7dd754b5f86f759557b4e60c0a531e3"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.816716184201238,
+          "source_type": "note",
+          "source_id": 5403,
+          "source_version": 1,
+          "note_id": 5403,
+          "citation_key": "74a5d502b9f84b8e51ead8db82453cfc39ad040774149aafcbdbda59146da76e"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8231873702323713
+      },
+      "latency_ms": 934.51,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "f9d25a7af691e786cb661f2c4638ab99bcc890375f007a81c17f87c55ea18b7f",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5403,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5423,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8171395936796398,
+          "source_type": "note",
+          "source_id": 5403,
+          "source_version": 1,
+          "note_id": 5403,
+          "citation_key": "74a5d502b9f84b8e51ead8db82453cfc39ad040774149aafcbdbda59146da76e"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.813348133415159,
+          "source_type": "note",
+          "source_id": 5423,
+          "source_version": 1,
+          "note_id": 5423,
+          "citation_key": "430ec9b9a0a81eb31f8a48cf96dd048fcb065ebe753938c5ff4104c9a8ffab7d"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8171395936796398
+      },
+      "latency_ms": 735.35,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "9d327259676417ef7ecba4ce024d752fac4c886f828b4faf4c391a2964b67544",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5423,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5443,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8183576849083516,
+          "source_type": "note",
+          "source_id": 5443,
+          "source_version": 1,
+          "note_id": 5443,
+          "citation_key": "20a50003cbe3dd1e5f356c034e66bc2407f1b5f5e8dcd645ec98ceadf161650d"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.807733398415159,
+          "source_type": "note",
+          "source_id": 5423,
+          "source_version": 1,
+          "note_id": 5423,
+          "citation_key": "430ec9b9a0a81eb31f8a48cf96dd048fcb065ebe753938c5ff4104c9a8ffab7d"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8183576849083516
+      },
+      "latency_ms": 748.7,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e9b0e6fd29e2c83ff66079c012ad45cdb3dad8da525114f355496569498a80d5",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5443,
+          "topic": "上海可办公咖啡店观察"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5453,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.8243735770612858,
+          "source_type": "note",
+          "source_id": 5453,
+          "source_version": 1,
+          "note_id": 5453,
+          "citation_key": "a9dc7dc6d9e347d773e23fec4812d3af228ae8cb021b9acc761e36a6df4c36a5"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.8147558294931948,
+          "source_type": "note",
+          "source_id": 5443,
+          "source_version": 1,
+          "note_id": 5443,
+          "citation_key": "20a50003cbe3dd1e5f356c034e66bc2407f1b5f5e8dcd645ec98ceadf161650d"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.8243735770612858
+      },
+      "latency_ms": 892.46,
+      "result_count": 2,
+      "candidate_count": 242,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e840ac670b63ba7cadc6cb6cc5e294e60ea6739092928e2d065f030185e9b4ac",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5267,
+          "topic": "云南雨季轻装清单"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5287,
+          "topic": "云南雨季轻装清单"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7966315059306275,
+          "source_type": "note",
+          "source_id": 5267,
+          "source_version": 1,
+          "note_id": 5267,
+          "citation_key": "93553886a82e1d7cad15c52bf8d7f5d2bb8f3867eace54b18e5736a87d54c4e5"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7881017224318803,
+          "source_type": "note",
+          "source_id": 5287,
+          "source_version": 1,
+          "note_id": 5287,
+          "citation_key": "db7b3f04829536ad99e86607478657808b1a4df1ce1cc9b6ea7710674c8f7e7c"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7966315059306275
+      },
+      "latency_ms": 170.38,
+      "result_count": 2,
+      "candidate_count": 4,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "73664ccefde0c14cf296532770668122b1e175cc31d57285dc1633d13686736a",
+      "task_type": "temporal_conflict",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5287,
+          "topic": "云南雨季轻装清单"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5307,
+          "topic": "云南雨季轻装清单"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7864597166565115,
+          "source_type": "note",
+          "source_id": 5287,
+          "source_version": 1,
+          "note_id": 5287,
+          "citation_key": "db7b3f04829536ad99e86607478657808b1a4df1ce1cc9b6ea7710674c8f7e7c"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.778599009362428,
+          "source_type": "note",
+          "source_id": 5307,
+          "source_version": 1,
+          "note_id": 5307,
+          "citation_key": "0bfe0cfdeb5d28a4ec8d0c91469d9e94c6a1641ebcd68a16796e28894b64e284"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7864597166565115
+      },
+      "latency_ms": 177.44,
+      "result_count": 2,
+      "candidate_count": 4,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "9eb0db353a52569bc97ee63cd67fb57b19aed80fdbc7d5c06ede2924f1c49845",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5254,
+          "topic": "敏感肌通勤防晒实测"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5257,
+          "topic": "杭州三天两夜慢游路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6250651892296224,
+          "source_type": "note",
+          "source_id": 5257,
+          "source_version": 1,
+          "note_id": 5257,
+          "citation_key": "4085a12029519b70309def8b02e1e79462aa817f7ec1b917b47918cbd4cec1d3"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 0.6131471927654585,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6250651892296224
+      },
+      "failure_category": "partial_gold_recall",
+      "latency_ms": 1962.15,
+      "result_count": 1,
+      "candidate_count": 243,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "af5c0e3fc9545e0693a43a501954fb7c29e3b751e781d148672ecd85072f1afb",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5259,
+          "topic": "新手八周力量训练"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5262,
+          "topic": "考研英语阅读复盘法"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6549749607442181,
+          "source_type": "note",
+          "source_id": 5262,
+          "source_version": 1,
+          "note_id": 5262,
+          "citation_key": "ade05612031f8076b34acd584c7317c7806cdf69d40da36c4e02034cfbcb9eb4"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 0.6131471927654585,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6549749607442181
+      },
+      "failure_category": "partial_gold_recall",
+      "latency_ms": 2055.15,
+      "result_count": 1,
+      "candidate_count": 243,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "80d9cf9a2500749887067bc116a2c61137546a88f6b77494d64015a7d4100193",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5264,
+          "topic": "油痘肌晚间清洁复盘"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5267,
+          "topic": "云南雨季轻装清单"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.46593489104494856
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 2337.78,
+      "result_count": 0,
+      "candidate_count": 244,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "a326958c3d965e267e7f68e20f128ab2a73d2c552f94103b985007caf0de6d41",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5269,
+          "topic": "办公室肩颈活动计划"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5272,
+          "topic": "在职备考周计划"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.49216057491228704
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1896.34,
+      "result_count": 0,
+      "candidate_count": 244,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "918d90ee0b97df41794708becffe93b4b93047ce2ffd07f60218bfa1fcd15cf3",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5274,
+          "topic": "敏感肌通勤防晒实测"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5277,
+          "topic": "杭州三天两夜慢游路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6259815300611358,
+          "source_type": "note",
+          "source_id": 5277,
+          "source_version": 1,
+          "note_id": 5277,
+          "citation_key": "65306c61aeed2059fc089a9d7d2654cecd0a897fcbf196148584deec69a20ab7"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 0.6131471927654585,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6259815300611358
+      },
+      "failure_category": "partial_gold_recall",
+      "latency_ms": 2064.89,
+      "result_count": 1,
+      "candidate_count": 243,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "1f65df7240cdfb645424adbf2f729d554247015c2e3c7a9dd88fbd9abdfb9868",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5279,
+          "topic": "办公室肩颈活动计划"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5282,
+          "topic": "考研英语阅读复盘法"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6526745379170796,
+          "source_type": "note",
+          "source_id": 5282,
+          "source_version": 1,
+          "note_id": 5282,
+          "citation_key": "9f7fbd6434765d5406044de231e87a01df9090937a795ac637c4b7eb3e7b5896"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 0.6131471927654585,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6526745379170796
+      },
+      "failure_category": "partial_gold_recall",
+      "latency_ms": 2203.82,
+      "result_count": 1,
+      "candidate_count": 243,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e93b5dcc5f34e9703a3697cdbcc35913965e387478231404e37552e72924310f",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5284,
+          "topic": "敏感肌通勤防晒实测"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5287,
+          "topic": "云南雨季轻装清单"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.4814144033832546
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1920.26,
+      "result_count": 0,
+      "candidate_count": 244,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "fdd00a6f1101d6dbd7d3dd186fa51c4fed40a51b8e1e40021022225bec9c5584",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5289,
+          "topic": "新手八周力量训练"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5292,
+          "topic": "在职备考周计划"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.5002953692342208
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 2262.06,
+      "result_count": 0,
+      "candidate_count": 244,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "28c096738853dbfa8c0116c2a3beb0cce4a8222159c8640860987616c2df11b2",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5294,
+          "topic": "敏感肌通勤防晒实测"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5297,
+          "topic": "杭州三天两夜慢游路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6240326882896365,
+          "source_type": "note",
+          "source_id": 5297,
+          "source_version": 1,
+          "note_id": 5297,
+          "citation_key": "ff9078527f028e9a47acdf39cae8e8452d38120123d8f59658840f5d48e53b6d"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 0.6131471927654585,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6240326882896365
+      },
+      "failure_category": "partial_gold_recall",
+      "latency_ms": 1872.9,
+      "result_count": 1,
+      "candidate_count": 243,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "119ee658c72c5f8d196a718d2659ee8e2ae99cf24b78001e87cc29af8c428621",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5299,
+          "topic": "新手八周力量训练"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5302,
+          "topic": "考研英语阅读复盘法"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6394362548253374,
+          "source_type": "note",
+          "source_id": 5302,
+          "source_version": 1,
+          "note_id": 5302,
+          "citation_key": "a89338381f6ea7fffe5d87be4da84d8f9a6d192da0d265ed4d9de2c15186964a"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0.5,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 0.6131471927654585,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6394362548253374
+      },
+      "failure_category": "partial_gold_recall",
+      "latency_ms": 1931.99,
+      "result_count": 1,
+      "candidate_count": 243,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e4fa7f276674c68076e2c0e50a928d505ddd2fcbaae2801afe2e9aa9a3f11d7c",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5304,
+          "topic": "油痘肌晚间清洁复盘"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5307,
+          "topic": "云南雨季轻装清单"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.4683186302781106
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 2787.14,
+      "result_count": 0,
+      "candidate_count": 244,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "faa39b4242fb31b6303e72069ba401ce53b1d138f8903f63f69590466ddeebca",
+      "task_type": "cross_note_compare",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5309,
+          "topic": "办公室肩颈活动计划"
+        },
+        {
+          "source_type": "note",
+          "note_id": 5312,
+          "topic": "在职备考周计划"
+        }
+      ],
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 0,
+        "source_precision_at_k": 0,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.49611894541228707
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 2453.09,
+      "result_count": 0,
+      "candidate_count": 244,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "7d42be151fc078939b0e1306fe9c52633f162aacf3f04850e10f4eb51aa79e67",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6262307099688574,
+          "source_type": "note",
+          "source_id": 2030,
+          "source_version": 1,
+          "note_id": 2030,
+          "citation_key": "e1873dc17896386aba31487359c08d03e70995abe57f4a2f6397e8c1bdd076fa"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6053900749026278,
+          "source_type": "note",
+          "source_id": 5244,
+          "source_version": 1,
+          "note_id": 5244,
+          "citation_key": "44faffdc7d3be6746ce39006e49ddb81f84c4cc5c157db08a7b2017bf5524177"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6048305408639889,
+          "source_type": "note",
+          "source_id": 4611,
+          "source_version": 1,
+          "note_id": 4611,
+          "citation_key": "b4a4f1ac2f63e189d80fcbc03f56f98a0ca371d2cbb797afab700599befaa8b1"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6262307099688574
+      },
+      "failure_category": "false_positive_no_relevant",
+      "latency_ms": 851.3,
+      "result_count": 3,
+      "candidate_count": 370,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "46cd0cfb895be1f2c12d42bac8548539de7c3cb9da90ef99a900d682a879d3a9",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.371541451
+      },
+      "latency_ms": 419.65,
+      "result_count": 0,
+      "candidate_count": 242,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "f90a45aa3117ff7da90efec1a0c5ec6dcb63bbf0a1ae8cc7efcdfd6dbb0062ee",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.4320027004752767
+      },
+      "latency_ms": 393.23,
+      "result_count": 0,
+      "candidate_count": 397,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "fb15cece6bc1a00d0954fcd85f48c4a05f8ca8102db943282ec28af6664abf13",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.39481532750000004
+      },
+      "latency_ms": 353.12,
+      "result_count": 0,
+      "candidate_count": 240,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "a9bac2b22fbc82d79367af0d26fc22f12000fe1326e8b3cf0e7f14166b12d07d",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.370280681
+      },
+      "latency_ms": 340.78,
+      "result_count": 0,
+      "candidate_count": 241,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "1e4878049a86e3fac0a9a24f39578dfd44149811290a11c107cf8c71c88f010e",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.41730426600000003
+      },
+      "latency_ms": 338.27,
+      "result_count": 0,
+      "candidate_count": 240,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "8c8796916c5b83af24256b08ee6aa3e7c5ffe0343486cef2d8b9a77ca81d5b83",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.39409573800000003
+      },
+      "latency_ms": 262.24,
+      "result_count": 0,
+      "candidate_count": 241,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "c36bbbaa81cb87e3342a5c6858bc27a7f4164b65244859d1589fba0bdad8f16b",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.39398819
+      },
+      "latency_ms": 254.12,
+      "result_count": 0,
+      "candidate_count": 240,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "6bdbaa7dfa3f373a5d5710bb4395f73d475de1ba1cb5abdec16292355ed83348",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.37689663300000004
+      },
+      "latency_ms": 243.57,
+      "result_count": 0,
+      "candidate_count": 241,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "43ce7b10e7e6cc29987baf3b23a06306baf64facf5ddec67650719eff891c417",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.389046736
+      },
+      "latency_ms": 3170.46,
+      "result_count": 0,
+      "candidate_count": 480,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "af8e1e46954d65a1e79d467691f38184c1eac488f84ff0c68ddb9da17bd56095",
+      "task_type": "no_relevant_document",
+      "answerable": false,
+      "gold_sources": null,
+      "retrieved_sources": [],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": true,
+        "authorization_leak": false,
+        "top_confidence": 0.38481192500000005
+      },
+      "latency_ms": 397.57,
+      "result_count": 0,
+      "candidate_count": 240,
+      "decision_status": "no_relevant_document",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "050cd0ea8a7cf4234ef2bcc10bba6259f0063c7750cb5eed4cb3f86d1315550c",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5409,
+          "topic": "办公室肩颈活动计划"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7875568542207133,
+          "source_type": "note",
+          "source_id": 3567,
+          "source_version": 1,
+          "note_id": 3567,
+          "citation_key": "3c6918d34737cac7506759f7db3ce3b6159953f63ac99cddc94c55d6e1c09b76"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7804808588331069,
+          "source_type": "note",
+          "source_id": 4926,
+          "source_version": 1,
+          "note_id": 4926,
+          "citation_key": "49ea3ac1471edbe2bb788dabfb5435145e9919deee8ae0353e1384c8d0a22846"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6986267509998905,
+          "source_type": "note",
+          "source_id": 2081,
+          "source_version": 1,
+          "note_id": 2081,
+          "citation_key": "03d8d705c63e866a901483a0d83ea950cf92963d4ae4e2a29bf1bfe2e8b2cb08"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6864112198092113,
+          "source_type": "note",
+          "source_id": 1736,
+          "source_version": 1,
+          "note_id": 1736,
+          "citation_key": "a79403a81274ca2743512c9d09e55337ee2a573ca49bc26d0e77ea41cfb7d075"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6723025564145975,
+          "source_type": "note",
+          "source_id": 5269,
+          "source_version": 1,
+          "note_id": 5269,
+          "citation_key": "3ece75469cea4d2310602d757fe6c07f0e10866facbe85d09a5c1736b63e792d"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6361261824989697,
+          "source_type": "note",
+          "source_id": 2143,
+          "source_version": 1,
+          "note_id": 2143,
+          "citation_key": "67dee22fdec51f0ace1ee0220cdfbfadfa759edb353fe6a67884fd284432f33a"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6174840659999948,
+          "source_type": "note",
+          "source_id": 2154,
+          "source_version": 1,
+          "note_id": 2154,
+          "citation_key": "049e470fcbc5c7a35e961ef527575bbe7c8caf87d4b40136cab74e15c72b8ddb"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6133014850216,
+          "source_type": "note",
+          "source_id": 461,
+          "source_version": 1,
+          "note_id": 461,
+          "citation_key": "0fcef18490ffd4389f25fc959937d0081999ac54c7eb03f8debb9e100455752b"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6108900882739232,
+          "source_type": "note",
+          "source_id": 969,
+          "source_version": 1,
+          "note_id": 969,
+          "citation_key": "4d06c7655608688469538bc2e8f03ca7a215b8c8d9f5e2ed8a6e689a9d6fb3b0"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6102857129306763,
+          "source_type": "note",
+          "source_id": 643,
+          "source_version": 1,
+          "note_id": 643,
+          "citation_key": "758430789ecf0881508d2a17b5c4f4b4cdb4159be1d935ae96e98a19f2e8bfb5"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7875568542207133
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1179.11,
+      "result_count": 10,
+      "candidate_count": 272,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "d1d1b5ebc05f679d566145191cfe5e3f89534307aca71d0b7a8c89d13b5794f7",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5416,
+          "topic": "低预算一周带饭计划"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7820620123053239,
+          "source_type": "note",
+          "source_id": 1931,
+          "source_version": 1,
+          "note_id": 1931,
+          "citation_key": "b9751a97ec4ee8fb8096715222c8166824702f2cc711e0d2108b343b4128c621"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7713096778650644,
+          "source_type": "note",
+          "source_id": 2953,
+          "source_version": 1,
+          "note_id": 2953,
+          "citation_key": "ec3017e4debe1fb265c0a320d522100136c210f300ff8d9c1dae2ac62a767d2a"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7706149049548109,
+          "source_type": "note",
+          "source_id": 2636,
+          "source_version": 1,
+          "note_id": 2636,
+          "citation_key": "794ce267d9dfd15747669f949bf5bd8e7426d39585dc5a891aaa59abae1d5631"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6372168895152343,
+          "source_type": "note",
+          "source_id": 1594,
+          "source_version": 1,
+          "note_id": 1594,
+          "citation_key": "84c251c29bff2f8caaf2e98aa4ce4528d99f1a155efba02c20b2a872bf34f808"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6360514876713155,
+          "source_type": "note",
+          "source_id": 859,
+          "source_version": 1,
+          "note_id": 859,
+          "citation_key": "d34eadba52bc6a5001fae0ea3e9c3e44dd084f19846c88f26001b6b6c8ee0acc"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6290157137777007,
+          "source_type": "note",
+          "source_id": 4858,
+          "source_version": 1,
+          "note_id": 4858,
+          "citation_key": "c3f7eaf4545c1837d7d44330b362718ec2d10364c26d4fbef7b1b7fd1e00863a"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6261089014153096,
+          "source_type": "note",
+          "source_id": 866,
+          "source_version": 1,
+          "note_id": 866,
+          "citation_key": "d2084fb44f7e0dee4e0c1ec2a43b98a7695e533a2cca7c3c7086c4dd4a0ad261"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.619429317086901,
+          "source_type": "note",
+          "source_id": 1725,
+          "source_version": 1,
+          "note_id": 1725,
+          "citation_key": "064f4c98b82003c3c95935fb32e56644a55a3a1b3ab39f1063f39cbc0eee9b07"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6155245050571356,
+          "source_type": "note",
+          "source_id": 1916,
+          "source_version": 1,
+          "note_id": 1916,
+          "citation_key": "b52908c1c598b4f610acb9641b797cb127e0b6ecabafb98d9347e211ce24a3d8"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6131876536162928,
+          "source_type": "note",
+          "source_id": 3893,
+          "source_version": 1,
+          "note_id": 3893,
+          "citation_key": "9237daed40bbfbe4f2074a0489e95abc1fe1da25978bd9708c868a56988da9d6"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7820620123053239
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1079.5,
+      "result_count": 10,
+      "candidate_count": 272,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "77ae81ba5c92a5fbb1a0afb1330d95f033039907dfe577574543f685f6513fe3",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5423,
+          "topic": "上海可办公咖啡店观察"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7614716828704082,
+          "source_type": "note",
+          "source_id": 1608,
+          "source_version": 1,
+          "note_id": 1608,
+          "citation_key": "a7ad1d5a2fde31310e3d76b0b20286ba6c9d967d86d477817e86f0ad1dc3bb75"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7546138344936992,
+          "source_type": "note",
+          "source_id": 2615,
+          "source_version": 1,
+          "note_id": 2615,
+          "citation_key": "d934090e5fa0b62c7f0c45f1d17e65a0ce37d1819edb0527bc260c5ea99ed97d"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7441381858449313,
+          "source_type": "note",
+          "source_id": 4631,
+          "source_version": 1,
+          "note_id": 4631,
+          "citation_key": "f28cbd61a92c61a09c68047c67ece7f9ac6756c4d4f8d50bb41fb3058c9a90d5"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6429391976274161,
+          "source_type": "note",
+          "source_id": 2736,
+          "source_version": 1,
+          "note_id": 2736,
+          "citation_key": "9fbf87a65428baddd068ca0733cbe099bfb9f1fb9e1d220bc3bd38002c48bf76"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6373752682737793,
+          "source_type": "note",
+          "source_id": 1860,
+          "source_version": 1,
+          "note_id": 1860,
+          "citation_key": "8a1aef98b9a62f89377fcebfae3c99805cd8668b54985dd2737712caca8df130"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.634385173379257,
+          "source_type": "note",
+          "source_id": 2012,
+          "source_version": 1,
+          "note_id": 2012,
+          "citation_key": "c6cd4f7f4d7953d5d7d3b8a9037ae4671e1ed83de461ce9a2d13863139dffbe4"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6285639956246319,
+          "source_type": "note",
+          "source_id": 1051,
+          "source_version": 1,
+          "note_id": 1051,
+          "citation_key": "139705bef22997d541f5fd2eb7a8eff507d7051ae61d7d64316738917fe555e7"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6241077861825761,
+          "source_type": "note",
+          "source_id": 1473,
+          "source_version": 1,
+          "note_id": 1473,
+          "citation_key": "42e535c84e4f587178c214cd2c969b9e3fe72f96335e26ec0a991510dbe6deab"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.616423037098993,
+          "source_type": "note",
+          "source_id": 2142,
+          "source_version": 1,
+          "note_id": 2142,
+          "citation_key": "00a6866e9fc427c1fbe0ff030fcc3f06816c44fc78bc731cc43aec6972eafb90"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6140217322871507,
+          "source_type": "note",
+          "source_id": 216,
+          "source_version": 1,
+          "note_id": 216,
+          "citation_key": "6a924d4bf2072d345c849b9e14b0de9945310a9034365c40546d898f6a8d1924"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7614716828704082
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1285.91,
+      "result_count": 10,
+      "candidate_count": 270,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "1e842303449d20009e07d981acdacb30cb68912bb4753f9e692eed6626805f22",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5430,
+          "topic": "产品经理面试复盘"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7628995915994983,
+          "source_type": "note",
+          "source_id": 1982,
+          "source_version": 1,
+          "note_id": 1982,
+          "citation_key": "f24e71397ac394bb5e5611b7fa2256150ebdafab42040d376b1f9a5a4178a900"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7456715911398918,
+          "source_type": "note",
+          "source_id": 5234,
+          "source_version": 1,
+          "note_id": 5234,
+          "citation_key": "128de77b5efb916b12ac17d2c7b34afa55f7afa615af1b1208c1ab682dcaae2f"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7222531771348737,
+          "source_type": "note",
+          "source_id": 5117,
+          "source_version": 1,
+          "note_id": 5117,
+          "citation_key": "21f05bfcb4ad64c3bde814c7f3172ff67cb6bae52fca2ffeb0456f3ef2986bfc"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.7199619641320965,
+          "source_type": "note",
+          "source_id": 413,
+          "source_version": 1,
+          "note_id": 413,
+          "citation_key": "42f1ddaa966234cbbfa1e9ef8c7f9960d12794d90f7e1f85ae5c5ce0afb0ff5f"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.719521330014679,
+          "source_type": "note",
+          "source_id": 5047,
+          "source_version": 1,
+          "note_id": 5047,
+          "citation_key": "9fd3d0b872a2f9f72e2d9781ea5d4ed39868d937a64722a21359097448a5592f"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.7035407807554961,
+          "source_type": "note",
+          "source_id": 3599,
+          "source_version": 1,
+          "note_id": 3599,
+          "citation_key": "44558ec84d5ac1354d48447148aaf204a0c3bc3606a7a7753d1ed61b9624eb2d"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6894503179221607,
+          "source_type": "note",
+          "source_id": 3896,
+          "source_version": 1,
+          "note_id": 3896,
+          "citation_key": "d6422c82d0cd8f21584c597107b5026457fbf4d35032be14ddb266141507be16"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6305342687367155,
+          "source_type": "note",
+          "source_id": 5370,
+          "source_version": 1,
+          "note_id": 5370,
+          "citation_key": "ceb87fe1bf2ed7a186faf74be47c58ffa3e1cbbe3f1060b381416fecc70f3e4f"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6160574633822428,
+          "source_type": "note",
+          "source_id": 1985,
+          "source_version": 1,
+          "note_id": 1985,
+          "citation_key": "48b39a8da9ed5063403392f20e2c7cb097b5f20c8fd76d926ae69dc03c212009"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6072286893784927,
+          "source_type": "note",
+          "source_id": 1613,
+          "source_version": 1,
+          "note_id": 1613,
+          "citation_key": "7945451e2fa19331ea942e2fc622ae39b72c99be084f8a4e3b088298215807f9"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7628995915994983
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1149.57,
+      "result_count": 10,
+      "candidate_count": 300,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "5f2690f340c21a0cedf66b3e2fb4e1e645a16f47e68d060cd0840b079af3b4da",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5437,
+          "topic": "杭州三天两夜慢游路线"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.7778628730536943,
+          "source_type": "note",
+          "source_id": 4589,
+          "source_version": 1,
+          "note_id": 4589,
+          "citation_key": "4dcceb4beb03f89d627eb3517e96a08ed7a80922d4ca80692897cebe4030d09e"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.7772770715071469,
+          "source_type": "note",
+          "source_id": 21,
+          "source_version": 1,
+          "note_id": 21,
+          "citation_key": "c7f9f317cf816f601c93e1fea25b960469a4850f64ae48fdd5a98a3edafea53f"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.7026227671259903,
+          "source_type": "note",
+          "source_id": 2337,
+          "source_version": 1,
+          "note_id": 2337,
+          "citation_key": "e9345086817755cb22fa93181ba426b8935ac747d8f6cdcc49f99e1dc07cf82f"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6857301256241991,
+          "source_type": "note",
+          "source_id": 166,
+          "source_version": 1,
+          "note_id": 166,
+          "citation_key": "fb09680916b783802b010a746a978bebc70d80f1407de642e8f9234a7de2f55d"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6743343540204311,
+          "source_type": "note",
+          "source_id": 5377,
+          "source_version": 1,
+          "note_id": 5377,
+          "citation_key": "4152453f8ccbf242347f2063c7117997774f16b001e7a3d17db19ea83bcd3e68"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.64698883449773,
+          "source_type": "note",
+          "source_id": 2585,
+          "source_version": 1,
+          "note_id": 2585,
+          "citation_key": "ea6533ee8c6d5baec45bfb4c383fe26e70cee15db4c88d2bb2e8ed97016d15a0"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6422772115174129,
+          "source_type": "note",
+          "source_id": 2973,
+          "source_version": 1,
+          "note_id": 2973,
+          "citation_key": "e35904e7d64b08ea482085ef22de7c7d44e53ef9ad4ea59bdf4747886cec59d5"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6402908911604384,
+          "source_type": "note",
+          "source_id": 2416,
+          "source_version": 1,
+          "note_id": 2416,
+          "citation_key": "d6fab4b5d151d95a4b6ba71bb273dd2c9aeef054ad6a912d0b5af18a6b904ce2"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6348411463671,
+          "source_type": "note",
+          "source_id": 1047,
+          "source_version": 1,
+          "note_id": 1047,
+          "citation_key": "9b189b42f80007e0280cbdc16ace7e9254d859dcf0bc6ad292a9cdd00fff720d"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6321515308406411,
+          "source_type": "note",
+          "source_id": 1388,
+          "source_version": 1,
+          "note_id": 1388,
+          "citation_key": "6a48b61115dddfbc537ad59bb88f67466508f225a357217af94f0063a049c9c4"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.7778628730536943
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1088.93,
+      "result_count": 10,
+      "candidate_count": 250,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "5c91ee732a86bf759e7f821721d6f9f362debbdf3a0445b3431d81c4d8337564",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5444,
+          "topic": "油痘肌晚间清洁复盘"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6873283733244714,
+          "source_type": "note",
+          "source_id": 1909,
+          "source_version": 1,
+          "note_id": 1909,
+          "citation_key": "6d2b44fe3a7bd15a528ebc99d2538810696529f39a831c6d71362a9f100614cc"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6842248196648505,
+          "source_type": "note",
+          "source_id": 1899,
+          "source_version": 1,
+          "note_id": 1899,
+          "citation_key": "160733ebc8b09e9a977b78a17ff9c188e5a85f4790c96cfaff2e77af0ee27217"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6792435102025931,
+          "source_type": "note",
+          "source_id": 1996,
+          "source_version": 1,
+          "note_id": 1996,
+          "citation_key": "04cfebd27fb817982d8dcb8697f6e152c4cfed1c59464ee55ba95bf268668ee2"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6738190690312112,
+          "source_type": "note",
+          "source_id": 1714,
+          "source_version": 1,
+          "note_id": 1714,
+          "citation_key": "b8dec32ce6a94a73ae275e6685496a6c4839289a71a6bcaa4fae8540519c3f53"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6664625372387712,
+          "source_type": "note",
+          "source_id": 2244,
+          "source_version": 1,
+          "note_id": 2244,
+          "citation_key": "8daff16d6827239db924dbe1909dfe2929c8efd2f6782837502cefa4ab0f0fa6"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6630253326546108,
+          "source_type": "note",
+          "source_id": 1468,
+          "source_version": 1,
+          "note_id": 1468,
+          "citation_key": "3384af411ae117c797f4a8d5e89fb6f78d8212c4a414e13c41cb5b499754b185"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6599935331670465,
+          "source_type": "note",
+          "source_id": 998,
+          "source_version": 1,
+          "note_id": 998,
+          "citation_key": "a21aa842a8ff288a21668d67cced30c11035e0635022db1b712993680e84df8d"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6493254108570562,
+          "source_type": "note",
+          "source_id": 3033,
+          "source_version": 1,
+          "note_id": 3033,
+          "citation_key": "a5ea4dda04c7e8fd1be80f29ca47242f4f1ecadcd6a4e4c379a4ee7ba9b646cd"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6486716708383388,
+          "source_type": "note",
+          "source_id": 1930,
+          "source_version": 1,
+          "note_id": 1930,
+          "citation_key": "9795bce2e2583af1cdeb1a3d2efba774cc8253aba48d425a137f94cfe4d639fa"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6458665759770292,
+          "source_type": "note",
+          "source_id": 3042,
+          "source_version": 1,
+          "note_id": 3042,
+          "citation_key": "10383b2eb6db4e013ad39c36a9a41478185f8b651a644a35983e40c085ac26ed"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6873283733244714
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1134.71,
+      "result_count": 10,
+      "candidate_count": 251,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "fb1329e1b946cd8ae79fc90d8a3874bcab4c6b414439e6c73d0051133f806890",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5451,
+          "topic": "降噪耳机通勤实测"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6510589701163023,
+          "source_type": "note",
+          "source_id": 14,
+          "source_version": 1,
+          "note_id": 14,
+          "citation_key": "1d733d2e5fa5667c33df66b6bd1d6d47afa52f257f783c84c9003c379a2fbd4a"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6355839355994684,
+          "source_type": "note",
+          "source_id": 377,
+          "source_version": 1,
+          "note_id": 377,
+          "citation_key": "6d85f816074b891235e0410d681404320b9a93855d0f875e6b26d330f9a9c251"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6333570306176823,
+          "source_type": "note",
+          "source_id": 1751,
+          "source_version": 1,
+          "note_id": 1751,
+          "citation_key": "9e9e43975db6376b0a020a1425b77a363490d3bfb160e1ff2d23891f0f0bd79f"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6271049281555929,
+          "source_type": "note",
+          "source_id": 1374,
+          "source_version": 1,
+          "note_id": 1374,
+          "citation_key": "4fa507b679943b7d01fd6ecd61e8572f086f56ae54c96b530f84573654eaf20b"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6259066224991411,
+          "source_type": "note",
+          "source_id": 97,
+          "source_version": 1,
+          "note_id": 97,
+          "citation_key": "854ca31c08f1aa01901cf5682a169b0b360feb39c99a104a42e08be5d934264d"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6186322929677146,
+          "source_type": "note",
+          "source_id": 1783,
+          "source_version": 1,
+          "note_id": 1783,
+          "citation_key": "6293272eb6b1c83baddfcfd785b896c2c7ec784fdc1ca984b281fd2f095c8caf"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6169682291781685,
+          "source_type": "note",
+          "source_id": 1851,
+          "source_version": 1,
+          "note_id": 1851,
+          "citation_key": "32d1693e0c5b09c544ee5c893b7939f9379844d59075198fb07f63e1b63e9dd8"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6167553189765208,
+          "source_type": "note",
+          "source_id": 170,
+          "source_version": 1,
+          "note_id": 170,
+          "citation_key": "b915f07bc630c5d89b792f9ddd391fd203691823000c923370980d58c67c8718"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6141650212336436,
+          "source_type": "note",
+          "source_id": 334,
+          "source_version": 1,
+          "note_id": 334,
+          "citation_key": "5760efc5ad5d3bad61693090ac23ae05d53f9a47aec04b6d380ec9c7dc10f6aa"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6139067944672746,
+          "source_type": "note",
+          "source_id": 4437,
+          "source_version": 1,
+          "note_id": 4437,
+          "citation_key": "af4eaeb917e0caa32024ab24d85c5d8c50f2ecc5eed45c7bb197ab5c590f67f2"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6510589701163023
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 811.7,
+      "result_count": 10,
+      "candidate_count": 240,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "4a312f2fdbfeef82e5a65273825f22a68a624fe4f3f143991f2fb33594dbb405",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5258,
+          "topic": "出租屋低成本照明调整"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6609037655695912,
+          "source_type": "note",
+          "source_id": 3851,
+          "source_version": 1,
+          "note_id": 3851,
+          "citation_key": "7c1d8b0c00de29eb64d5f33b875e20b7fcbb8282b01ba110d8b3140cb1177ba1"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6464261177120846,
+          "source_type": "note",
+          "source_id": 1676,
+          "source_version": 1,
+          "note_id": 1676,
+          "citation_key": "01c889df91206b7577eefd28216555a13b8c15f3d6914d971d31e2a8a9abe8d4"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6423152075419322,
+          "source_type": "note",
+          "source_id": 1823,
+          "source_version": 1,
+          "note_id": 1823,
+          "citation_key": "5168d5836a9360cb0e5fd8cca0308bfcd70c99eb2cc064af21211f2626e2845c"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6297511162493724,
+          "source_type": "note",
+          "source_id": 4896,
+          "source_version": 1,
+          "note_id": 4896,
+          "citation_key": "bfaa62b9722dcbe65da9f1ae5ac16435a2fcd3d3ac7849b424ddcf576324ea44"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6277877511735168,
+          "source_type": "note",
+          "source_id": 1151,
+          "source_version": 1,
+          "note_id": 1151,
+          "citation_key": "460c94026b8441b15e2bc9deeb91fd675eab3baa0be67230152551b9258d2e9c"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6273343390604126,
+          "source_type": "note",
+          "source_id": 891,
+          "source_version": 1,
+          "note_id": 891,
+          "citation_key": "c28df4e2e031a0125cab1ed466b45dcf2f249598c5c455ec90eaaa55bfc97b5e"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6255366067230735,
+          "source_type": "note",
+          "source_id": 5125,
+          "source_version": 1,
+          "note_id": 5125,
+          "citation_key": "2ef4a2ef84810f3e6115f6f11da93a24ba7bd9777929306d09de2530afaf656f"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6233847629754702,
+          "source_type": "note",
+          "source_id": 1007,
+          "source_version": 1,
+          "note_id": 1007,
+          "citation_key": "8ce3fb086ac9d5a865392b9d5fb615ac216624db541de4f597a572f044fbe982"
+        },
+        {
+          "rank": 9,
+          "confidence": 0.6196032974732396,
+          "source_type": "note",
+          "source_id": 4255,
+          "source_version": 1,
+          "note_id": 4255,
+          "citation_key": "04778d64075b4c62dc4855cf90f07037f9c9d7579dcb03f00d53ab55f27c0f23"
+        },
+        {
+          "rank": 10,
+          "confidence": 0.6176167860686533,
+          "source_type": "note",
+          "source_id": 3992,
+          "source_version": 1,
+          "note_id": 3992,
+          "citation_key": "3f807cf0dda36aa0f62d13f7d7d3943804bb0e5f2240ca3290c43d58e02439c4"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6609037655695912
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1078.46,
+      "result_count": 10,
+      "candidate_count": 282,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "1818124881bb65a35fb5b0610e3d46fe01515292a943f5b9957eebd5da570c5c",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5265,
+          "topic": "梨形身材秋冬叠穿记录"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6306894961270584,
+          "source_type": "note",
+          "source_id": 1799,
+          "source_version": 1,
+          "note_id": 1799,
+          "citation_key": "d3d9f4163d98576d60420a6f74a1fa331547d338316332db68cbed323425cacc"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6295170524135949,
+          "source_type": "note",
+          "source_id": 619,
+          "source_version": 1,
+          "note_id": 619,
+          "citation_key": "009903e5775c7db13d0ef1b641528deb31f4515d9a7fb022c998949d654d5704"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6234545714110167,
+          "source_type": "note",
+          "source_id": 1692,
+          "source_version": 1,
+          "note_id": 1692,
+          "citation_key": "08e5b9addd5b3dc886e67a750d5e47f5e3c4df1d829339bacc8f082862403c21"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.618354510219972,
+          "source_type": "note",
+          "source_id": 3932,
+          "source_version": 1,
+          "note_id": 3932,
+          "citation_key": "ea96e8e0ab19e01dfbb01fd17bf67771d3e25d5493a07554dc99c91cb8a8f58f"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6179492837512952,
+          "source_type": "note",
+          "source_id": 2622,
+          "source_version": 1,
+          "note_id": 2622,
+          "citation_key": "a819b2f4c7e5a012ce5629e818322d39498a1ea013d69f98d29873ecec8bfc63"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.616592863862279,
+          "source_type": "note",
+          "source_id": 1542,
+          "source_version": 1,
+          "note_id": 1542,
+          "citation_key": "3073ffc063b82760956a69c82b24972e3d436607a155c7f1b55a37d2f526a7d6"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6057412961134125,
+          "source_type": "note",
+          "source_id": 2418,
+          "source_version": 1,
+          "note_id": 2418,
+          "citation_key": "715f146ade415b0d7d912ce71a6c68fe8fa88b87ccfc7bf29285dc44c7210ba5"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.6002820669508202,
+          "source_type": "note",
+          "source_id": 825,
+          "source_version": 1,
+          "note_id": 825,
+          "citation_key": "49014d0f9d50472fc177756793b2a1bf7720e2fb76193f94b1ab8d2422f028a7"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6306894961270584
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1091.96,
+      "result_count": 8,
+      "candidate_count": 281,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "7d27ef718431cbd76c33b9763229d332811ccac9bcfaa1002065d4f7a729ed66",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5272,
+          "topic": "在职备考周计划"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6326625103433424,
+          "source_type": "note",
+          "source_id": 2592,
+          "source_version": 1,
+          "note_id": 2592,
+          "citation_key": "9c1eec5eec2b1a79ea3515668595803d83b20d6ccfdf23c6cb866a9420abb787"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6090124364661963,
+          "source_type": "note",
+          "source_id": 5312,
+          "source_version": 1,
+          "note_id": 5312,
+          "citation_key": "25a5099a917288c854d8081215414e6182bef5a4f87e83581a0d0707578df871"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6326625103433424
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1090.46,
+      "result_count": 2,
+      "candidate_count": 303,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "c565c01483142c4b03df358ced52652f65e6fcf81b1b666bed10094613dfa3ff",
+      "task_type": "insufficient_evidence",
+      "answerable": false,
+      "gold_sources": [
+        {
+          "source_type": "note",
+          "note_id": 5279,
+          "topic": "办公室肩颈活动计划"
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6525229492111617,
+          "source_type": "note",
+          "source_id": 41,
+          "source_version": 1,
+          "note_id": 41,
+          "citation_key": "a6ac706b5c798b8b54faf4e7190cb97b73a98fbdfeddd8984eadc2fc6388c401"
+        },
+        {
+          "rank": 2,
+          "confidence": 0.6277439045527834,
+          "source_type": "note",
+          "source_id": 461,
+          "source_version": 1,
+          "note_id": 461,
+          "citation_key": "0fcef18490ffd4389f25fc959937d0081999ac54c7eb03f8debb9e100455752b"
+        },
+        {
+          "rank": 3,
+          "confidence": 0.6204541229922469,
+          "source_type": "note",
+          "source_id": 2154,
+          "source_version": 1,
+          "note_id": 2154,
+          "citation_key": "049e470fcbc5c7a35e961ef527575bbe7c8caf87d4b40136cab74e15c72b8ddb"
+        },
+        {
+          "rank": 4,
+          "confidence": 0.6160266536179438,
+          "source_type": "note",
+          "source_id": 3133,
+          "source_version": 1,
+          "note_id": 3133,
+          "citation_key": "88d72fb8b8cbbdf5f81054abff8512e31444eea81eaf94562898839ca4dac878"
+        },
+        {
+          "rank": 5,
+          "confidence": 0.6157905830534028,
+          "source_type": "note",
+          "source_id": 2163,
+          "source_version": 1,
+          "note_id": 2163,
+          "citation_key": "850cc7b4989892f39f6cd49e1787d7ba672b2efc10b00a6d2647a0c59fbd4e8e"
+        },
+        {
+          "rank": 6,
+          "confidence": 0.6118037240775828,
+          "source_type": "note",
+          "source_id": 1231,
+          "source_version": 1,
+          "note_id": 1231,
+          "citation_key": "9d0b0772d061bbcb8421aa48e42023b15c5453b0f4736c4bc4d8ebb019683369"
+        },
+        {
+          "rank": 7,
+          "confidence": 0.6064233084308942,
+          "source_type": "note",
+          "source_id": 896,
+          "source_version": 1,
+          "note_id": 896,
+          "citation_key": "95bd17b87fc1e1de9c6c42378ff8c5738e8fc2577a429a1b80d2e9914e966458"
+        },
+        {
+          "rank": 8,
+          "confidence": 0.600159745410511,
+          "source_type": "note",
+          "source_id": 4254,
+          "source_version": 1,
+          "note_id": 4254,
+          "citation_key": "b229557e82949f4dbd4c08f858fb8cfecc5d5e54a95615057a77b45befce4f74"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 0,
+        "reciprocal_rank": 0,
+        "ndcg_at_k": 0,
+        "citation_precision": 1,
+        "source_precision_at_k": 0,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6525229492111617
+      },
+      "failure_category": "missed_all_gold",
+      "latency_ms": 1021.9,
+      "result_count": 8,
+      "candidate_count": 272,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "6759cd139f405c5e557d7d0cabb92adfe8c5d4d1b0964f102e2a81963443887f",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5440,
+          "topic": "产品经理面试复盘",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6669255904545455,
+          "source_type": "note_media",
+          "source_id": 6759,
+          "source_version": 1,
+          "note_id": 5440,
+          "position": 2,
+          "citation_key": "4659f265f70323328e22edbf3564bd899f692b2008de3278bd5e9c8df6b1cd7d"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6669255904545455
+      },
+      "latency_ms": 166.31,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "41b241c58b1f6a937d6b279813abcbe1d9c98416f22ace253380114d18ce3d14",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5447,
+          "topic": "杭州三天两夜慢游路线",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6760956604545455,
+          "source_type": "note_media",
+          "source_id": 6787,
+          "source_version": 1,
+          "note_id": 5447,
+          "position": 2,
+          "citation_key": "745a3080a3cec55f513f2b4231fd3137913f5bbbf6cda76ed5a2f8dffc9832fe"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6760956604545455
+      },
+      "latency_ms": 166.02,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "96ca32c2a9d6bdd5fd71183f6430b2bed3efd958bc1ac024e995ce942b2170e7",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5254,
+          "topic": "敏感肌通勤防晒实测",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6639797594545456,
+          "source_type": "note_media",
+          "source_id": 6015,
+          "source_version": 1,
+          "note_id": 5254,
+          "position": 2,
+          "citation_key": "e15bc8163d47a8625b65879154d9fc59b52662cd0e010449489ecc0277871a49"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6639797594545456
+      },
+      "latency_ms": 170.63,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "f4c81ea34c9d1e2c5a95bd1c4e13517da0901d5d2842e82df7194f0787081be0",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5261,
+          "topic": "平板无纸化学习流程",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6780155854545455,
+          "source_type": "note_media",
+          "source_id": 6043,
+          "source_version": 1,
+          "note_id": 5261,
+          "position": 2,
+          "citation_key": "96e4fff45c19bec982c60832e967007bdcc0f4640a8d4d8c89661c5068631975"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6780155854545455
+      },
+      "latency_ms": 179.3,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "da1dac4022611ecdb5c4a83af486dbe3b8fa1d2ccf2eb8eaadb133f1cbe8552f",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5268,
+          "topic": "小户型玄关收纳改造",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6794227254545455,
+          "source_type": "note_media",
+          "source_id": 6071,
+          "source_version": 1,
+          "note_id": 5268,
+          "position": 2,
+          "citation_key": "a7d46f25d4059e6ec8bf3e4446a7398b5d32fd54ca983a369e45c5cb9612b408"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6794227254545455
+      },
+      "latency_ms": 172.28,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "e7575f20b897716bd959ca1c722e3d188c931f9c86291ccd2db38093bed8b301",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5275,
+          "topic": "梨形身材秋冬叠穿记录",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6678343654545456,
+          "source_type": "note_media",
+          "source_id": 6099,
+          "source_version": 1,
+          "note_id": 5275,
+          "position": 2,
+          "citation_key": "c436d5f87a391c1446974c09a99d65f7624591a63157e209e4dd72dc5e390e0a"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6678343654545456
+      },
+      "latency_ms": 165.83,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "d6fb206606e96410a8f38e8dc43bdfde8644666ec27bdfb0ead703ea7e8e368f",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5282,
+          "topic": "考研英语阅读复盘法",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6839833234545455,
+          "source_type": "note_media",
+          "source_id": 6127,
+          "source_version": 1,
+          "note_id": 5282,
+          "position": 2,
+          "citation_key": "951d2e6f54963e1c67f020c0c860a38f00ff0fa3465047db11dc445b991f86be"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6839833234545455
+      },
+      "latency_ms": 161.06,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "aa1edf78910ff8509ca743a5e32ac2c92d6c61ec1677dddda2f2ec770c7c26ff",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5289,
+          "topic": "新手八周力量训练",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6689794534545456,
+          "source_type": "note_media",
+          "source_id": 6155,
+          "source_version": 1,
+          "note_id": 5289,
+          "position": 2,
+          "citation_key": "56c96c058d43118b71ae2becb0e4db58eb409919a81d6208d4001f4b40de1fe9"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6689794534545456
+      },
+      "latency_ms": 155.26,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "a9e703ebf57e93f0792e2133f474722a3e5e01006111b8050b1aefb1083ee8f8",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5296,
+          "topic": "空气炸锅工作日晚餐",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6632348824545455,
+          "source_type": "note_media",
+          "source_id": 6183,
+          "source_version": 1,
+          "note_id": 5296,
+          "position": 2,
+          "citation_key": "791638fec4233736e32eb79c7294fba5a60c4bbee96f6614a47592b1366ef535"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6632348824545455
+      },
+      "latency_ms": 158.23,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    },
+    {
+      "case_checksum": "39ee878afa583374879a9fb7fb1398bdb433bc94764eb10ce109eb73af66bb22",
+      "task_type": "ocr_detail",
+      "answerable": true,
+      "gold_sources": [
+        {
+          "source_type": "note_media",
+          "note_id": 5303,
+          "topic": "上海可办公咖啡店观察",
+          "position": 2
+        }
+      ],
+      "retrieved_sources": [
+        {
+          "rank": 1,
+          "confidence": 0.6829169726037889,
+          "source_type": "note_media",
+          "source_id": 6211,
+          "source_version": 1,
+          "note_id": 5303,
+          "position": 2,
+          "citation_key": "ed897c2f80fbb27b86d28a51dae7f7aa4a519eeec9718bed49492dddabe4d488"
+        }
+      ],
+      "metrics": {
+        "recall_at_k": 1,
+        "reciprocal_rank": 1,
+        "ndcg_at_k": 1,
+        "citation_precision": 1,
+        "source_precision_at_k": 1,
+        "rejected": false,
+        "authorization_leak": false,
+        "top_confidence": 0.6829169726037889
+      },
+      "latency_ms": 213.69,
+      "result_count": 1,
+      "candidate_count": 6,
+      "decision_status": "candidates",
+      "embedding_calls": 1
+    }
+  ],
+  "started_at": "2026-07-18T03:27:15.8049714Z",
+  "completed_at": "2026-07-18T03:28:42.3746472Z",
+  "development_gate": {
+    "passed": false,
+    "checks": {
+      "citation_precision_gte_0_90": true,
+      "dataset_contract_matched": true,
+      "mrr_at_10_gte_0_70": false,
+      "no_relevant_rejection_accuracy_gte_0_85": true,
+      "recall_at_10_gte_0_85": false
+    },
+    "values": {
+      "citation_precision": 1,
+      "dataset_contract_matched": 1,
+      "mrr_at_10": 0.5598,
+      "no_relevant_rejection_accuracy": 0.9091,
+      "recall_at_10": 0.5652
+    }
+  },
+  "dataset_contract_matched": true
+}

@@ -14,6 +14,12 @@ COPY bin/noteinsight-dlqctl /app/noteinsight-dlqctl
 COPY bin/noteinsight-evalfreeze /app/noteinsight-evalfreeze
 COPY bin/noteinsight-datasetfreeze /app/noteinsight-datasetfreeze
 COPY bin/noteinsight-evidence /app/noteinsight-evidence
+COPY bin/noteinsight-retrieval-index /app/noteinsight-retrieval-index
+COPY bin/noteinsight-vector-index /app/noteinsight-vector-index
+COPY bin/noteinsight-retrieval-search /app/noteinsight-retrieval-search
+COPY bin/noteinsight-retrieval-eval /app/noteinsight-retrieval-eval
+COPY bin/noteinsight-eval-dataset /app/noteinsight-eval-dataset
+COPY bin/noteinsight-benchmark-audit /app/noteinsight-benchmark-audit
 COPY migrations /app/migrations
 
 USER 65532:65532

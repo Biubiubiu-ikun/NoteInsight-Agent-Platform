@@ -4,11 +4,11 @@ Updated: 2026-07-18
 
 ## Authority
 
-`最新项目规划.md` V6.9 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.1 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
-- Phase 1 through Phase 7A are implemented; Phase 6B keeps a long-soak performance gate open.
+- Phase 1 through Phase 7C are implemented; Phase 6B keeps a long-soak performance gate open and Phase 7C retrieval quality gates remain failed baselines.
 - Phase 5C fact materialization is complete.
 - Local P0/P1 pre-retrieval gaps are closed. The sanitized public GitHub remote has Actions, CodeQL upload, CODEOWNERS, PR/security policy and protected `main`; the full holdout and pre-public history remain in a private archive. Independent human holdout review and production/long-soak gates remain open.
 - Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; release hardening is preserved by tag `v0.6.5`.
@@ -16,7 +16,9 @@ Updated: 2026-07-18
 - Approved retrieval benchmark v4 has 240 unique cases and checksum `851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74`; v3 is retired.
 - Frontend testing console is available at `http://127.0.0.1:15173/` while the dev server is running.
 - Phase 7A canonical evidence is complete on frozen dataset version `2`: 25,448 documents, 56,349 chunks and 153,348 exact citations.
-- Next planned work is Phase 7B authorization-filtered PostgreSQL lexical retrieval and offline development-set evaluation.
+- Phase 7B/7C provides authorization-filtered lexical, vector, and hybrid retrieval with exact citations, immutable index/evaluation lineage, public API, observability, and real PostgreSQL security tests.
+- The full Qdrant index contains 56,349 points. Formal lexical, vector, and hybrid baselines all fail Recall/MRR gates; the sealed v4 holdout has not been used.
+- Next planned work is Phase 7D: independently reviewed benchmark v5, resumable/reconciled vector indexing, dependency recovery/security, and concurrent load evidence before Agent work.
 
 ## Runtime Ports
 
@@ -31,12 +33,15 @@ Updated: 2026-07-18
 | NATS monitor | `http://127.0.0.1:18222` |
 | Prometheus optional | `http://127.0.0.1:19090` |
 | Grafana optional | `http://127.0.0.1:13000` |
+| Qdrant retrieval profile | `http://127.0.0.1:16333` |
+| TEI embedding profile | `http://127.0.0.1:18082` |
 
 ## Resume
 
 ```powershell
 .\scripts\build_backend_linux.ps1
 docker compose up -d --build --wait
+docker compose --profile retrieval up -d qdrant text-embeddings
 .\scripts\migrate.ps1
 .\scripts\start_frontend.ps1
 Invoke-RestMethod http://127.0.0.1:18080/ready
@@ -79,9 +84,15 @@ cd backend-go
 go run ./cmd/evalfreeze -verify-only `
   -output-dir ../evaluation/benchmarks/retrieval_v4
 
+go run ./cmd/benchmarkaudit `
+  --benchmark-root ../evaluation/benchmarks/retrieval_v4 `
+  --output ../evaluation/results/retrieval_v4/development_benchmark_audit_v1.json
+
 cd ..
 .\scripts\evidence.ps1 -Operation audit `
   -RunId phase7a_dv2_rebuild_v2_20260718
+
+.\scripts\smoke_phase7_retrieval.ps1 -Modes lexical,vector,hybrid
 
 docker compose run --rm --no-deps `
   --entrypoint /app/noteinsight-reconcile worker --full
@@ -95,6 +106,12 @@ Latest verified data:
 - frozen retrieval dataset: version `2`, 113,921 source references, checksum `b91df11ca9136e000c759fd2c6de5b448816bb57d903849c478f99db8533eab5`;
 - evidence run `phase7a_dv2_v1_20260718`: 1,283 fact inputs, 25,448 documents, 56,349 chunks, 153,348 citations and output checksum `3f372c59b8108bd95fb747e5d04aa73fe35ea6657f7219022ce047b07da3ee1a`;
 - deterministic rebuild `phase7a_dv2_rebuild_v2_20260718`: all 25,448 documents reused, identical output checksum, zero audit violations and about 46 seconds of database run time;
+- full vector index `qwen3_dense_cosine_v1`: 56,349 points in collection `noteinsight_7aa574ea1bb52ae1591b4ad0d5969013`, built in 1h1m37s with checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627`;
+- formal lexical baseline: Recall@10 `0.6812`, MRR `0.6585`, citation integrity `1.0`, no-relevant rejection `1.0`;
+- formal vector baseline: Recall@10 `0.2391`, MRR `0.2366`, citation integrity `1.0`, no-relevant rejection `0.9091`, P95 `548.66ms`;
+- formal hybrid baseline: Recall@10 `0.5652`, MRR `0.5598`, citation integrity `1.0`, no-relevant rejection `0.9091`, P95 `2262.06ms`;
+- all formal retrieval runs match dataset version `2` and fail the Recall/MRR gate; quality-subset results remain diagnostic only and the v4 holdout remains sealed;
+- benchmark audit checksum `2e702eb90709b965467ffa79275189e95da6349ed4d4df425194fee40b616850`: 58 distinguishable Gold cases, 11 no-Gold cases, and 11 insufficient-evidence cases requiring independent review;
 - all registry-backed citation source slices were compared on the main data set with zero mismatches;
 - main database after Phase 7A-0 acceptance: 5,511 active notes, 6,813 media, 101,635 active comments and 113,927 active Evidence Sources;
 - invariants: zero missing dataset source, counter drift, duplicate dataset, active Outbox, JetStream pending or redelivery;

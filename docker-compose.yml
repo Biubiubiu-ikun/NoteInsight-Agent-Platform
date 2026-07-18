@@ -19,6 +19,16 @@ services:
       RATE_LIMIT_CONTENT_WRITE_LIMIT: "${RATE_LIMIT_CONTENT_WRITE_LIMIT:-30}"
       RATE_LIMIT_COMMENT_WRITE_LIMIT: "${RATE_LIMIT_COMMENT_WRITE_LIMIT:-60}"
       RATE_LIMIT_INTERACTION_WRITE_LIMIT: "${RATE_LIMIT_INTERACTION_WRITE_LIMIT:-120}"
+      RATE_LIMIT_RETRIEVAL_READ_LIMIT: "${RATE_LIMIT_RETRIEVAL_READ_LIMIT:-120}"
+      RATE_LIMIT_RETRIEVAL_READ_WINDOW: "${RATE_LIMIT_RETRIEVAL_READ_WINDOW:-1m}"
+      RETRIEVAL_QUERY_TIMEOUT: "${RETRIEVAL_QUERY_TIMEOUT:-4s}"
+      QDRANT_URL: http://qdrant:6333
+      EMBEDDING_URL: http://text-embeddings:80
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}"
+      EMBEDDING_REVISION: "${EMBEDDING_REVISION:-97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3}"
+      EMBEDDING_DIMENSION: "${EMBEDDING_DIMENSION:-1024}"
+      EMBEDDING_BATCH_SIZE: "${EMBEDDING_BATCH_SIZE:-32}"
+      RETRIEVAL_DEPENDENCY_TIMEOUT: "${RETRIEVAL_DEPENDENCY_TIMEOUT:-30s}"
       RECONCILE_ENABLED: "${RECONCILE_ENABLED:-true}"
     ports:
       - "${BACKEND_PORT:-18080}:8080"
@@ -118,6 +128,52 @@ services:
       retries: 20
     restart: unless-stopped
 
+  qdrant:
+    image: qdrant/qdrant:v1.18.2
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-qdrant"
+    profiles: ["retrieval"]
+    ports:
+      - "${QDRANT_HTTP_PORT:-16333}:6333"
+      - "${QDRANT_GRPC_PORT:-16334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  text-embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:turing-1.9
+    container_name: "${CONTAINER_PREFIX:-creatorinsight}-text-embeddings"
+    profiles: ["retrieval"]
+    gpus: all
+    environment:
+      HTTP_PROXY: "${CONTAINER_HTTP_PROXY:-}"
+      HTTPS_PROXY: "${CONTAINER_HTTPS_PROXY:-}"
+      http_proxy: "${CONTAINER_HTTP_PROXY:-}"
+      https_proxy: "${CONTAINER_HTTPS_PROXY:-}"
+      NO_PROXY: "localhost,127.0.0.1,qdrant,postgres,redis,nats,backend,worker"
+      no_proxy: "localhost,127.0.0.1,qdrant,postgres,redis,nats,backend,worker"
+    command:
+      - --model-id
+      - "${EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}"
+      - --dtype
+      - float16
+      - --revision
+      - "${EMBEDDING_REVISION:-97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3}"
+      - --max-client-batch-size
+      - "${EMBEDDING_MAX_CLIENT_BATCH_SIZE:-64}"
+      - --max-batch-tokens
+      - "${EMBEDDING_MAX_BATCH_TOKENS:-2048}"
+      - --max-batch-requests
+      - "${EMBEDDING_MAX_BATCH_REQUESTS:-8}"
+      - --max-concurrent-requests
+      - "${EMBEDDING_MAX_CONCURRENT_REQUESTS:-32}"
+    ports:
+      - "${EMBEDDING_PORT:-18082}:80"
+    volumes:
+      - tei_data:/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   nats_data:
+  qdrant_data:
+  tei_data:

@@ -59,3 +59,16 @@ func TestNotesRoutesReplaceVideoAndDanmuRoutes(t *testing.T) {
 		}
 	}
 }
+
+func TestRetrievalSearchRouteIsRegistered(t *testing.T) {
+	router := NewRouter(RouterDeps{
+		Config: config.Config{App: config.AppConfig{Env: "test"}},
+		Logger: slog.Default(),
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/retrieval/search", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("POST retrieval search status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}

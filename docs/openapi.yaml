@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: NoteInsight API
-  version: 0.6.5
-  description: Phase 6C public community and authenticated content API with contract gates.
+  version: 0.7.3
+  description: Phase 7 lexical, vector, and hybrid evidence retrieval plus authenticated content APIs.
 servers:
   - url: http://localhost:18080
 paths:
@@ -27,6 +27,27 @@ paths:
           description: PostgreSQL and Redis are available.
         '503':
           description: At least one required dependency is unavailable.
+  /api/v1/retrieval/search:
+    post:
+      tags: [Retrieval]
+      description: Lexical, dense-vector, or RRF hybrid retrieval over an immutable evidence ingestion run. A bearer token is optional and expands project-scoped visibility only through active project membership.
+      security: [{}, { bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RetrievalSearchRequest' }
+      responses:
+        '200':
+          description: Authorized, confidence-filtered evidence chunks with exact source citations.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RetrievalSearchResponse' }
+        '400': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+        '504': { $ref: '#/components/responses/Error' }
   /api/v1/auth/register:
     post:
       tags: [Auth]
@@ -359,3 +380,131 @@ components:
       properties:
         items: { type: array, items: { $ref: '#/components/schemas/Note' } }
         next_cursor: { type: string }
+    RetrievalSearchRequest:
+      type: object
+      required: [query]
+      properties:
+        project_id: { type: integer, format: int64, minimum: 1, default: 1 }
+        dataset_version_id: { type: integer, format: int64, minimum: 1 }
+        ingestion_run_id: { type: string, maxLength: 128 }
+        query: { type: string, minLength: 1, maxLength: 2000 }
+        mode: { type: string, enum: [lexical, vector, hybrid], default: lexical }
+        limit: { type: integer, minimum: 1, maximum: 50, default: 10 }
+        filters:
+          type: object
+          properties:
+            document_types:
+              type: array
+              items: { type: string, enum: [note, note_media, note_comment_cluster, note_daily_fact, user_daily_fact] }
+            source_types:
+              type: array
+              items: { type: string, enum: [note, note_media, note_comment_cluster, note_daily_fact, user_daily_fact] }
+    RetrievalSearchResponse:
+      type: object
+      required: [mode, retriever_version, reranker_version, scope, query, decision, results, candidate_count, took_ms, external_model_calls, embedding_calls]
+      properties:
+        mode: { type: string, enum: [lexical, vector, hybrid] }
+        retriever_version: { type: string }
+        reranker_version: { type: string }
+        scope: { $ref: '#/components/schemas/RetrievalScope' }
+        query:
+          type: object
+          required: [original, terms, indexed_terms, candidate_terms]
+          properties:
+            original: { type: string }
+            terms: { type: array, items: { type: string } }
+            indexed_terms: { type: array, items: { type: string } }
+            candidate_terms: { type: array, items: { type: string } }
+            hinted_note_ids: { type: array, items: { type: integer, format: int64 } }
+            preferred_document_type: { type: string }
+        decision:
+          type: object
+          required: [status, reason, threshold, top_confidence]
+          properties:
+            status: { type: string, enum: [candidates, no_relevant_document] }
+            reason: { type: string }
+            threshold: { type: number }
+            top_confidence: { type: number }
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/RetrievalResult' }
+        candidate_count: { type: integer }
+        took_ms: { type: number }
+        external_model_calls: { type: integer, minimum: 0, maximum: 1 }
+        embedding_calls: { type: integer, minimum: 0, maximum: 1 }
+    RetrievalScope:
+      type: object
+      required: [project_id, dataset_id, dataset_version_id, ingestion_run_id, ingestion_output_checksum, parser_version, chunker_version, tokenizer_version, lexical_index_version, lexical_index_checksum]
+      properties:
+        project_id: { type: integer, format: int64 }
+        project_visibility: { type: string }
+        dataset_id: { type: integer, format: int64 }
+        dataset_version_id: { type: integer, format: int64 }
+        dataset_version: { type: integer, format: int64 }
+        dataset_manifest_checksum: { type: string }
+        ingestion_run_id: { type: string }
+        ingestion_output_checksum: { type: string }
+        parser_version: { type: string }
+        chunker_version: { type: string }
+        tokenizer_version: { type: string }
+        lexical_index_version: { type: string }
+        lexical_index_checksum: { type: string }
+        vector_index_version: { type: string }
+        vector_index_checksum: { type: string }
+        vector_collection: { type: string }
+        embedding_model: { type: string }
+        embedding_revision: { type: string }
+    RetrievalResult:
+      type: object
+      required: [rank, score, confidence, document_id, document_key, document_type, source_type, source_version, chunk_id, chunk_key, chunk_index, content, content_hash, start_byte, end_byte, citations]
+      properties:
+        rank: { type: integer, minimum: 1 }
+        score: { type: number }
+        confidence: { type: number }
+        fts_score: { type: number }
+        vector_score: { type: number }
+        hybrid_score: { type: number }
+        weighted_coverage: { type: number }
+        document_id: { type: integer, format: int64 }
+        document_key: { type: string }
+        document_type: { type: string }
+        source_type: { type: string }
+        source_id: { type: integer, format: int64 }
+        source_version: { type: integer, format: int64 }
+        note_id: { type: integer, format: int64 }
+        media_position: { type: integer }
+        chunk_id: { type: integer, format: int64 }
+        chunk_key: { type: string }
+        chunk_index: { type: integer }
+        content: { type: string }
+        content_hash: { type: string }
+        start_byte: { type: integer }
+        end_byte: { type: integer }
+        citations:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/SourceCitation' }
+    SourceCitation:
+      type: object
+      required: [citation_id, citation_key, project_id, dataset_id, dataset_version_id, document_id, chunk_id, source_type, source_id, source_version, source_content_hash, parser_version, document_start_byte, document_end_byte, source_start_byte, source_end_byte, quote, quote_hash]
+      properties:
+        citation_id: { type: integer, format: int64 }
+        citation_key: { type: string }
+        project_id: { type: integer, format: int64 }
+        dataset_id: { type: integer, format: int64 }
+        dataset_version_id: { type: integer, format: int64 }
+        document_id: { type: integer, format: int64 }
+        chunk_id: { type: integer, format: int64 }
+        source_type: { type: string }
+        source_id: { type: integer, format: int64 }
+        source_version: { type: integer, format: int64 }
+        note_id: { type: integer, format: int64 }
+        media_position: { type: integer }
+        source_content_hash: { type: string }
+        parser_version: { type: string }
+        document_start_byte: { type: integer }
+        document_end_byte: { type: integer }
+        source_start_byte: { type: integer }
+        source_end_byte: { type: integer }
+        quote: { type: string }
+        quote_hash: { type: string }

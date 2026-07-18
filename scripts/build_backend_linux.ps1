@@ -54,6 +54,18 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Dataset snapshot Linux build failed." }
     & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-evidence" ./cmd/evidence
     if ($LASTEXITCODE -ne 0) { throw "Evidence ingestion Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-retrieval-index" ./cmd/retrievalindex
+    if ($LASTEXITCODE -ne 0) { throw "Lexical retrieval index Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-vector-index" ./cmd/vectorindex
+    if ($LASTEXITCODE -ne 0) { throw "Vector retrieval index Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-retrieval-search" ./cmd/retrievalsearch
+    if ($LASTEXITCODE -ne 0) { throw "Retrieval search Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-retrieval-eval" ./cmd/retrievaleval
+    if ($LASTEXITCODE -ne 0) { throw "Retrieval evaluation Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-eval-dataset" ./cmd/evaldataset
+    if ($LASTEXITCODE -ne 0) { throw "Evaluation dataset Linux build failed." }
+    & $GoCommand build -trimpath -ldflags="-s -w" -o "bin/noteinsight-benchmark-audit" ./cmd/benchmarkaudit
+    if ($LASTEXITCODE -ne 0) { throw "Benchmark audit Linux build failed." }
 }
 finally {
     $env:CGO_ENABLED = $PreviousCGOEnabled
