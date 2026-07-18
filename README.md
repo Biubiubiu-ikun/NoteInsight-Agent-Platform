@@ -41,11 +41,10 @@ docker-compose.yml      API/worker/PostgreSQL/Redis/NATS runtime
 ## Quick Start
 
 ```powershell
-.\scripts\build_backend_linux.ps1
-docker compose up -d --build --wait
-.\scripts\migrate.ps1
-.\scripts\start_frontend.ps1
+.\scripts\start_local_stack.ps1 -Build -StartFrontend
 ```
+
+The startup entry point waits for the full observability/retrieval stack, applies migrations, and warms lexical, vector, and hybrid retrieval before reporting the local environment ready.
 
 Open:
 
