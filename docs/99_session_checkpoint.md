@@ -4,13 +4,13 @@ Updated: 2026-07-18
 
 ## Authority
 
-`最新项目规划.md` V7.2 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.4 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
 - Phase 1 through Phase 7C are implemented; Phase 6B keeps a long-soak performance gate open and Phase 7C retrieval quality gates remain failed baselines.
 - Phase 5C fact materialization is complete.
-- Local P0/P1 pre-retrieval gaps are closed. The sanitized public GitHub remote has Actions, CodeQL upload, CODEOWNERS, PR/security policy and protected `main`; the full holdout and pre-public history remain in a private archive. Independent human holdout review and production/long-soak gates remain open.
+- Local P0/P1 pre-retrieval gaps are closed. The sanitized public GitHub remote has Actions, CodeQL upload, CODEOWNERS, PR/security policy and protected `main`; the full holdout and pre-public history remain in a private archive. Independent human holdout review and production-like deployment gates remain open.
 - Phase 6C is recoverable at commit `f0dee23`, annotated tag `v0.6.4`; release hardening is preserved by tag `v0.6.5`.
 - Dataset version `2` freezes 113,921 source references at checksum `b91df11ca9136e000c759fd2c6de5b448816bb57d903849c478f99db8533eab5`.
 - Approved retrieval benchmark v4 has 240 unique cases and checksum `851a0ae94df77291d72904185754a2bea65893826fa942d52961472b65ab1b74`; v3 is retired.
@@ -19,7 +19,9 @@ Updated: 2026-07-18
 - Phase 7B/7C provides authorization-filtered lexical, vector, and hybrid retrieval with exact citations, immutable index/evaluation lineage, public API, observability, and real PostgreSQL security tests.
 - The full Qdrant index contains 56,349 points. Formal lexical, vector, and hybrid baselines all fail Recall/MRR gates; the sealed v4 holdout has not been used.
 - Phase 7D vector recovery is complete locally: PostgreSQL lease/checkpoint resume, exact point-id/content-hash reconciliation, stale/orphan repair, immutable completion audit, snapshot retention, and an isolated 56,349-point Qdrant restore drill.
-- Next planned work is Phase 7D benchmark v5 independent review plus dependency security/observability and concurrent query/index load evidence before Agent work.
+- Phase 7D local load evidence is complete: lexical v3 preserves v2 quality while halving formal P95; mixed 2 RPS passes without indexing, mixed 1 RPS passes with batch-8 indexing, and Qdrant/TEI restart recovery passes. Mixed 3 RPS and shared-index 2 RPS are retained failed capacity boundaries.
+- The 30-minute warm mixed 2 RPS soak passes with 3,601 iterations, 0.6387 percent timeouts, zero dropped iterations/rate limits/invalid citations, and a successful recovery query.
+- Next planned work is benchmark v5 independent review plus OpenTelemetry, production-like multi-instance capacity and deployment security evidence before any public production-ready claim. Local `pg_stat_statements` and slow-query diagnostics are configured.
 
 ## Runtime Ports
 

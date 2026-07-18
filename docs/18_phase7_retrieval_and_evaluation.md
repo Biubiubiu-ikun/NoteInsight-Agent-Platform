@@ -48,10 +48,10 @@ Anonymous callers can search public evidence. A valid JWT expands access only th
 Current implementation identities:
 
 - lexical index: `postgres_ts_stat_v1`;
-- lexical retriever: `postgres_fts_lexical_v2`;
+- lexical retriever baseline: `postgres_fts_lexical_v2`; the Phase 7D load-tested candidate pre-ranking revision is `postgres_fts_lexical_v3`;
 - vector index: `qwen3_dense_cosine_v1`;
 - vector retriever: `qdrant_qwen3_dense_v1`;
-- hybrid retriever: `rrf_lexical_dense_v2`;
+- hybrid retriever baseline: `rrf_lexical_dense_v2`; the lexical-v3 composition reports `rrf_lexical_dense_v3`;
 - reranker: `weighted_coverage_v2`;
 - metrics: `retrieval_metrics_v2`.
 
@@ -177,9 +177,13 @@ cd ..
 
 The 2026-07-18 isolated restore drill used Qdrant `v1.18.2`: the downloaded collection snapshot was 310,594,560 bytes with SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938`; the temporary collection restored all 56,349 points and was then deleted. Snapshot files live under a Git-ignored artifact directory. `prune` retains at least the configured recent snapshot count. See the [official Qdrant snapshot compatibility and recovery rules](https://qdrant.tech/documentation/snapshots/).
 
+## Phase 7D Load Evidence
+
+Lexical v3 preserves all recorded v2 quality metrics while reducing formal P95 from 2,831.99 ms to 1,404.09 ms. Local mixed 2 RPS passes without indexing, including a 30-minute warm soak with 3,601 iterations, a 0.6387 percent timeout rate, no dropped iterations or invalid citations, and lexical/vector/hybrid P95 of 3,192.54/616.51/3,098.76 ms. Mixed 3 RPS crosses the four-second timeout budget. Qdrant and TEI restart scenarios recover, and a batch-8 index can share the stack at mixed 1 RPS without online errors. See [Phase 7D Retrieval Load and Observability](20_phase7d_load_and_observability.md) for commands, invalid-run controls and limits.
+
 ## Remaining Before Phase 8
 
 1. Execute and freeze the [benchmark v5 independent review protocol](19_phase7d_benchmark_v5_review.md) with multi-Gold relevance labels and public authorization cases. The public scaffold and schema exist; no human-review claim has been made yet.
 2. Benchmark a pinned cross-encoder reranker only after benchmark v5 is frozen.
-3. Run vector/hybrid load and failure tests with production-like CPU/GPU quotas; add dependency saturation and index-build dashboards/alerts.
+3. Repeat the now-automated load/failure matrix with production-like CPU/GPU quotas, multiple API instances and an external load generator; local single-instance evidence and dashboards/alerts are complete.
 4. Configure Qdrant API keys, TLS/private networking, managed backup/restore, secret management, and cloud capacity evidence before production deployment.

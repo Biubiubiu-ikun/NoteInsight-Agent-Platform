@@ -4,17 +4,25 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
 	"strings"
 	"time"
+
+	"creatorinsight/backend-go/internal/platform/observability"
 )
 
 const defaultQueryInstruction = "Given a creator-content platform question, retrieve Chinese evidence passages that answer the query"
 
-const maxEmbeddingAttempts = 3
+const (
+	maxQueryEmbeddingAttempts    = 3
+	maxDocumentEmbeddingAttempts = 8
+	embeddingRetryBaseDelay      = 100 * time.Millisecond
+	embeddingRetryMaxDelay       = 5 * time.Second
+)
 
 type Embedder interface {
 	EmbedDocuments(context.Context, []string) ([][]float32, error)
@@ -22,39 +30,54 @@ type Embedder interface {
 }
 
 type TEIEmbedder struct {
-	baseURL     string
-	model       string
-	revision    string
-	dimension   int
-	instruction string
-	client      *http.Client
+	baseURL          string
+	model            string
+	revision         string
+	dimension        int
+	instruction      string
+	client           *http.Client
+	queryAttempts    int
+	documentAttempts int
+	retryBaseDelay   time.Duration
+	retryMaxDelay    time.Duration
 }
 
 func NewTEIEmbedder(baseURL string, model string, revision string, dimension int, timeout time.Duration) *TEIEmbedder {
 	return &TEIEmbedder{
 		baseURL: strings.TrimRight(strings.TrimSpace(baseURL), "/"), model: model,
 		revision: revision, dimension: dimension, instruction: defaultQueryInstruction,
-		client: &http.Client{Timeout: timeout},
+		client: &http.Client{Timeout: timeout}, queryAttempts: maxQueryEmbeddingAttempts,
+		documentAttempts: maxDocumentEmbeddingAttempts, retryBaseDelay: embeddingRetryBaseDelay,
+		retryMaxDelay: embeddingRetryMaxDelay,
 	}
 }
 
-func (e *TEIEmbedder) EmbedDocuments(ctx context.Context, inputs []string) ([][]float32, error) {
-	return e.embed(ctx, inputs)
+func (e *TEIEmbedder) EmbedDocuments(ctx context.Context, inputs []string) (vectors [][]float32, err error) {
+	if len(inputs) == 0 {
+		return [][]float32{}, nil
+	}
+	finish := observability.StartRetrievalDependency("tei", "embed_documents")
+	observability.ObserveRetrievalEmbeddingBatch("documents", len(inputs))
+	defer func() { finish(retrievalDependencyResult(ctx, err)) }()
+	return e.embed(ctx, inputs, "embed_documents", e.documentAttempts)
 }
 
-func (e *TEIEmbedder) EmbedQuery(ctx context.Context, query string) ([]float32, error) {
+func (e *TEIEmbedder) EmbedQuery(ctx context.Context, query string) (vector []float32, err error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, fmt.Errorf("%w: embedding query is required", ErrInvalidInput)
 	}
-	vectors, err := e.embed(ctx, []string{"Instruct: " + e.instruction + "\nQuery: " + query})
+	finish := observability.StartRetrievalDependency("tei", "embed_query")
+	observability.ObserveRetrievalEmbeddingBatch("query", 1)
+	defer func() { finish(retrievalDependencyResult(ctx, err)) }()
+	vectors, err := e.embed(ctx, []string{"Instruct: " + e.instruction + "\nQuery: " + query}, "embed_query", e.queryAttempts)
 	if err != nil {
 		return nil, err
 	}
 	return vectors[0], nil
 }
 
-func (e *TEIEmbedder) embed(ctx context.Context, inputs []string) ([][]float32, error) {
+func (e *TEIEmbedder) embed(ctx context.Context, inputs []string, operation string, maxAttempts int) ([][]float32, error) {
 	if len(inputs) == 0 {
 		return [][]float32{}, nil
 	}
@@ -68,7 +91,7 @@ func (e *TEIEmbedder) embed(ctx context.Context, inputs []string) ([][]float32, 
 		return nil, fmt.Errorf("encode embedding request: %w", err)
 	}
 	var responseBody []byte
-	for attempt := 1; attempt <= maxEmbeddingAttempts; attempt++ {
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		request, requestErr := http.NewRequestWithContext(ctx, http.MethodPost, e.baseURL+"/embed", bytes.NewReader(body))
 		if requestErr != nil {
 			return nil, fmt.Errorf("create embedding request: %w", requestErr)
@@ -76,7 +99,8 @@ func (e *TEIEmbedder) embed(ctx context.Context, inputs []string) ([][]float32, 
 		request.Header.Set("Content-Type", "application/json")
 		response, requestErr := e.client.Do(request)
 		if requestErr != nil {
-			if attempt < maxEmbeddingAttempts && waitForEmbeddingRetry(ctx, attempt) == nil {
+			if attempt < maxAttempts && waitForEmbeddingRetry(ctx, attempt, e.retryBaseDelay, e.retryMaxDelay) == nil {
+				observability.IncRetrievalDependencyRetry("tei", operation, "transport")
 				continue
 			}
 			return nil, fmt.Errorf("call embedding service: %w", requestErr)
@@ -96,8 +120,9 @@ func (e *TEIEmbedder) embed(ctx context.Context, inputs []string) ([][]float32, 
 		if response.StatusCode >= 200 && response.StatusCode < 300 {
 			break
 		}
-		if isRetryableEmbeddingStatus(response.StatusCode) && attempt < maxEmbeddingAttempts {
-			if err := waitForEmbeddingRetry(ctx, attempt); err != nil {
+		if isRetryableEmbeddingStatus(response.StatusCode) && attempt < maxAttempts {
+			observability.IncRetrievalDependencyRetry("tei", operation, fmt.Sprintf("http_%d", response.StatusCode))
+			if err := waitForEmbeddingRetry(ctx, attempt, e.retryBaseDelay, e.retryMaxDelay); err != nil {
 				return nil, err
 			}
 			continue
@@ -127,13 +152,29 @@ func (e *TEIEmbedder) embed(ctx context.Context, inputs []string) ([][]float32, 
 	return vectors, nil
 }
 
+func retrievalDependencyResult(ctx context.Context, err error) string {
+	if err == nil {
+		return "success"
+	}
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		return "timeout"
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+		return "canceled"
+	}
+	return "error"
+}
+
 func isRetryableEmbeddingStatus(status int) bool {
 	return status == http.StatusTooManyRequests || status == http.StatusBadGateway ||
 		status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
-func waitForEmbeddingRetry(ctx context.Context, attempt int) error {
-	delay := time.Duration(attempt*attempt) * 100 * time.Millisecond
+func waitForEmbeddingRetry(ctx context.Context, attempt int, baseDelay time.Duration, maxDelay time.Duration) error {
+	delay := baseDelay * time.Duration(1<<min(attempt-1, 20))
+	if delay > maxDelay {
+		delay = maxDelay
+	}
 	timer := time.NewTimer(delay)
 	defer timer.Stop()
 	select {

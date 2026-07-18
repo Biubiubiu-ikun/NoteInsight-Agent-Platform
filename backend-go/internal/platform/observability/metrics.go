@@ -2,6 +2,7 @@ package observability
 
 import (
 	"database/sql"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -297,6 +298,48 @@ var (
 		},
 		[]string{"mode"},
 	)
+
+	RetrievalDependencyRequestsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "retrieval_dependency_requests_total",
+			Help: "Total retrieval dependency calls by dependency, operation, and bounded result.",
+		},
+		[]string{"dependency", "operation", "result"},
+	)
+
+	RetrievalDependencyDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "retrieval_dependency_duration_seconds",
+			Help:    "Retrieval dependency call duration by dependency and operation.",
+			Buckets: []float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 4, 8, 15, 30},
+		},
+		[]string{"dependency", "operation"},
+	)
+
+	RetrievalDependencyInFlight = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "retrieval_dependency_in_flight",
+			Help: "Current retrieval dependency calls by dependency and operation.",
+		},
+		[]string{"dependency", "operation"},
+	)
+
+	RetrievalDependencyRetriesTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "retrieval_dependency_retries_total",
+			Help: "Total bounded dependency retries by dependency, operation, and reason.",
+		},
+		[]string{"dependency", "operation", "reason"},
+	)
+
+	RetrievalEmbeddingBatchSize = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "retrieval_embedding_batch_size",
+			Help:    "Embedding inputs per client call by operation.",
+			Buckets: []float64{1, 2, 4, 8, 16, 32, 64},
+		},
+		[]string{"operation"},
+	)
 )
 
 func init() {
@@ -338,6 +381,11 @@ func init() {
 		RetrievalDuration,
 		RetrievalCandidateCount,
 		RetrievalResultCount,
+		RetrievalDependencyRequestsTotal,
+		RetrievalDependencyDuration,
+		RetrievalDependencyInFlight,
+		RetrievalDependencyRetriesTotal,
+		RetrievalEmbeddingBatchSize,
 	)
 }
 
@@ -486,4 +534,27 @@ func ObserveRetrieval(mode string, status string, startedAt time.Time, candidate
 	RetrievalDuration.WithLabelValues(mode).Observe(time.Since(startedAt).Seconds())
 	RetrievalCandidateCount.WithLabelValues(mode).Observe(float64(candidateCount))
 	RetrievalResultCount.WithLabelValues(mode).Observe(float64(resultCount))
+}
+
+func StartRetrievalDependency(dependency string, operation string) func(string) {
+	startedAt := time.Now()
+	RetrievalDependencyInFlight.WithLabelValues(dependency, operation).Inc()
+	var once sync.Once
+	return func(result string) {
+		once.Do(func() {
+			RetrievalDependencyInFlight.WithLabelValues(dependency, operation).Dec()
+			RetrievalDependencyRequestsTotal.WithLabelValues(dependency, operation, result).Inc()
+			RetrievalDependencyDuration.WithLabelValues(dependency, operation).Observe(time.Since(startedAt).Seconds())
+		})
+	}
+}
+
+func IncRetrievalDependencyRetry(dependency string, operation string, reason string) {
+	RetrievalDependencyRetriesTotal.WithLabelValues(dependency, operation, reason).Inc()
+}
+
+func ObserveRetrievalEmbeddingBatch(operation string, size int) {
+	if size > 0 {
+		RetrievalEmbeddingBatchSize.WithLabelValues(operation).Observe(float64(size))
+	}
 }
