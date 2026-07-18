@@ -1,6 +1,6 @@
 # Phase 7D Benchmark v5 Independent Review Protocol
 
-Updated: 2026-07-18
+Updated: 2026-07-19
 
 ## Purpose
 
@@ -56,11 +56,20 @@ The private authoring workspace contains:
 
 ```text
 retrieval_v5_private/
+  review_plan.json
+  authoring_matrix.jsonl
+  authored_cases.template.jsonl
   authored_cases.jsonl
-  candidate_pools.jsonl
-  reviewer_a.jsonl
-  reviewer_b.jsonl
+  resolved_sources.jsonl
+  reviewer_a/assignments.jsonl
+  reviewer_a/submissions.jsonl
+  reviewer_b/assignments.jsonl
+  reviewer_b/submissions.jsonl
   adjudications.jsonl
+  adjudication_queue.jsonl
+  review_ledger.jsonl
+  review_summary.private.json
+  approved_cases.jsonl
   reviewer_identity_map.enc
 ```
 
@@ -79,9 +88,37 @@ evaluation/benchmarks/retrieval_v5/
 
 The JSON Schema in this directory validates the per-case review ledger. The freeze command must reject `machine_validated` cases and any case without two distinct reviewers and a resolved adjudication.
 
+## Executable Workflow
+
+The engineering workflow is complete; this does not mean the human review is complete.
+
+```powershell
+# One-time deterministic 288-slot matrix initialization.
+.\scripts\review_retrieval_benchmark.ps1 -Operation init
+
+# After authors fill authored_cases.jsonl, resolve frozen evidence and create blind assignments.
+.\scripts\review_retrieval_benchmark.ps1 -Operation prepare `
+  -ReviewerA reviewer-a-pseudonym `
+  -ReviewerB reviewer-b-pseudonym
+
+# After each reviewer independently creates submissions.jsonl.
+.\scripts\review_retrieval_benchmark.ps1 -Operation audit
+
+# Only after an independent adjudicator completes adjudications.jsonl.
+.\scripts\review_retrieval_benchmark.ps1 -Operation freeze
+```
+
+`prepare` queries dataset version `2` and ingestion run `phase7a_dv2_rebuild_v2_20260718`. Every candidate must be present in both the immutable dataset membership and the completed ingestion citation graph. Assignments contain canonical source text and content hash, but omit the author's identity and expected answer. They never contain retrieval rank or model score.
+
+`audit` enforces exactly one submission per case from each of two stable, distinct reviewer pseudonyms; neither reviewer may be the author. Every candidate must receive one grade from each reviewer. It reports exact agreement, binary answerability Cohen's kappa, and quadratic weighted relevance kappa overall and by task. Every case then requires a resolved adjudication from a third identity that is neither author nor reviewer.
+
+`freeze` fails closed unless all matrix, independence, adjudication, source-membership, semantic, overall agreement, and per-task agreement gates pass. It then writes `human_approved` cases for the existing `evalfreeze` pipeline and an aggregate public summary. It does not publish holdout text, answer, source labels, nonce, assignments, submissions, or reviewer identities.
+
+The private workspace is Git-ignored and physically stored inside the D-drive project directory. Back it up as a private encrypted artifact before human work begins; do not move it into the public repository.
+
 ## Work Estimate and Order
 
-At 1.5 to 3 minutes per case per reviewer, 288 cases require about 14.4 to 28.8 reviewer-hours before adjudication. This is an external evidence task and should start in parallel with load/security hardening. Ranker thresholds and a cross-encoder must wait until the development split is frozen; the v4 holdout remains sealed throughout.
+At 1.5 to 3 minutes per case per reviewer, 288 cases require about 14.4 to 28.8 reviewer-hours before adjudication. The deterministic matrix and review tooling are ready, but authorship, two human reviews, and adjudication have not started. This is an external evidence task and should start in parallel with load/security hardening. Ranker thresholds and a cross-encoder must wait until the development split is frozen; the v4 holdout remains sealed throughout.
 
 ## Promotion Rule
 

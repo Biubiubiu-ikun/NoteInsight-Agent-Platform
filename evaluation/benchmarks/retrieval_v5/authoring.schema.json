@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform/evaluation/benchmarks/retrieval_v5/authoring.schema.json",
+  "title": "Retrieval Benchmark v5 Authored Case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "author_id",
+    "task_type",
+    "split",
+    "rubric_version",
+    "draft_assistance",
+    "query",
+    "expected_answer",
+    "candidate_refs"
+  ],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" },
+    "author_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+    "task_type": { "$ref": "#/$defs/task_type" },
+    "split": { "enum": ["development", "holdout"] },
+    "rubric_version": { "const": "retrieval_relevance_v1" },
+    "draft_assistance": { "enum": ["none", "model_assisted"] },
+    "query": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "expected_answer": { "type": "string", "minLength": 1, "maxLength": 12000 },
+    "candidate_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/source_ref" }
+    },
+    "adversarial_tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+    },
+    "commitment_nonce": { "type": "string", "minLength": 22, "maxLength": 128 },
+    "metadata": { "type": "object" }
+  },
+  "$defs": {
+    "task_type": {
+      "enum": [
+        "semantic_paraphrase",
+        "typo_robustness",
+        "temporal_conflict",
+        "cross_note_compare",
+        "no_relevant_document",
+        "insufficient_evidence",
+        "ocr_detail",
+        "authorization_boundary",
+        "out_of_domain_noise"
+      ]
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_type", "source_id", "source_version"],
+      "properties": {
+        "source_type": { "enum": ["note", "note_body", "note_media", "note_comment"] },
+        "source_id": { "type": "integer", "minimum": 1 },
+        "source_version": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

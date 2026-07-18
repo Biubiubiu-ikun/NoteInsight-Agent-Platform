@@ -120,11 +120,11 @@ jobs:
       - name: Validate contracts and dashboards
         run: |
           python -m json.tool docs/contracts/domain-event-v1.schema.json >/dev/null
-          python -m json.tool evaluation/benchmarks/retrieval_v5/review.schema.json >/dev/null
+          for schema in evaluation/benchmarks/retrieval_v5/*.schema.json; do python -m json.tool "$schema" >/dev/null; done
           python -m json.tool deploy/observability/grafana/dashboards/platform-overview.json >/dev/null
           python -m pip install --disable-pip-version-check openapi-spec-validator==0.7.2 jsonschema==4.25.1
           openapi-spec-validator docs/openapi.yaml
-          python -c "import json; from jsonschema import Draft202012Validator; Draft202012Validator.check_schema(json.load(open('evaluation/benchmarks/retrieval_v5/review.schema.json', encoding='utf-8')))"
+          python -c "import glob,json; from jsonschema import Draft202012Validator; [Draft202012Validator.check_schema(json.load(open(path, encoding='utf-8'))) for path in glob.glob('evaluation/benchmarks/retrieval_v5/*.schema.json')]"
 
       - name: Validate Prometheus configuration and alert rules
         run: |

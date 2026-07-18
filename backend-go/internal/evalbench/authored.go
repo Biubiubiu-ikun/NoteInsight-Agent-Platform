@@ -130,9 +130,9 @@ func validateAuthoredSemantics(ordinal int, evalCase Case) error {
 	}
 	answerable, hasAnswerable := metadataBool(evalCase.Metadata, "answerable")
 	switch evalCase.TaskType {
-	case "no_relevant_document":
+	case "no_relevant_document", "out_of_domain_noise":
 		if len(evalCase.GoldSources) != 0 || !hasAnswerable || answerable {
-			return fmt.Errorf("authored case %d no_relevant_document requires no gold sources and answerable=false", ordinal)
+			return fmt.Errorf("authored case %d %s requires no gold sources and answerable=false", ordinal, evalCase.TaskType)
 		}
 	case "insufficient_evidence":
 		if len(evalCase.GoldSources) == 0 || !hasAnswerable || answerable {

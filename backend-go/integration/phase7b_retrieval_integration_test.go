@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"creatorinsight/backend-go/internal/dataset"
+	"creatorinsight/backend-go/internal/evalreview"
 	"creatorinsight/backend-go/internal/evidence"
 	"creatorinsight/backend-go/internal/retrieval"
 )
@@ -53,6 +54,22 @@ RETURNING id`, projectID, registered.User.ID).Scan(&noteID); err != nil {
 		RunID: ingestionRunID, DatasetVersionID: snapshot.ID, Mode: "incremental",
 	}); err != nil {
 		t.Fatal(err)
+	}
+	var sourceVersion int64
+	if err := integrationDB.QueryRowContext(ctx, `
+SELECT source_version
+FROM dataset_version_sources
+WHERE dataset_version_id=$1 AND source_type='note' AND source_id=$2`, snapshot.ID, noteID).Scan(&sourceVersion); err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := evalreview.NewRepository(integrationDB).ResolveSources(ctx, snapshot.ID, ingestionRunID, []evalreview.CandidateRef{{
+		SourceType: "note", SourceID: noteID, SourceVersion: sourceVersion,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resolved) != 1 || resolved[0].NoteID != noteID || resolved[0].DatasetVersionID != snapshot.ID || resolved[0].CanonicalText == "" {
+		t.Fatalf("resolved review candidate = %+v", resolved)
 	}
 	retrievalService := retrieval.NewService(retrieval.NewRepository(integrationDB))
 	index, err := retrievalService.BuildLexicalIndex(ctx, ingestionRunID)
