@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform/evaluation/benchmarks/retrieval_v5/assignment.schema.json",
+  "title": "Retrieval Benchmark v5 Blind Review Assignment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "reviewer_id", "task_type", "split", "rubric_version", "query", "candidate_pool", "review_blind"],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" },
+    "reviewer_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+    "task_type": {
+      "enum": [
+        "semantic_paraphrase",
+        "typo_robustness",
+        "temporal_conflict",
+        "cross_note_compare",
+        "no_relevant_document",
+        "insufficient_evidence",
+        "ocr_detail",
+        "authorization_boundary",
+        "out_of_domain_noise"
+      ]
+    },
+    "split": { "enum": ["development", "holdout"] },
+    "rubric_version": { "const": "retrieval_relevance_v1" },
+    "query": { "type": "string", "minLength": 1 },
+    "review_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required_project_id": { "type": "integer", "minimum": 1 },
+        "allowed_user_id": { "type": "integer", "minimum": 1 },
+        "denied_user_id": { "type": "integer", "minimum": 1 },
+        "as_of": { "type": "string" },
+        "comparison_dimensions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1, "maxLength": 120 }
+        }
+      }
+    },
+    "candidate_pool": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "review_blind": { "const": true }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_type",
+        "source_id",
+        "source_version",
+        "note_id",
+        "visibility",
+        "content_hash",
+        "canonical_text",
+        "dataset_version_id",
+        "ingestion_run_id"
+      ],
+      "properties": {
+        "source_type": { "enum": ["note", "note_body", "note_media", "note_comment"] },
+        "source_id": { "type": "integer", "minimum": 1 },
+        "source_version": { "type": "integer", "minimum": 1 },
+        "note_id": { "type": "integer", "minimum": 1 },
+        "position": { "type": "integer", "minimum": 0 },
+        "visibility": { "enum": ["public", "project"] },
+        "content_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "canonical_text": { "type": "string", "minLength": 1 },
+        "dataset_version_id": { "type": "integer", "minimum": 1 },
+        "ingestion_run_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" }
+      }
+    }
+  }
+}

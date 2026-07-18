@@ -45,18 +45,20 @@
     "judgment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source_type", "source_id", "relevance_grade"],
+      "required": ["source_type", "source_id", "source_version", "relevance_grade"],
       "properties": {
         "source_type": { "enum": ["note", "note_body", "note_media", "note_comment"] },
         "source_id": { "type": "integer", "minimum": 1 },
+        "source_version": { "type": "integer", "minimum": 1 },
         "relevance_grade": { "type": "integer", "minimum": 0, "maximum": 3 }
       }
     },
     "review": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["reviewer_id", "answerability", "judgments", "reviewed_at"],
+      "required": ["case_id", "reviewer_id", "answerability", "judgments", "reviewed_at"],
       "properties": {
+        "case_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" },
         "reviewer_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
         "answerability": {
           "enum": ["answerable", "insufficient_evidence", "no_relevant_document", "authorization_denied"]
@@ -72,8 +74,9 @@
     "adjudication": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "adjudicator_id", "answerability", "judgments", "rationale", "adjudicated_at"],
+      "required": ["case_id", "status", "adjudicator_id", "answerability", "judgments", "rationale", "adjudicated_at"],
       "properties": {
+        "case_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,128}$" },
         "status": { "const": "resolved" },
         "adjudicator_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
         "answerability": {

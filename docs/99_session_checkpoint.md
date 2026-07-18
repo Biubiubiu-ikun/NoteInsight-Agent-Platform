@@ -1,10 +1,10 @@
 # Session Checkpoint
 
-Updated: 2026-07-18
+Updated: 2026-07-19
 
 ## Authority
 
-`最新项目规划.md` V7.5 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.6 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
@@ -22,7 +22,10 @@ Updated: 2026-07-18
 - Phase 7D local load evidence is complete: lexical v3 preserves v2 quality while halving formal P95; mixed 2 RPS passes without indexing, mixed 1 RPS passes with batch-8 indexing, and Qdrant/TEI restart recovery passes. Mixed 3 RPS and shared-index 2 RPS are retained failed capacity boundaries.
 - The 30-minute warm mixed 2 RPS soak passes with 3,601 iterations, 0.6387 percent timeouts, zero dropped iterations/rate limits/invalid citations, and a successful recovery query.
 - Phase 7D local distributed tracing is complete: W3C context crosses API, SQL/Redis, transactional Outbox, NATS and Worker, while hybrid retrieval includes TEI/Qdrant client spans. Collector, Tempo and the Grafana data source are provisioned; SQL/Redis content and credentials are not exported.
-- Next planned work is benchmark v5 independent review and freeze, followed by same-contract retrieval comparison. Production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
+- Phase 7D benchmark v5 review engineering is complete: deterministic matrix initialization, frozen Evidence Source resolution, blind reviewer assignments, identity conflict checks, overall/per-task agreement, adjudication queue, checksummed ledger, and fail-closed freeze output are implemented in `internal/evalreview` and `cmd/benchmarkreview`.
+- Retrieval evaluation counts `out_of_domain_noise` together with `no_relevant_document` for rejection accuracy and false-positive classification while retaining a separate OOD task slice.
+- The private v5 workspace contains only `review_plan.json`, `authoring_matrix.jsonl`, and an unfilled `authored_cases.template.jsonl`: 288 slots, 144 development + 144 holdout, 32 per task, checksum `7086266255375de7137d0f9502543769c22a53d20f2d280a928469c9183f3a61`. No authored questions, human reviews, adjudications, approved cases, or public review summary exist yet; v5 is not frozen.
+- Next planned work is model-assisted-but-unapproved case drafting and candidate-pool authoring, followed by two real independent reviewers and a third adjudicator. Same-contract retrieval comparison starts only after freeze. Production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
 
 ## Runtime Ports
 
@@ -63,6 +66,14 @@ Invoke-RestMethod http://127.0.0.1:18081/ready
 
 The local runtime lives under the Git-ignored `.tools` tree. The startup script waits for dependencies and warms all three retrieval modes before reporting readiness; this is required when the Docker VHDX is hosted on slower external storage.
 
+Benchmark v5 review workspace status:
+
+```powershell
+.\scripts\review_retrieval_benchmark.ps1 -Operation status
+```
+
+The next executable review step is authoring `evaluation/private/retrieval_v5/authored_cases.jsonl`. Do not run `prepare` until all 288 slots have independently drafted queries and candidate references; do not create reviewer or adjudicator output with automation and call it human evidence.
+
 Optional observability stack:
 
 ```powershell
@@ -79,6 +90,8 @@ Invoke-RestMethod http://127.0.0.1:13200/ready
 cd backend-go
 go test ./...
 go vet ./...
+
+go test ./internal/evalreview ./internal/evalbench ./cmd/benchmarkreview
 
 cd ..
 docker run --rm --mount "type=bind,source=$((Get-Location).Path),target=/workspace" `
@@ -155,6 +168,7 @@ Latest verified data:
 - delayed deleted-note view replay passed and DLQ did not grow.
 - distributed trace `903741a95c1ed196dbcd3cbd1f00b86a` contains 37 API/Worker spans across an Outbox/NATS delivery for note `5548`; the persisted W3C parent is `00-903741a95c1ed196dbcd3cbd1f00b86a-74ba37ebb05005af-01` and the Outbox row reached `sent`;
 - hybrid retrieval trace `5316cae36621eca92abd4481b4dfe69a` returned HTTP 200 and contains SQL, `tei POST` and `qdrant query` spans;
+- benchmark v5 private matrix `retrieval_v5_matrix_v1` contains 288 deterministic authoring slots, 32 for each of nine task families and 144 per split; checksum `7086266255375de7137d0f9502543769c22a53d20f2d280a928469c9183f3a61`; status remains `authoring` with zero human-reviewed cases;
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
 - Go statement coverage is 29.72% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
 - Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.

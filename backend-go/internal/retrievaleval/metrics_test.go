@@ -19,6 +19,18 @@ func TestEvaluateCaseSeparatesNoRelevantAndInsufficientEvidence(t *testing.T) {
 	if !noResult.Metrics.Rejected || noResult.FailureCategory != "" {
 		t.Fatalf("no relevant result = %+v", noResult)
 	}
+	ood := evalbench.Case{
+		TaskType: "out_of_domain_noise", CaseChecksum: "ood",
+		Metadata: map[string]any{"answerable": false},
+	}
+	oodFalsePositive := evaluateCase(ood, retrieval.SearchResponse{Results: []retrieval.Result{{}}}, 0, false, 10)
+	if oodFalsePositive.Metrics.Rejected || oodFalsePositive.FailureCategory != "false_positive_no_relevant" {
+		t.Fatalf("OOD false positive = %+v", oodFalsePositive)
+	}
+	combined := aggregate([]CaseResult{noResult, oodFalsePositive})
+	if combined.NoRelevantCaseCount != 2 || combined.NoRelevantRejectionAccuracy != 0.5 {
+		t.Fatalf("combined no-relevant/OOD metrics = %+v", combined)
+	}
 
 	noteID := int64(9)
 	insufficient := evalbench.Case{

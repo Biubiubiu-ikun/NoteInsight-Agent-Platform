@@ -122,7 +122,7 @@ func aggregate(cases []CaseResult) Metrics {
 		if current.ResultCount > 0 {
 			validCitations += int(math.Round(current.Metrics.CitationPrecision * float64(len(current.RetrievedSources))))
 		}
-		if current.TaskType == "no_relevant_document" {
+		if isNoRelevantTask(current.TaskType) {
 			metrics.NoRelevantCaseCount++
 			if current.Metrics.Rejected {
 				noRelevantRejected++
@@ -195,7 +195,7 @@ func classifyFailure(result CaseResult) string {
 	switch {
 	case result.TaskType == "authorization_boundary" && result.Metrics.AuthorizationLeak:
 		return "authorization_leak"
-	case result.TaskType == "no_relevant_document" && !result.Metrics.Rejected:
+	case isNoRelevantTask(result.TaskType) && !result.Metrics.Rejected:
 		return "false_positive_no_relevant"
 	case len(result.GoldSources) > 0 && result.Metrics.RecallAtK == 0:
 		return "missed_all_gold"
@@ -208,6 +208,10 @@ func classifyFailure(result CaseResult) string {
 	default:
 		return ""
 	}
+}
+
+func isNoRelevantTask(taskType string) bool {
+	return taskType == "no_relevant_document" || taskType == "out_of_domain_noise"
 }
 
 func sourceMatches(gold evalbench.GoldSource, retrieved RetrievedSource) bool {
