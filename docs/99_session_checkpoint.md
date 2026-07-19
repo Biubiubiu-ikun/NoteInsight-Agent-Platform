@@ -4,7 +4,7 @@ Updated: 2026-07-19
 
 ## Authority
 
-`最新项目规划.md` V7.7 is authoritative. Old-version planning files are history only.
+`最新项目规划.md` V7.8 is authoritative. Old-version planning files are history only.
 
 ## Current State
 
@@ -26,7 +26,9 @@ Updated: 2026-07-19
 - Retrieval evaluation counts `out_of_domain_noise` together with `no_relevant_document` for rejection accuracy and false-positive classification while retaining a separate OOD task slice.
 - The private v5 workspace now contains 288 model-assisted, unapproved authored cases, 1,728 candidate references resolving to 1,229 unique frozen sources, and separate reviewer A/B blind packages. The authored checksum is `da13ddd29c0f3cfbe2f8e7c4e133e431e09a218aff044cad78aa482c1051eedd`; every task has 32 cases and each split has 144.
 - Human review count remains zero. No `submissions.jsonl`, adjudication, approved cases, or public review summary exists; v5 is not frozen and makes no retrieval quality claim.
-- Next work is reviewer A in the loopback review UI, then a genuinely independent reviewer B, third-party adjudication, audit/freeze, and only then same-contract lexical/vector/hybrid comparison. Production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
+- Phase 8A Agent control-plane engineering is complete: migrations `000024-000028`, authenticated create/get/list/cancel APIs, immutable prompt/retrieval lineage, bounded usage counters, idempotency, required model dispatch binding, safe definition retirement, tool/claim/citation tables, ingestion-scoped citation/hash guards, success-time supported/cited claim enforcement and update/delete-resistant audit lineage. It does not execute a model or consume tokens.
+- Benchmark v5 human review can proceed in parallel. It blocks retrieval/prompt tuning and formal quality claims, but it does not block Phase 8B executor engineering against the unchanged baseline.
+- Next engineering work after Phase 8A acceptance is the bounded Phase 8B single-Agent executor. In parallel, reviewer A/B and adjudication remain required before same-contract v5 comparison; production-like multi-instance capacity, managed trace policy and deployment security evidence remain required before any public production-ready claim.
 
 ## Runtime Ports
 
@@ -164,6 +166,7 @@ Latest verified data:
 - full vector index `qwen3_dense_cosine_v1`: 56,349 points in collection `noteinsight_7aa574ea1bb52ae1591b4ad0d5969013`, built in 1h1m37s with checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627`;
 - migration `000021` adds vector build lease/attempt/checkpoint/heartbeat/reconciliation state; real PostgreSQL tests reject concurrent and stale leases while preserving the last durable checkpoint;
 - migration `000023` adds validated W3C `traceparent/tracestate` to Outbox rows; real PostgreSQL integration tests prove the context commits transactionally with the event and no row remains after rollback;
+- migrations `000024-000028` add Agent prompt/model/run/tool/claim/citation lineage, bounded usage, idempotency, safe definition retirement and database-enforced scope/state/citation/completion/delete invariants; the isolated Phase 8A PostgreSQL test passes;
 - completed-index audit compares all 56,349 frozen chunk ids/content hashes with all Qdrant point ids/payload hashes and reproduces checksum `432221b4873b965b52444776d9e887bd79cc5ff3d1581abbf3157f88b5ae8627` with zero missing/orphan/mismatched points;
 - Qdrant restore drill snapshot: 310,594,560 bytes, SHA-256 `6400ff3cb682c872d3dc0a848f0e4795d7e9102456f91debb5da2d276c19c938`; an isolated temporary collection restored 56,349 points and was deleted after verification;
 - formal lexical baseline: Recall@10 `0.6812`, MRR `0.6585`, citation integrity `1.0`, no-relevant rejection `1.0`;
@@ -176,13 +179,15 @@ Latest verified data:
 - invariants: zero missing dataset source, counter drift, duplicate dataset, active Outbox, JetStream pending or redelivery;
 - isolated PostgreSQL restore drill passed; Phase 7A-0 archive is `artifacts/backups/noteinsight_20260716_033326.dump` with SHA-256 `3424FEF52C080F432E6F230DB579EAE51379CC90C8F1C90CDCED89745F140E92` and a parseable 316-entry TOC;
 - Phase 7A completion archive is `artifacts/backups/noteinsight_20260718_062530.dump` (97,180,232 bytes), SHA-256 `45F2E285534DE9D3E94BBE1949D11318B8D40CB04DB44F608840A5F36C973CB0`, with a parseable 434-entry TOC;
+- Phase 8A pre-migration archive is `artifacts/backups/noteinsight_20260719_232256.dump` (118,966,742 bytes), SHA-256 `D46C730CFEF6024EC939CABE2212E18D6F3F988187482C2D00BB4ED2887C2DB2`, with a parseable 494-line custom-format TOC; it is Git-ignored on D drive.
 - delayed deleted-note view replay passed and DLQ did not grow.
 - distributed trace `903741a95c1ed196dbcd3cbd1f00b86a` contains 37 API/Worker spans across an Outbox/NATS delivery for note `5548`; the persisted W3C parent is `00-903741a95c1ed196dbcd3cbd1f00b86a-74ba37ebb05005af-01` and the Outbox row reached `sent`;
 - hybrid retrieval trace `5316cae36621eca92abd4481b4dfe69a` returned HTTP 200 and contains SQL, `tei POST` and `qdrant query` spans;
 - benchmark v5 private matrix `retrieval_v5_matrix_v1` contains 288 deterministic slots, 32 for each of nine task families and 144 per split; checksum `7086266255375de7137d0f9502543769c22a53d20f2d280a928469c9183f3a61`;
 - benchmark v5 model-assisted draft checksum is `da13ddd29c0f3cfbe2f8e7c4e133e431e09a218aff044cad78aa482c1051eedd`; 1,728 candidate references resolve through the frozen ingestion graph to 1,229 unique sources, with zero human-reviewed cases and no freeze claim;
+- Phase 8A authenticated smoke passes create `201`, idempotent replay `200` with the same run ID, owner get/list, queued cancellation, 64-character prompt/ingestion checksums and zero model calls; migrations `000024-000028` rerun with zero applied files.
 - frontend browser smoke passed for search, deep-linked detail, structured media text, comments, ranking and runtime status with no console errors.
-- Go statement coverage is 29.72% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
+- Go statement coverage is 34.07% with a 25% CI floor; frontend statement coverage is 60.84% with four metric floors.
 - Govulncheck reports zero reachable vulnerabilities; Trivy reports zero fixable HIGH/CRITICAL findings for the Go 1.26.5 scratch image; SPDX SBOM generation passed.
 - Public GitHub remote: `https://github.com/Biubiubiu-ikun/NoteInsight-Agent-Platform`; CodeQL uploads to GitHub Code Scanning, while the private archive uses local-SARIF mode.
 

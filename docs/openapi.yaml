@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: NoteInsight API
-  version: 0.7.3
-  description: Phase 7 lexical, vector, and hybrid evidence retrieval plus authenticated content APIs.
+  version: 0.8.0
+  description: Phase 8A auditable Agent run contracts, Phase 7 evidence retrieval, and authenticated content APIs.
 servers:
   - url: http://localhost:18080
 paths:
@@ -48,6 +48,89 @@ paths:
         '429': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
         '504': { $ref: '#/components/responses/Error' }
+  /api/v1/agent/runs:
+    post:
+      tags: [Agent]
+      description: Creates an authenticated, budgeted Agent run request with immutable prompt and retrieval lineage. Phase 8A persists the queued contract but does not execute a model.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAgentRunRequest' }
+      responses:
+        '201':
+          description: A new queued Agent run contract.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateAgentRunResponse' }
+        '200':
+          description: Idempotent replay of an existing run contract.
+          headers:
+            Idempotent-Replayed:
+              schema: { type: string, const: 'true' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CreateAgentRunResponse' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+    get:
+      tags: [Agent]
+      description: Lists the current user's Agent runs using keyset pagination. Admins may inspect all runs.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: cursor, schema: { type: string } }
+      responses:
+        '200':
+          description: Agent run history.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentRunPage' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+  /api/v1/agent/runs/{run_id}:
+    parameters: [{ $ref: '#/components/parameters/AgentRunID' }]
+    get:
+      tags: [Agent]
+      description: Gets a run owned by the current user. Admins may inspect any run.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Immutable request lineage and current execution state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentRun' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+  /api/v1/agent/runs/{run_id}/cancel:
+    parameters: [{ $ref: '#/components/parameters/AgentRunID' }]
+    post:
+      tags: [Agent]
+      description: Cancels a queued run or records cooperative cancellation for a running run.
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Updated run state.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentRun' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '429': { $ref: '#/components/responses/Error' }
   /api/v1/auth/register:
     post:
       tags: [Auth]
@@ -288,6 +371,11 @@ components:
       name: comment_id
       required: true
       schema: { type: integer, format: int64, minimum: 1 }
+    AgentRunID:
+      in: path
+      name: run_id
+      required: true
+      schema: { type: string, format: uuid }
   responses:
     AuthResponse:
       description: Access token response; refresh token is also set as HttpOnly cookie.
@@ -399,6 +487,121 @@ components:
             source_types:
               type: array
               items: { type: string, enum: [note, note_media, note_comment_cluster, note_daily_fact, user_daily_fact] }
+    CreateAgentRunRequest:
+      type: object
+      required: [dataset_version_id, query]
+      properties:
+        project_id: { type: integer, format: int64, minimum: 1, default: 1 }
+        dataset_version_id: { type: integer, format: int64, minimum: 1 }
+        ingestion_run_id: { type: string, maxLength: 128 }
+        query: { type: string, minLength: 1, maxLength: 2000 }
+        mode: { type: string, enum: [lexical, vector, hybrid], default: lexical }
+        budget: { $ref: '#/components/schemas/AgentBudget' }
+    CreateAgentRunResponse:
+      type: object
+      required: [run, replayed]
+      properties:
+        run: { $ref: '#/components/schemas/AgentRun' }
+        replayed: { type: boolean }
+    AgentRunPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/AgentRun' }
+        next_cursor: { type: string }
+    AgentRun:
+      type: object
+      required: [id, project_id, dataset_version_id, ingestion_run_id, requested_by, query, requested_mode, intent, retrieval_plan, prompt, status, budget, usage, cancellation_requested, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        project_id: { type: integer, format: int64 }
+        dataset_version_id: { type: integer, format: int64 }
+        ingestion_run_id: { type: string }
+        requested_by: { type: integer, format: int64 }
+        query: { type: string }
+        requested_mode: { type: string, enum: [lexical, vector, hybrid] }
+        intent: { type: object, additionalProperties: true }
+        retrieval_plan: { $ref: '#/components/schemas/AgentRetrievalContract' }
+        report: { type: object, additionalProperties: true }
+        prompt: { $ref: '#/components/schemas/AgentPromptVersion' }
+        model: { $ref: '#/components/schemas/AgentModelVersion' }
+        status: { type: string, enum: [queued, running, succeeded, failed, cancelled] }
+        budget: { $ref: '#/components/schemas/AgentBudget' }
+        usage: { $ref: '#/components/schemas/AgentUsage' }
+        cancellation_requested: { type: boolean }
+        idempotency_key: { type: string }
+        request_id: { type: string }
+        trace_id: { type: string }
+        failure_code: { type: string }
+        failure_message: { type: string }
+        started_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    AgentBudget:
+      type: object
+      properties:
+        max_steps: { type: integer, minimum: 1, maximum: 32, default: 8 }
+        max_retrieval_calls: { type: integer, minimum: 1, maximum: 32, default: 4 }
+        max_model_calls: { type: integer, minimum: 1, maximum: 32, default: 4 }
+        max_input_tokens: { type: integer, minimum: 1, maximum: 1000000, default: 32000 }
+        max_output_tokens: { type: integer, minimum: 1, maximum: 1000000, default: 4096 }
+        max_duration_ms: { type: integer, format: int64, minimum: 1000, maximum: 3600000, default: 120000 }
+        max_cost_micros: { type: integer, format: int64, minimum: 0, maximum: 1000000000, default: 50000 }
+    AgentUsage:
+      type: object
+      required: [steps, retrieval_calls, model_calls, input_tokens, output_tokens, cost_micros]
+      properties:
+        steps: { type: integer, minimum: 0 }
+        retrieval_calls: { type: integer, minimum: 0 }
+        model_calls: { type: integer, minimum: 0 }
+        input_tokens: { type: integer, format: int64, minimum: 0 }
+        output_tokens: { type: integer, format: int64, minimum: 0 }
+        cost_micros: { type: integer, format: int64, minimum: 0 }
+    AgentRetrievalContract:
+      type: object
+      required: [mode, project_id, dataset_id, dataset_version_id, dataset_manifest_checksum, ingestion_run_id, ingestion_output_checksum, parser_version, chunker_version, tokenizer_version, access_scope]
+      properties:
+        mode: { type: string, enum: [lexical, vector, hybrid] }
+        project_id: { type: integer, format: int64 }
+        dataset_id: { type: integer, format: int64 }
+        dataset_version_id: { type: integer, format: int64 }
+        dataset_manifest_checksum: { type: string }
+        ingestion_run_id: { type: string }
+        ingestion_output_checksum: { type: string }
+        parser_version: { type: string }
+        chunker_version: { type: string }
+        tokenizer_version: { type: string }
+        lexical_index_version: { type: string }
+        lexical_index_checksum: { type: string }
+        vector_index_version: { type: string }
+        vector_index_checksum: { type: string }
+        embedding_model: { type: string }
+        embedding_revision: { type: string }
+        access_scope: { type: string, enum: [member, public] }
+    AgentPromptVersion:
+      type: object
+      required: [id, prompt_key, version, purpose, template_sha256, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        prompt_key: { type: string }
+        version: { type: string }
+        purpose: { type: string }
+        template_sha256: { type: string, minLength: 64, maxLength: 64 }
+        created_at: { type: string, format: date-time }
+    AgentModelVersion:
+      type: object
+      required: [id, provider, model, revision, parameters, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        provider: { type: string }
+        model: { type: string }
+        revision: { type: string }
+        parameters: { type: object, additionalProperties: true }
+        artifact_sha256: { type: string, minLength: 64, maxLength: 64 }
+        created_at: { type: string, format: date-time }
     RetrievalSearchResponse:
       type: object
       required: [mode, retriever_version, reranker_version, scope, query, decision, results, candidate_count, took_ms, external_model_calls, embedding_calls]

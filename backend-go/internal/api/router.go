@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"creatorinsight/backend-go/internal/agent"
 	"creatorinsight/backend-go/internal/api/handlers"
 	"creatorinsight/backend-go/internal/auth"
 	"creatorinsight/backend-go/internal/config"
@@ -55,7 +56,9 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 
 	authService := auth.NewService(auth.NewRepository(deps.DB), deps.Config.Auth, deps.Config.App.Env)
 	noteService := note.NewService(note.NewRepository(deps.DB), deps.Redis)
-	retrievalService := retrieval.NewService(retrieval.NewRepository(deps.DB))
+	retrievalRepository := retrieval.NewRepository(deps.DB)
+	retrievalService := retrieval.NewService(retrievalRepository)
+	agentService := agent.NewService(agent.NewRepository(deps.DB), retrievalRepository)
 	if err := retrievalService.EnableVector(
 		retrieval.NewTEIEmbedder(
 			deps.Config.Retrieval.EmbeddingURL, deps.Config.Retrieval.EmbeddingModel,
@@ -95,6 +98,11 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 		Limit:  deps.Config.RateLimit.RetrievalRead.Limit,
 		Window: deps.Config.RateLimit.RetrievalRead.Window,
 	}
+	agentRunPolicy := ratelimit.Policy{
+		Name:   "agent_run",
+		Limit:  deps.Config.RateLimit.AgentRun.Limit,
+		Window: deps.Config.RateLimit.AgentRun.Window,
+	}
 	rateLimitEnabled := deps.Config.RateLimit.Enabled
 
 	router.Use(AuthMiddleware(authService))
@@ -110,6 +118,7 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	)
 	noteHandler := handlers.NewNoteHandler(noteService)
 	retrievalHandler := handlers.NewRetrievalHandler(retrievalService, deps.Config.Retrieval.QueryTimeout)
+	agentHandler := handlers.NewAgentHandler(agentService)
 
 	router.GET("/health", healthHandler.Health)
 	router.GET("/ready", healthHandler.Ready)
@@ -131,6 +140,10 @@ func NewRouter(deps RouterDeps) *gin.Engine {
 	v1.GET("/notes/:note_id/comments", noteHandler.ListComments)
 	v1.GET("/rankings/notes/daily", noteHandler.ListHotNotes)
 	v1.POST("/retrieval/search", IPRateLimit(writeLimiter, rateLimitEnabled, retrievalReadPolicy), retrievalHandler.Search)
+	v1.GET("/agent/runs", RequireAuth(), agentHandler.ListRuns)
+	v1.GET("/agent/runs/:run_id", RequireAuth(), agentHandler.GetRun)
+	v1.POST("/agent/runs", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, agentRunPolicy), AuditMutation(deps.Logger, "agent.run.create"), agentHandler.CreateRun)
+	v1.POST("/agent/runs/:run_id/cancel", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, agentRunPolicy), AuditMutation(deps.Logger, "agent.run.cancel"), agentHandler.CancelRun)
 	v1.POST("/notes", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), noteHandler.CreateNote)
 	v1.PATCH("/notes/:note_id", RequireAuth(), RequireActiveUser(), UserRateLimit(writeLimiter, rateLimitEnabled, contentWritePolicy), RequireOwnerOrAdmin(func(ctx *gin.Context, currentUser auth.CurrentUser) (bool, error) {
 		return noteService.CanModifyNote(ctx.Request.Context(), ctx.Param("note_id"), currentUser)
