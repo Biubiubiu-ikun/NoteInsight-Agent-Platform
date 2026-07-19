@@ -54,6 +54,7 @@ Updated: 2026-07-19
 - Project runtime and tool caches live under the Git-ignored `D:\面向内容平台的创作者洞察 Agent 应用平台\.tools` tree.
 - Docker Desktop's WSL disk is physically stored at `.tools\runtime\docker-desktop\wsl`; `C:\Users\23016\AppData\Local\Docker\wsl` is a directory junction to that location.
 - Go build/module/temp, npm, and Hugging Face caches are physically stored under `.tools\cache` or `.tools\gopath`. Their former C-drive locations are compatibility junctions, and the corresponding user environment variables point to D.
+- pnpm's content-addressable store is physically stored at `.tools\cache\pnpm-store\v11`; `pnpm config get store-dir` must resolve to the project `.tools\cache\pnpm-store` path. The former `D:\.pnpm-store` root directory was removed after an 8,917-file integrity check and `pnpm store status` verification.
 - The D drive is external USB storage. The ignored local `.env` uses `RETRIEVAL_QUERY_TIMEOUT=25s` and `HTTP_WRITE_TIMEOUT=40s` so cold reads can finish; production/default values remain `4s` and `10s`.
 - Use `scripts/start_local_stack.ps1` after a restart. It waits for the full stack and warms lexical, vector, and hybrid retrieval before reporting readiness.
 - After a Docker Desktop update, verify the WSL junction with `Get-Item C:\Users\23016\AppData\Local\Docker\wsl`; its `Target` must remain the project `.tools\runtime` path.
