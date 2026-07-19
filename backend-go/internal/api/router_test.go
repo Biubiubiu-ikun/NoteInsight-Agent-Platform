@@ -72,3 +72,16 @@ func TestRetrievalSearchRouteIsRegistered(t *testing.T) {
 		t.Fatalf("POST retrieval search status = %d, want %d", rec.Code, http.StatusBadRequest)
 	}
 }
+
+func TestAgentRunRouteRequiresAuthentication(t *testing.T) {
+	router := NewRouter(RouterDeps{
+		Config: config.Config{App: config.AppConfig{Env: "test"}},
+		Logger: slog.Default(),
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/agent/runs", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("POST agent run status = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}

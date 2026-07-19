@@ -117,6 +117,7 @@ type RateLimitConfig struct {
 	CommentWrite     RateLimitPolicyConfig
 	InteractionWrite RateLimitPolicyConfig
 	RetrievalRead    RateLimitPolicyConfig
+	AgentRun         RateLimitPolicyConfig
 }
 
 type RateLimitPolicyConfig struct {
@@ -251,6 +252,10 @@ func Load() (Config, error) {
 			RetrievalRead: RateLimitPolicyConfig{
 				Limit:  int64(getEnvInt("RATE_LIMIT_RETRIEVAL_READ_LIMIT", 120)),
 				Window: getEnvDuration("RATE_LIMIT_RETRIEVAL_READ_WINDOW", time.Minute),
+			},
+			AgentRun: RateLimitPolicyConfig{
+				Limit:  int64(getEnvInt("RATE_LIMIT_AGENT_RUN_LIMIT", 10)),
+				Window: getEnvDuration("RATE_LIMIT_AGENT_RUN_WINDOW", time.Minute),
 			},
 		},
 		Retrieval: RetrievalConfig{

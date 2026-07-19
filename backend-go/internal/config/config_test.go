@@ -44,7 +44,7 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Worker.HTTPPort != 8081 || cfg.Worker.OutboxMaxRetries != 20 {
 		t.Fatalf("unexpected worker defaults: %+v", cfg.Worker)
 	}
-	if cfg.Retrieval.QueryTimeout != 4*time.Second || cfg.Retrieval.EmbeddingDimension != 1024 || cfg.Retrieval.EmbeddingBatchSize != 32 || cfg.RateLimit.RetrievalRead.Limit != 120 {
+	if cfg.Retrieval.QueryTimeout != 4*time.Second || cfg.Retrieval.EmbeddingDimension != 1024 || cfg.Retrieval.EmbeddingBatchSize != 32 || cfg.RateLimit.RetrievalRead.Limit != 120 || cfg.RateLimit.AgentRun.Limit != 10 {
 		t.Fatalf("unexpected retrieval defaults: retrieval=%+v rate=%+v", cfg.Retrieval, cfg.RateLimit.RetrievalRead)
 	}
 	if cfg.Telemetry.Enabled || cfg.Postgres.TracingEnabled || cfg.Redis.TracingEnabled || cfg.Telemetry.SampleRatio != 0.1 {
